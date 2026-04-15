@@ -1,11 +1,18 @@
+import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import GameWebView from './src/GameWebView';
+import { initAds } from './src/adService';
 
 export default function App() {
+  useEffect(() => {
+    initAds();
+  }, []);
+
   return (
     <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
+      <StatusBar style="light" hidden translucent />
+      <GameWebView />
     </View>
   );
 }
@@ -13,8 +20,6 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#0a0a1a',
   },
 });

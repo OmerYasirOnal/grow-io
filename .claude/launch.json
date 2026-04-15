@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "game-preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["http-server", "game", "-p", "8091", "-c-1"],
+      "port": 8091
+    },
+    {
+      "name": "expo-dev",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--web", "--port", "8092"],
+      "port": 8092
+    }
+  ]
+}

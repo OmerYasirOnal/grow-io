@@ -1,0 +1,16 @@
+{
+  "cli": { "version": ">= 15.0.0", "appVersionSource": "remote" },
+  "build": {
+    "development": { "developmentClient": true, "distribution": "internal" },
+    "preview": { "distribution": "internal" },
+    "production": { "ios": { "autoIncrement": true } }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "omeryasironal@hotmail.com",
+        "appleTeamId": "9X8FDSW5D8"
+      }
+    }
+  }
+}
