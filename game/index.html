@@ -343,6 +343,18 @@ function spawnPowerup(){
   powerups.push({x,y,type:t,pulse:0});
 }
 
+// ═══ BOT DIFFICULTY STAGES ═══
+// Bots get smarter / faster / more aggressive as the player progresses.
+// Each stage tunes: reactionTime, sightRange, boostUse, aggression, planning.
+const BOT_STAGES = [
+  { min: 0,    name: 'Rookie',  reactMul: 1.7,  sightMul: 0.7,  boostMul: 0.3,  aggression: 0.30 },
+  { min: 500,  name: 'Hunter',  reactMul: 1.3,  sightMul: 0.85, boostMul: 0.55, aggression: 0.50 },
+  { min: 2000, name: 'Veteran', reactMul: 1.0,  sightMul: 1.0,  boostMul: 0.75, aggression: 0.70 },
+  { min: 5000, name: 'Elite',   reactMul: 0.75, sightMul: 1.15, boostMul: 0.9,  aggression: 0.85 },
+  { min: 12000,name: 'Apex',    reactMul: 0.55, sightMul: 1.3,  boostMul: 1.0,  aggression: 1.0  },
+];
+function currentBotStage(){let s=BOT_STAGES[0];for(const st of BOT_STAGES)if(score>=st.min)s=st;return s;}
+
 // ═══ SNAKE CREATION ═══
 function createSnake(isPlayer,x,y,skinIdx){
   if(x==null){const a=rand(0,TAU),r=rand(200,800);x=WCX+Math.cos(a)*r;y=WCY+Math.sin(a)*r;}
@@ -360,7 +372,8 @@ function createSnake(isPlayer,x,y,skinIdx){
     boosting:false,boostFuel:100,
     powerups:{speed:0,shield:0,magnet:0,ghost:0},
     killCount:0,invulnTimer:0,
-    aiTimer:rand(0,0.2),respawnTimer:0,isKing:false
+    aiTimer:rand(0,0.2),respawnTimer:0,isKing:false,
+    skill:0.5+rand(0,0.5) // per-bot skill multiplier 0.5..1
   };
 }
 
@@ -483,7 +496,9 @@ function killSnake(victim,killer,cause){
     killerName=killer?killer.name:(cause==='boundary'?'the boundary':'unknown');
     deathCount++;saveHS();saveStats();saveCoins();addTopScore(score);checkUnlocks();saveSkins();
     state='dead';
-    if(deathCount%3===0)postMsg({type:'SHOW_INTERSTITIAL'});
+    // Try to show interstitial each death; AdMob throttles internally so this is safe.
+    // First death no ad (better first-time-user feel).
+    if(deathCount>=2)postMsg({type:'SHOW_INTERSTITIAL'});
   }else{victim.respawnTimer=rand(3,6);}
 }
 
@@ -496,49 +511,82 @@ function revivePlayer(){
   state='playing';
 }
 
-// ═══ BOT AI ═══
+// ═══ BOT AI (stage-aware) ═══
 function updateBot(bot,dt){
   if(!bot.alive||bot.isPlayer)return;
+  const stage=currentBotStage();
   bot.aiTimer-=dt;if(bot.aiTimer>0)return;
-  bot.aiTimer=0.15+rand(0,0.1);
+  // Smarter bots think more often
+  bot.aiTimer=(0.12+rand(0,0.08))*stage.reactMul/Math.max(0.6,bot.skill);
+
   const head=bot.segments[0];
+  // Sight scales with stage
+  const sight=500*stage.sightMul;
+  const sightSmall=600*stage.sightMul;
+  const sightBig=300*stage.sightMul;
+
   let nearFood=null,nfD=Infinity;
-  for(const f of foods){const d=dist(head,f);if(d<nfD){nfD=d;nearFood=f;}}
+  for(const f of foods){const d=dist(head,f);if(d<nfD&&d<sight){nfD=d;nearFood=f;}}
   let nearSmall=null,nearBig=null,nsD=Infinity,nbD=Infinity;
   for(const s of snakes){
     if(s===bot||!s.alive)continue;const d=dist(head,s.segments[0]);
     if(s.length<bot.length*0.8&&d<nsD){nsD=d;nearSmall=s;}
     if(s.length>bot.length*1.2&&d<nbD){nbD=d;nearBig=s;}
   }
+
+  // Avoid the wall
   const bDist=dist(head,{x:WCX,y:WCY});
-  if(bDist>WR-200){bot.targetAngle=angleTo(head,{x:WCX,y:WCY});return;}
+  if(bDist>WR-220){bot.targetAngle=angleTo(head,{x:WCX,y:WCY});bot.boosting=false;return;}
+
+  // Avoid the player's body too (smarter bots steer around it)
+  if(player&&player.alive&&player.segments.length>5){
+    let bodyHit=null,bhD=Infinity;
+    for(let i=4;i<player.segments.length;i+=2){
+      const seg=player.segments[i];const d=dist(head,seg);
+      if(d<60+stage.aggression*40&&d<bhD){bhD=d;bodyHit=seg;}
+    }
+    if(bodyHit){
+      const a=angleTo(bodyHit,head);
+      bot.targetAngle=a+(Math.random()<0.5?PI/2:-PI/2)*0.5;
+      return;
+    }
+  }
+
+  // Maybe boost-attack if the stage permits and a small target is close
+  const useBoost=Math.random()<stage.boostMul*bot.skill;
+
   switch(bot.personality){
     case 'collector':
-      if(nearBig&&nbD<300){bot.targetAngle=angleTo(nearBig.segments[0],head);break;}
-      if(nearFood&&nfD<500){bot.targetAngle=angleTo(head,nearFood);break;}
-      bot.targetAngle+=rand(-0.5,0.5);break;
+      if(nearBig&&nbD<sightBig){bot.targetAngle=angleTo(nearBig.segments[0],head);bot.boosting=false;break;}
+      if(nearFood){bot.targetAngle=angleTo(head,nearFood);break;}
+      bot.targetAngle+=rand(-0.5,0.5);bot.boosting=false;break;
     case 'aggressive':
-      if(nearBig&&nbD<250){bot.targetAngle=angleTo(nearBig.segments[0],head);bot.boosting=false;break;}
-      if(nearSmall&&nsD<600){
-        const t=nsD/bot.speed;
-        const px=nearSmall.segments[0].x+Math.cos(nearSmall.angle)*nearSmall.speed*t*0.5;
-        const py=nearSmall.segments[0].y+Math.sin(nearSmall.angle)*nearSmall.speed*t*0.5;
+      if(nearBig&&nbD<sightBig*0.85){bot.targetAngle=angleTo(nearBig.segments[0],head);bot.boosting=false;break;}
+      if(nearSmall&&nsD<sightSmall){
+        const t=nsD/Math.max(80,bot.speed);
+        const px=nearSmall.segments[0].x+Math.cos(nearSmall.angle)*nearSmall.speed*t*0.55;
+        const py=nearSmall.segments[0].y+Math.sin(nearSmall.angle)*nearSmall.speed*t*0.55;
         bot.targetAngle=angleTo(head,{x:px,y:py});
-        bot.boosting=nsD<200;break;
+        bot.boosting=useBoost&&nsD<260&&bot.boostFuel>30;break;
       }
       if(nearFood)bot.targetAngle=angleTo(head,nearFood);else bot.targetAngle+=rand(-0.3,0.3);
       bot.boosting=false;break;
     case 'coiler':
-      if(nearSmall&&nsD<400){
-        const orbitD=100+nearSmall.length*0.3;
+      if(nearSmall&&nsD<sightSmall*0.7){
+        const orbitD=110+nearSmall.length*0.3;
         const a=angleTo(head,nearSmall.segments[0]);
-        bot.targetAngle=dist(head,nearSmall.segments[0])>orbitD+50?a:a+PI/2;break;
+        bot.targetAngle=dist(head,nearSmall.segments[0])>orbitD+50?a:a+PI/2;
+        bot.boosting=useBoost&&nsD<140;break;
       }
-      if(nearFood)bot.targetAngle=angleTo(head,nearFood);else bot.targetAngle+=rand(-0.4,0.4);break;
+      if(nearFood)bot.targetAngle=angleTo(head,nearFood);else bot.targetAngle+=rand(-0.4,0.4);
+      bot.boosting=false;break;
     case 'ambush':
-      if(nearSmall&&nsD<250){bot.targetAngle=angleTo(head,nearSmall.segments[0]);bot.boosting=true;break;}
+      if(nearSmall&&nsD<sightSmall*0.45){
+        bot.targetAngle=angleTo(head,nearSmall.segments[0]);
+        bot.boosting=useBoost&&bot.boostFuel>40;break;
+      }
       bot.boosting=false;
-      if(nearFood&&nfD<300)bot.targetAngle=angleTo(head,nearFood);else bot.targetAngle+=rand(-0.2,0.2);break;
+      if(nearFood&&nfD<sight*0.6)bot.targetAngle=angleTo(head,nearFood);else bot.targetAngle+=rand(-0.2,0.2);break;
   }
 }
 
@@ -594,8 +642,11 @@ function update(dt){
   if(state!=='playing')return;
   playTime+=dt;
   unlockCheckTimer-=dt;if(unlockCheckTimer<=0){unlockCheckTimer=1.5;checkUnlocks();}
-  for(const s of snakes)updateSnake(s,dt);
-  for(const s of snakes)if(!s.isPlayer)updateBot(s,dt);
+  // Sync order: player physics first, then bot AI (so bots react to fresh player position),
+  // then physics again for bots, then collisions.
+  if(player&&player.alive)updateSnake(player,dt);
+  for(const s of snakes)if(!s.isPlayer&&s.alive)updateBot(s,dt);
+  for(const s of snakes)if(!s.isPlayer&&s.alive)updateSnake(s,dt);
   checkCollisions();updateParticles(dt);updateScorePopups(dt);
   foodSpawnTimer-=dt;if(foodSpawnTimer<=0){foodSpawnTimer=0.2;spawnFood();}
   puSpawnTimer-=dt;if(puSpawnTimer<=0){puSpawnTimer=5;spawnPowerup();}
@@ -630,7 +681,9 @@ function render(){
     const sx=shakeTimer>0?rand(-shakeMag,shakeMag):0,sy=shakeTimer>0?rand(-shakeMag,shakeMag):0;
     ctx.save();ctx.translate(W/2+sx,H/2+sy);ctx.scale(zoom,zoom);ctx.translate(-camera.x,-camera.y);
     drawGrid();drawBoundary();drawFood();drawPowerups();
-    for(const s of snakes)if(s.alive&&!s.isPlayer)drawSnake(s);
+    // Z-sort snakes: smaller bots first, bigger bots above; player always on top.
+    const liveBots=snakes.filter(s=>s.alive&&!s.isPlayer).sort((a,b)=>a.length-b.length);
+    for(const s of liveBots)drawSnake(s);
     if(player&&player.alive)drawSnake(player);
     drawParticles();drawScorePopups();ctx.restore();
     drawHUD();drawMinimap();
@@ -702,17 +755,25 @@ function drawSnake(s){
   const skin=SKINS[s.skin];const w=6+Math.min(s.segments.length*0.03,14);
   if(s.powerups.ghost>0)ctx.globalAlpha=0.4;
   if(s.invulnTimer>0&&Math.floor(s.invulnTimer*10)%2===0)ctx.globalAlpha=0.3;
+  // Subtle outline pass (helps prevent visual overlap between snakes)
+  ctx.shadowBlur=0;
   for(let i=s.segments.length-1;i>=0;i--){
     const seg=s.segments[i];const t=1-i/Math.max(1,s.segments.length-1);
-    const r=w/2*(0.5+t*0.5);let color;
+    const r=w/2*(0.55+t*0.45);
+    ctx.fillStyle='rgba(0,0,0,0.35)';
+    ctx.beginPath();ctx.arc(seg.x,seg.y,r+1.2,0,TAU);ctx.fill();
+  }
+  for(let i=s.segments.length-1;i>=0;i--){
+    const seg=s.segments[i];const t=1-i/Math.max(1,s.segments.length-1);
+    const r=w/2*(0.55+t*0.45);let color;
     if(skin.p==='rainbow')color=hsl((i*8+frameCount*2)%360,80,60);
     else if(skin.p==='striped')color=Math.floor(i/3)%2===0?skin.c[0]:skin.c[1];
     else color=lerpColor(skin.c[1],skin.c[0],t);
     ctx.fillStyle=color;
-    if(i===0){ctx.shadowColor=skin.c[0];ctx.shadowBlur=skin.p==='neon'?20:12;}
+    if(i===0){ctx.shadowColor=skin.c[0];ctx.shadowBlur=skin.p==='neon'?22:14;}
     ctx.beginPath();ctx.arc(seg.x,seg.y,r,0,TAU);ctx.fill();
     if(i===0)ctx.shadowBlur=0;
-    if(skin.p==='dotted'&&i%4===0&&i>0){ctx.fillStyle='rgba(255,255,255,0.3)';ctx.beginPath();ctx.arc(seg.x,seg.y,r*0.4,0,TAU);ctx.fill();}
+    if(skin.p==='dotted'&&i%4===0&&i>0){ctx.fillStyle='rgba(255,255,255,0.35)';ctx.beginPath();ctx.arc(seg.x,seg.y,r*0.4,0,TAU);ctx.fill();}
   }
   // Shield aura
   if(s.powerups.shield>0){ctx.strokeStyle='rgba(64,196,255,0.4)';ctx.lineWidth=3;ctx.shadowColor='#40c4ff';ctx.shadowBlur=10;ctx.beginPath();ctx.arc(s.segments[0].x,s.segments[0].y,w/2+6,0,TAU);ctx.stroke();ctx.shadowBlur=0;}
@@ -747,6 +808,10 @@ function drawHUD(){
   ctx.fillText(L.length+': '+(player?player.length:0),15,m+50);
   ctx.fillText(L.kills+': '+(player?player.killCount:0),15,m+66);
   ctx.fillStyle='#ffd600';ctx.fillText('🪙 '+coins,15,m+82);
+  // Difficulty stage badge
+  const stg=currentBotStage();
+  ctx.fillStyle='rgba(255,255,255,0.45)';ctx.font='700 11px Rajdhani';
+  ctx.fillText('AI: '+stg.name,15,m+98);
   if(kingToast>0){
     const a=Math.min(kingToast,1);ctx.textAlign='center';ctx.globalAlpha=a;
     ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=20;

@@ -4,7 +4,7 @@ import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { Asset } from 'expo-asset';
 import * as Haptics from 'expo-haptics';
 import { loadHighScore, saveHighScore, loadCoins, saveCoins } from './storage';
-import { showInterstitial, showRewarded } from './adService';
+import { showInterstitial, showRewarded, isInterstitialReady, isRewardedReady } from './adService';
 
 const gameAsset = require('../game/index.html');
 
@@ -40,11 +40,22 @@ export default function GameWebView() {
     try {
       const msg: GameMessage = JSON.parse(event.nativeEvent.data);
       switch (msg.type) {
-        case 'SHOW_INTERSTITIAL': showInterstitial(); break;
+        case 'SHOW_INTERSTITIAL': {
+          const shown = showInterstitial();
+          sendToGame({ type: shown ? 'INTERSTITIAL_SHOWN' : 'INTERSTITIAL_FAILED' });
+          break;
+        }
         case 'SHOW_REWARDED_AD': {
           const requestedReward = msg.data?.reward || 'continue';
           const shown = showRewarded(() => sendToGame({ type: 'AD_REWARD_EARNED', data: { reward: requestedReward } }));
           if (!shown) sendToGame({ type: 'AD_FAILED' });
+          break;
+        }
+        case 'CHECK_AD_READY': {
+          sendToGame({
+            type: 'AD_STATUS',
+            data: { interstitial: isInterstitialReady(), rewarded: isRewardedReady() },
+          });
           break;
         }
         case 'SAVE_HIGH_SCORE':
