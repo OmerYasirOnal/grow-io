@@ -1,0 +1,15 @@
+Version 1.1.2 — Polish & Compatibility
+
+NEW
+• Auto-pause when the app goes to background, receives a call, or loses focus
+• Larger pause button with improved tap target for precise touch
+• Full iPhone X / 11 / 12 / 13 / 14 / 15 / 16 notch and Dynamic Island support
+• Minimap repositioned to avoid Dynamic Island clipping
+• Safe-area handling across every screen
+
+IMPROVEMENTS
+• Smoother game loop on older iPhones
+• HUD elements stay readable on every device size
+• Background / foreground transitions no longer skip frames
+
+Thanks for playing Grow.io! If you enjoy the game, please rate it on the App Store — it helps a lot.

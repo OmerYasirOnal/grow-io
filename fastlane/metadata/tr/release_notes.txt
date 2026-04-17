@@ -1,0 +1,15 @@
+Sürüm 1.1.2 — Düzeltmeler ve Uyumluluk
+
+YENİ
+• Uygulama arka plana alındığında, telefon geldiğinde veya odak kaybolduğunda otomatik duraklatma
+• Daha büyük ve doğru algılayan duraklat düğmesi
+• iPhone X / 11 / 12 / 13 / 14 / 15 / 16 çentik ve Dynamic Island tam uyumluluğu
+• Mini haritanın Dynamic Island ile çakışmayacak şekilde yeniden konumlandırılması
+• Tüm ekranlarda güvenli alan (safe area) desteği
+
+İYİLEŞTİRMELER
+• Eski iPhone'larda daha akıcı oyun döngüsü
+• HUD elemanları her ekran boyutunda net okunuyor
+• Arka plan / ön plan geçişlerinde kare atlama düzeltildi
+
+Grow.io'yu oynadığın için teşekkürler! Oyunu beğendiysen App Store'da puanlamayı unutma, çok yardımcı oluyor.
