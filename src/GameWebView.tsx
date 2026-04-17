@@ -91,12 +91,33 @@ export default function GameWebView() {
   }
 
   return (
-    <WebView ref={webViewRef} source={{ uri: htmlUri }} style={styles.webview}
-      onMessage={onMessage} scrollEnabled={false} bounces={false} overScrollMode="never"
-      allowsInlineMediaPlayback mediaPlaybackRequiresUserAction={false}
-      javaScriptEnabled domStorageEnabled startInLoadingState={false}
-      originWhitelist={['*']} allowFileAccess allowFileAccessFromFileURLs
-      allowUniversalAccessFromFileURLs />
+    <WebView
+      ref={webViewRef}
+      source={{ uri: htmlUri }}
+      style={styles.webview}
+      onMessage={onMessage}
+      scrollEnabled={false}
+      bounces={false}
+      overScrollMode="never"
+      allowsInlineMediaPlayback
+      mediaPlaybackRequiresUserAction={false}
+      javaScriptEnabled
+      domStorageEnabled
+      startInLoadingState={false}
+      originWhitelist={['*']}
+      allowFileAccess
+      allowFileAccessFromFileURLs
+      allowUniversalAccessFromFileURLs
+      contentInsetAdjustmentBehavior="never"
+      automaticallyAdjustContentInsets={false}
+      allowsBackForwardNavigationGestures={false}
+      hideKeyboardAccessoryView
+      textInteractionEnabled={false}
+      setSupportMultipleWindows={false}
+      pullToRefreshEnabled={false}
+      androidLayerType="hardware"
+      applicationNameForUserAgent="AKISGames/1.0"
+    />
   );
 }
 

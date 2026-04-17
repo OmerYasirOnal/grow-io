@@ -1,28 +1,15 @@
-Sürüm 1.1 — Büyük Güncelleme
+Sürüm 1.1.2 — Düzeltmeler ve Uyumluluk
 
-YENİ ÖZELLİKLER
-• Ses, kamera zoom ve ana menüye dönüş ayarlı duraklatma menüsü
-• Para sistemi — yem ve öldürmeden para kazan, istediğin skin'i satın al
-• Yerel skor tablosu — en iyi 10 skorun
-• Günlük giriş bonusu + seri ödülleri
-• İlk açılışta eğitici + oyun içi yardım butonu
-• Combo çarpanı — ard arda yem topla, 2x veya 3x skor
-• Reklam izle → +100 para bonusu
-• Yüzen skor göstergeleri (+N)
-• Büyük av bonusu — kendinden büyük yılanı öldür, ekstra skor + para
-• Kral gelişi efekti (ekran flaşı + sarsıntı)
-• Doğuşta koruma bandı (2.5s)
-• Minimap yön göstergesi
-• Mıknatıs menzil görsel ipucu
-• Skor tablosunda istatistikler (toplam oyun, öldürme, ölüm)
-• Skorlarda göreli tarih ("2 gün önce")
+YENİ
+• Uygulama arka plana alındığında, telefon geldiğinde veya odak kaybolduğunda otomatik duraklatma
+• Daha büyük ve doğru algılayan duraklat düğmesi
+• iPhone X / 11 / 12 / 13 / 14 / 15 / 16 çentik ve Dynamic Island tam uyumluluğu
+• Mini haritanın Dynamic Island ile çakışmayacak şekilde yeniden konumlandırılması
+• Tüm ekranlarda güvenli alan (safe area) desteği
 
-DÜZELTMELER
-• iOS sesi artık doğru çalıyor (AudioContext düzeltmesi)
-• Kral, bot veya duvar tarafından öldürüldüğünde yeniden doğuyor
-• Toplam oyun sayısı düzeltildi (iki kere sayılıyordu)
-• Dokunma kontrolleri temizlendi — yanıltıcı "2. parmak" büyüsü kaldırıldı
-• Duraklat-devam grace süresi (1.2s koruma)
-• Birçok UX iyileştirmesi
+İYİLEŞTİRMELER
+• Eski iPhone'larda daha akıcı oyun döngüsü
+• HUD elemanları her ekran boyutunda net okunuyor
+• Arka plan / ön plan geçişlerinde kare atlama düzeltildi
 
-Oynadığın için teşekkürler! Daha fazla güncelleme yolda.
+Grow.io'yu oynadığın için teşekkürler! Oyunu beğendiysen App Store'da puanlamayı unutma, çok yardımcı oluyor.

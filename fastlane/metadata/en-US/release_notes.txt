@@ -1,28 +1,15 @@
-Version 1.1 — Major Update
+Version 1.1.2 — Polish & Compatibility
 
-NEW FEATURES
-• Pause menu with sound, camera zoom, and quit-to-menu
-• Coin economy — earn coins from food and kills, buy any skin
-• Local leaderboard with your top 10 scores
-• Daily login bonus with streak rewards
-• First-time tutorial + in-game help button
-• Combo multiplier — chain pickups for 2x or 3x score
-• Watch ad option for +100 coin bonus
-• Floating score popups (+N appears on pickups)
-• Big kill bonus — defeat larger snakes for extra score & coins
-• King arrival cinematic with screen flash
-• Spawn invulnerability banner (2.5s protection)
-• Minimap direction indicator
-• Magnet range visual hint
-• Leaderboard stats (total games, kills, deaths)
-• Relative dates on scores ("2 days ago")
+NEW
+• Auto-pause when the app goes to background, receives a call, or loses focus
+• Larger pause button with improved tap target for precise touch
+• Full iPhone X / 11 / 12 / 13 / 14 / 15 / 16 notch and Dynamic Island support
+• Minimap repositioned to avoid Dynamic Island clipping
+• Safe-area handling across every screen
 
-FIXES
-• iOS audio now plays correctly (AudioContext fix)
-• King now respawns after being killed by bots or boundary
-• Total games count fixed (was counting twice)
-• Touch controls cleaner — removed misleading "2nd finger" magic
-• Pause-resume grace period (1.2s protection)
-• Many UX polish improvements
+IMPROVEMENTS
+• Smoother game loop on older iPhones
+• HUD elements stay readable on every device size
+• Background / foreground transitions no longer skip frames
 
-Thanks for playing! More updates coming soon.
+Thanks for playing Grow.io! If you enjoy the game, please rate it on the App Store — it helps a lot.
