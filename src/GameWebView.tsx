@@ -3,7 +3,7 @@ import { StyleSheet, Platform, ActivityIndicator, View } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { Asset } from 'expo-asset';
 import * as Haptics from 'expo-haptics';
-import { loadHighScore, saveHighScore } from './storage';
+import { loadHighScore, saveHighScore, loadCoins, saveCoins } from './storage';
 import { showInterstitial, showRewarded } from './adService';
 
 const gameAsset = require('../game/index.html');
@@ -41,14 +41,23 @@ export default function GameWebView() {
       const msg: GameMessage = JSON.parse(event.nativeEvent.data);
       switch (msg.type) {
         case 'SHOW_INTERSTITIAL': showInterstitial(); break;
-        case 'SHOW_REWARDED_AD':
-          showRewarded((reward) => sendToGame({ type: 'AD_REWARD_EARNED', data: { reward } }));
+        case 'SHOW_REWARDED_AD': {
+          const requestedReward = msg.data?.reward || 'continue';
+          const shown = showRewarded(() => sendToGame({ type: 'AD_REWARD_EARNED', data: { reward: requestedReward } }));
+          if (!shown) sendToGame({ type: 'AD_FAILED' });
           break;
+        }
         case 'SAVE_HIGH_SCORE':
           if (typeof msg.data === 'number') saveHighScore(msg.data);
           break;
         case 'LOAD_HIGH_SCORE':
           loadHighScore().then((s) => sendToGame({ type: 'HIGH_SCORE_LOADED', data: s }));
+          break;
+        case 'SAVE_COINS':
+          if (typeof msg.data === 'number') saveCoins(msg.data);
+          break;
+        case 'LOAD_COINS':
+          loadCoins().then((c) => sendToGame({ type: 'COINS_LOADED', data: c }));
           break;
         case 'HAPTIC':
           if (Platform.OS !== 'web') {
