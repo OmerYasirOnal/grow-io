@@ -85,6 +85,17 @@ function resize(){
   $.style.width = W+'px'; $.style.height = H+'px';
   ctx.setTransform(dpr,0,0,dpr,0,0);
   try{sat=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sat'))||0;sab=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sab'))||0;}catch(e){}
+  // Detect notched iPhones (iPhone X and later: iPhone 11/12/13/14/15/16 all fit these ratios)
+  // and guarantee minimum safe clearance even if env(safe-area-inset-*) fails inside WebView.
+  const ratio=H>0?W/H:1;
+  const notchLike=(H>=780&&H<=960&&W>=375&&W<=440&&ratio<0.48);
+  if(notchLike){
+    sat=Math.max(sat,44);
+    sab=Math.max(sab,34);
+  }else{
+    sat=Math.max(sat,12);
+    sab=Math.max(sab,12);
+  }
 }
 window.addEventListener('resize', resize);
 resize();
@@ -849,7 +860,7 @@ function drawHUD(){
 // ═══ MINIMAP ═══
 let mmC=null;
 function drawMinimap(){
-  const sz=90,mx=W-sz-10,my=sat+12,sc=sz/WS;
+  const sz=90,mx=W-sz-12,my=sat+8,sc=sz/WS;
   if(!mmC){mmC=document.createElement('canvas');mmC.width=sz*2;mmC.height=sz*2;}
   const mc=mmC.getContext('2d');mc.setTransform(2,0,0,2,0,0);mc.clearRect(0,0,sz,sz);
   mc.fillStyle='rgba(0,0,0,0.5)';mc.fillRect(0,0,sz,sz);
@@ -896,11 +907,11 @@ function drawBoostBtn(){
 
 // ═══ PAUSE BUTTON ═══
 function drawPauseBtn(){
-  const px=45,py=H-sab-55,pr=22;
-  ctx.fillStyle='rgba(255,255,255,0.08)';ctx.beginPath();ctx.arc(px,py,pr,0,TAU);ctx.fill();
-  ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=2;ctx.stroke();
-  ctx.fillStyle='rgba(255,255,255,0.8)';
-  ctx.fillRect(px-7,py-8,4,16);ctx.fillRect(px+3,py-8,4,16);
+  const px=50,py=H-sab-60,pr=28;
+  ctx.fillStyle='rgba(0,0,0,0.35)';ctx.beginPath();ctx.arc(px,py,pr,0,TAU);ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.55)';ctx.lineWidth=2.5;ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.95)';
+  ctx.fillRect(px-9,py-10,5,20);ctx.fillRect(px+4,py-10,5,20);
 }
 
 // ═══ PAUSE SCREEN ═══
@@ -1128,7 +1139,7 @@ $.addEventListener('touchstart',function(e){
   if(state==='skinselect'){handleSkinTap(t.clientX,t.clientY);touches._lastY=t.clientY;return;}
   if(state==='playing'){
     // Pause button (bottom-left)
-    if(dist({x:t.clientX,y:t.clientY},{x:45,y:H-sab-55})<32){state='paused';if(player)player.boosting=false;joystick.active=false;sndMenu();return;}
+    if(dist({x:t.clientX,y:t.clientY},{x:50,y:H-sab-60})<42){state='paused';if(player)player.boosting=false;joystick.active=false;sndMenu();return;}
     // Boost button (bottom-right)
     const bx=W-65,by=H-sab-65;
     if(dist({x:t.clientX,y:t.clientY},{x:bx,y:by})<44){if(player)player.boosting=true;sndBoost();touches[t.identifier]='boost';return;}
@@ -1171,7 +1182,7 @@ $.addEventListener('mousedown',function(e){
   if(state==='paused'){handlePauseTap(e.clientX,e.clientY);return;}
   if(state==='leaderboard'){handleLeaderboardTap(e.clientX,e.clientY);return;}
   if(state==='skinselect'){handleSkinTap(e.clientX,e.clientY);return;}
-  if(state==='playing'&&dist({x:e.clientX,y:e.clientY},{x:45,y:H-sab-55})<32){state='paused';if(player)player.boosting=false;sndMenu();return;}
+  if(state==='playing'&&dist({x:e.clientX,y:e.clientY},{x:50,y:H-sab-60})<42){state='paused';if(player)player.boosting=false;sndMenu();return;}
   if(e.button===2&&player){player.boosting=true;sndBoost();}
 });
 $.addEventListener('mousemove',function(e){if(state==='playing'&&player&&player.alive)player.targetAngle=Math.atan2(e.clientY-H/2,e.clientX-W/2);});
@@ -1228,9 +1239,32 @@ function handleSkinTap(x,y){
   else{buyFailedMsg=2;sndDeath();}
 }
 
+// ═══ AUTO-PAUSE (background / focus loss / phone call / notification) ═══
+function autoPauseIfPlaying(){
+  if(state==='playing'){
+    state='paused';
+    if(player)player.boosting=false;
+    joystick.active=false;
+    for(const k in touches)if(k!=='_lastY')delete touches[k];
+    quitConfirmTimer=0;
+  }
+}
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden)autoPauseIfPlaying();
+  lt=0;
+});
+window.addEventListener('blur',autoPauseIfPlaying);
+window.addEventListener('pagehide',autoPauseIfPlaying);
+window.addEventListener('focus',function(){lt=0;});
+
 // ═══ GAME LOOP ═══
 let lt=0;
-function loop(ts){const d=Math.min((ts-lt)/1000,0.05);lt=ts;update(d);render();requestAnimationFrame(loop);}
+function loop(ts){
+  if(!lt)lt=ts;
+  const d=Math.min((ts-lt)/1000,0.05);lt=ts;
+  update(d);render();
+  requestAnimationFrame(loop);
+}
 document.fonts.ready.then(function(){requestAnimationFrame(loop);});
 </script>
 </body>
