@@ -503,21 +503,30 @@ function checkCollisions(){
     const head=s.segments[0];
     const sw=6+Math.min(s.length*0.03,14);
     const hr=sw/2;
-    // Head-body
+    // Head-vs-body / head-vs-head
+    let died=false;
     if(s.powerups.ghost<=0){
-      const nearby=gridQuery(head.x,head.y,hr+20);
+      // Wider search radius (covers max possible other-snake body width too).
+      const nearby=gridQuery(head.x,head.y,hr+24);
       for(const n of nearby){
         if(n.snake===s||!n.snake.alive)continue;
+        // Skip the ATTACKER's first 3 segments (kafa + 2 follow). The defender's
+        // segments are checked in full so following snakes can still collide
+        // with the front of the attacker's neck.
         if(n.idx<3)continue;
         const seg=n.snake.segments[n.idx];
         const ow=6+Math.min(n.snake.length*0.03,14);
-        if(dist(head,seg)<hr+ow/2-2){
+        // Slightly more forgiving threshold (no -2): brushing past = clean miss,
+        // overlapping center = always counts.
+        if(dist(head,seg)<hr+ow/2){
           if(n.idx===0){if(s.length<=n.snake.length)killSnake(s,n.snake,'head');else killSnake(n.snake,s,'head');}
           else killSnake(s,n.snake,'body');
-          return;
+          died=true;break;
         }
       }
     }
+    // Skip food/powerup collection if this snake just died — let the next snake be processed
+    if(died)continue;
     // Food
     const magR=s.powerups.magnet>0?200:0;
     for(let i=foods.length-1;i>=0;i--){
@@ -716,12 +725,30 @@ function update(dt){
   if(state!=='playing')return;
   playTime+=dt;
   unlockCheckTimer-=dt;if(unlockCheckTimer<=0){unlockCheckTimer=1.5;checkUnlocks();checkBotStageTransition();}
-  // Sync order: player physics first, then bot AI (so bots react to fresh player position),
-  // then physics again for bots, then collisions.
-  if(player&&player.alive)updateSnake(player,dt);
+  // 1) AI decisions once per frame (full dt for stable timer accumulation)
   for(const s of snakes)if(!s.isPlayer&&s.alive)updateBot(s,dt);
-  for(const s of snakes)if(!s.isPlayer&&s.alive)updateSnake(s,dt);
-  checkCollisions();updateParticles(dt);updateScorePopups(dt);
+  // 2) Substepped physics + collisions to prevent tunneling at high speed
+  //    (boost + speed power-up can push speed past one body radius per frame).
+  let vmax=BASE_SPEED;
+  for(const s of snakes){
+    if(!s.alive)continue;
+    let v=s.speed;
+    if(s.boosting)v*=2;
+    if(s.powerups.speed>0)v*=1.8;
+    if(v>vmax)vmax=v;
+  }
+  // Step at most half a body-segment per substep (~4px). Cap at 4 substeps so a
+  // single dropped frame can't blow up the cost.
+  const subSteps=Math.max(1,Math.min(4,Math.ceil(vmax*dt/(SEG_DIST*0.5))));
+  const sdt=dt/subSteps;
+  for(let st=0;st<subSteps;st++){
+    gdt=sdt;
+    if(player&&player.alive)updateSnake(player,sdt);
+    for(const s of snakes)if(!s.isPlayer&&s.alive)updateSnake(s,sdt);
+    checkCollisions();
+  }
+  gdt=dt;
+  updateParticles(dt);updateScorePopups(dt);
   foodSpawnTimer-=dt;if(foodSpawnTimer<=0){foodSpawnTimer=0.2;spawnFood();}
   puSpawnTimer-=dt;if(puSpawnTimer<=0){puSpawnTimer=5;spawnPowerup();}
   // Respawn bots
