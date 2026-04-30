@@ -3,8 +3,15 @@ import { StyleSheet, Platform, ActivityIndicator, View } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { Asset } from 'expo-asset';
 import * as Haptics from 'expo-haptics';
-import { loadHighScore, saveHighScore, loadCoins, saveCoins } from './storage';
-import { showInterstitial, showRewarded, isInterstitialReady, isRewardedReady } from './adService';
+import {
+  loadHighScore, saveHighScore, loadCoins, saveCoins,
+  loadStats, saveStats, loadSkinState, saveSkinState,
+  type Stats, type SkinState,
+} from './storage';
+import {
+  showInterstitial, showRewarded, isInterstitialReady, isRewardedReady,
+  setAdStatusListener,
+} from './adService';
 
 const gameAsset = require('../game/index.html');
 
@@ -32,8 +39,17 @@ export default function GameWebView() {
     if (!htmlUri) return;
     const timer = setTimeout(() => {
       loadHighScore().then((s) => sendToGame({ type: 'HIGH_SCORE_LOADED', data: s }));
+      loadCoins().then((c) => sendToGame({ type: 'COINS_LOADED', data: c }));
+      loadStats().then((s) => sendToGame({ type: 'STATS_LOADED', data: s }));
+      loadSkinState().then((s) => sendToGame({ type: 'SKIN_STATE_LOADED', data: s }));
     }, 500);
     return () => clearTimeout(timer);
+  }, [htmlUri, sendToGame]);
+
+  useEffect(() => {
+    if (!htmlUri) return;
+    setAdStatusListener((s) => sendToGame({ type: 'AD_STATUS', data: s }));
+    return () => setAdStatusListener(null);
   }, [htmlUri, sendToGame]);
 
   const onMessage = useCallback((event: WebViewMessageEvent) => {
@@ -48,7 +64,7 @@ export default function GameWebView() {
         case 'SHOW_REWARDED_AD': {
           const requestedReward = msg.data?.reward || 'continue';
           const shown = showRewarded(() => sendToGame({ type: 'AD_REWARD_EARNED', data: { reward: requestedReward } }));
-          if (!shown) sendToGame({ type: 'AD_FAILED' });
+          if (!shown) sendToGame({ type: 'AD_FAILED', data: { reward: requestedReward } });
           break;
         }
         case 'CHECK_AD_READY': {
@@ -69,6 +85,18 @@ export default function GameWebView() {
           break;
         case 'LOAD_COINS':
           loadCoins().then((c) => sendToGame({ type: 'COINS_LOADED', data: c }));
+          break;
+        case 'SAVE_STATS':
+          if (msg.data && typeof msg.data === 'object') saveStats(msg.data as Stats);
+          break;
+        case 'LOAD_STATS':
+          loadStats().then((s) => sendToGame({ type: 'STATS_LOADED', data: s }));
+          break;
+        case 'SAVE_SKIN_STATE':
+          if (msg.data && typeof msg.data === 'object') saveSkinState(msg.data as SkinState);
+          break;
+        case 'LOAD_SKIN_STATE':
+          loadSkinState().then((s) => sendToGame({ type: 'SKIN_STATE_LOADED', data: s }));
           break;
         case 'HAPTIC':
           if (Platform.OS !== 'web') {
