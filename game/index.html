@@ -487,16 +487,22 @@ function updateSnake(s,dt){
   if(s.invulnTimer>0)s.invulnTimer-=dt;
   for(const k of PU_TYPES)if(s.powerups[k]>0)s.powerups[k]-=dt;
   let spd=s.speed;
-  if(s.boosting&&s.boostFuel>0){spd*=2;s.boostFuel-=20*dt;}
-  if(s.powerups.speed>0)spd*=1.8;
-  if(s.boostFuel<=0)s.boosting=false;
-  if(!s.boosting)s.boostFuel=Math.min(100,s.boostFuel+5*dt);
-  // Shed segments while boosting
-  if(s.boosting&&s.length>5&&frameCount%10===0){
-    s.length--;
-    const tail=s.segments[s.segments.length-1];
-    spawnFood(tail.x,tail.y,1,SKINS[s.skin].c[0]);
+  // Boost is now length-based: each boosted segment is shed as food. Below MIN
+  // length the snake can't boost — preventing infinite-press abuse and turning
+  // length itself into the boost resource.
+  const MIN_BOOST_LEN=10;
+  if(s.boosting&&s.length>MIN_BOOST_LEN){
+    spd*=2;
+    if(frameCount%6===0){
+      s.length--;
+      const tail=s.segments[s.segments.length-1];
+      spawnFood(tail.x,tail.y,1,SKINS[s.skin].c[0]);
+    }
+  }else if(s.boosting){
+    // Forced off when too short
+    s.boosting=false;
   }
+  if(s.powerups.speed>0)spd*=1.8;
   // Turn
   let diff=normAngle(s.targetAngle-s.angle);
   s.angle+=Math.sign(diff)*Math.min(Math.abs(diff),TURN_SPEED*dt);
@@ -542,14 +548,12 @@ function checkCollisions(){
       const nearby=gridQuery(head.x,head.y,hr+24);
       for(const n of nearby){
         if(n.snake===s||!n.snake.alive)continue;
-        // Skip the ATTACKER's first 3 segments (kafa + 2 follow). The defender's
-        // segments are checked in full so following snakes can still collide
-        // with the front of the attacker's neck.
-        if(n.idx<3)continue;
+        // Invulnerable snakes are intangible to others (spawn protection).
+        if(n.snake.invulnTimer>0)continue;
         const seg=n.snake.segments[n.idx];
         const ow=6+Math.min(n.snake.length*0.03,14);
-        // Slightly more forgiving threshold (no -2): brushing past = clean miss,
-        // overlapping center = always counts.
+        // Tight threshold without fudge so brushing past misses cleanly while
+        // any actual overlap registers. (Substepping handles fast movement.)
         if(dist(head,seg)<hr+ow/2){
           if(n.idx===0){if(s.length<=n.snake.length)killSnake(s,n.snake,'head');else killSnake(n.snake,s,'head');}
           else killSnake(s,n.snake,'body');
@@ -680,7 +684,7 @@ function updateBot(bot,dt){
         const px=nearSmall.segments[0].x+Math.cos(nearSmall.angle)*nearSmall.speed*t*0.55;
         const py=nearSmall.segments[0].y+Math.sin(nearSmall.angle)*nearSmall.speed*t*0.55;
         bot.targetAngle=angleTo(head,{x:px,y:py});
-        bot.boosting=useBoost&&nsD<260&&bot.boostFuel>30;break;
+        bot.boosting=useBoost&&nsD<260&&bot.length>16;break;
       }
       if(nearFood)bot.targetAngle=angleTo(head,nearFood);else bot.targetAngle+=rand(-0.3,0.3);
       bot.boosting=false;break;
@@ -696,7 +700,7 @@ function updateBot(bot,dt){
     case 'ambush':
       if(nearSmall&&nsD<sightSmall*0.45){
         bot.targetAngle=angleTo(head,nearSmall.segments[0]);
-        bot.boosting=useBoost&&bot.boostFuel>40;break;
+        bot.boosting=useBoost&&bot.length>18;break;
       }
       bot.boosting=false;
       if(nearFood&&nfD<sight*0.6)bot.targetAngle=angleTo(head,nearFood);else bot.targetAngle+=rand(-0.2,0.2);break;
@@ -735,7 +739,10 @@ function startGame(){
   foods=[];powerups=[];particles=[];snakes=[];scorePopups=[];
   kingActive=false;nextKingScore=2000;
   spawnInitialFood();
-  player=createSnake(true,WCX,WCY,currentSkin);player.invulnTimer=2.5;snakes.push(player);
+  // Player starts with extra length so they have a real "boost reserve" up front.
+  player=createSnake(true,WCX,WCY,currentSkin);
+  player.length=22;player.invulnTimer=2.5;
+  snakes.push(player);
   for(let i=0;i<MAX_BOTS;i++){const b=createSnake(false);b.length=randInt(10,40);snakes.push(b);}
   for(let i=0;i<50;i++){const a=rand(0,TAU),r=rand(30,200);spawnFood(WCX+Math.cos(a)*r,WCY+Math.sin(a)*r,1);}
   camera.x=WCX;camera.y=WCY;camera.zoom=1;
@@ -1050,20 +1057,23 @@ function drawJoystick(){
   ctx.fillStyle='rgba(0,229,255,0.25)';ctx.shadowColor='#00e5ff';ctx.shadowBlur=8;
   ctx.beginPath();ctx.arc(kx,ky,20,0,TAU);ctx.fill();ctx.shadowBlur=0;
 }
-// Passive boost-fuel indicator (top-right, near minimap). No tap target.
+// Boost reserve indicator: length itself is the fuel. Bar fills toward 1
+// once player has enough segments to spend (length above min); empty/red below.
 function drawBoostFuel(){
   if(!player||!player.alive)return;
   const fw=110,fh=8,fx=W-fw-12,fy=sat+108;
-  // Background track
   ctx.fillStyle='rgba(255,255,255,0.08)';rr(fx,fy,fw,fh,4);ctx.fill();
-  // Fill
-  const pct=Math.max(0,Math.min(1,player.boostFuel/100));
-  const col=player.boosting?'#ffab00':(pct>0.5?'#00e5ff':(pct>0.2?'#ffab00':'#ff5252'));
+  const MIN=10;
+  const reserve=Math.max(0,player.length-MIN);
+  // Show reserve relative to a "comfortable" 30-segment buffer.
+  const pct=Math.max(0,Math.min(1,reserve/30));
+  const ready=reserve>0;
+  const col=player.boosting?'#ffab00':(ready?(pct>0.4?'#00e5ff':'#ffab00'):'#ff5252');
   ctx.fillStyle=col;ctx.shadowColor=col;ctx.shadowBlur=player.boosting?10:4;
   rr(fx,fy,fw*pct,fh,4);ctx.fill();ctx.shadowBlur=0;
-  // Label
-  ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='700 9px Rajdhani';ctx.textAlign='right';
-  ctx.fillText(L.boost,fx+fw,fy-3);ctx.textAlign='left';
+  ctx.fillStyle=ready?'rgba(255,255,255,0.5)':'rgba(255,82,82,0.85)';
+  ctx.font='700 9px Rajdhani';ctx.textAlign='right';
+  ctx.fillText(L.boost+(ready?'':' ✕'),fx+fw,fy-3);ctx.textAlign='left';
 }
 
 // ═══ PAUSE BUTTON ═══
@@ -1301,7 +1311,7 @@ function drawMenu(){
   ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='600 12px Rajdhani';ctx.fillText(skin.name,W/2,py+50);
   // Version stamp (bottom)
   ctx.fillStyle='rgba(255,255,255,0.18)';ctx.font='600 10px Rajdhani';ctx.textAlign='center';
-  ctx.fillText('v1.1.5',W/2,H-sab-8);
+  ctx.fillText('v1.1.6',W/2,H-sab-8);
   ctx.textAlign='left';
 }
 
