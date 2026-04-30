@@ -453,6 +453,12 @@ function spawnInitialFood(){for(let i=0;i<400;i++)spawnFood();}
 const PU_TYPES = ['speed','shield','magnet','ghost'];
 const PU_COLORS = {speed:'#ffab00',shield:'#40c4ff',magnet:'#76ff03',ghost:'#d500f9'};
 const PU_DUR = {speed:8,shield:10,magnet:12,ghost:6};
+const PU_ICONS = {speed:'⚡',shield:'🛡',magnet:'🧲',ghost:'👻'};
+// Coin price for the death-screen revive fallback when no rewarded ad is loaded.
+const COIN_REVIVE_COST = 100;
+// Reusable HUD leaderboard buffer + comparator (drawHUD refreshes ~7×/s).
+const hudLeaderboard = [];
+function LB_BY_LENGTH(a,b){return b.length-a.length;}
 function spawnPowerup(){
   if(powerups.length>=MAX_POWERUPS)return;
   const t=PU_TYPES[randInt(0,3)];let x,y;
@@ -1066,9 +1072,16 @@ function drawHUD(){
     ctx.shadowBlur=0;ctx.textAlign='left';
   }
   let py=m+100;
-  if(player){const puIcons={speed:'⚡',shield:'🛡',magnet:'🧲',ghost:'👻'};for(const k of PU_TYPES){if(player.powerups[k]>0){ctx.fillStyle=PU_COLORS[k];ctx.font='bold 14px Rajdhani';ctx.fillText(puIcons[k]+' '+player.powerups[k].toFixed(1)+'s',15,py);py+=18;}}}
-  // Leaderboard
-  const lb=snakes.filter(s=>s.alive).sort((a,b)=>b.length-a.length).slice(0,5);
+  if(player){for(const k of PU_TYPES){if(player.powerups[k]>0){ctx.fillStyle=PU_COLORS[k];ctx.font='bold 14px Rajdhani';ctx.fillText(PU_ICONS[k]+' '+player.powerups[k].toFixed(1)+'s',15,py);py+=18;}}}
+  // Leaderboard — refresh ranking ~7×/s. Was filter+sort+slice every frame
+  // (3 array allocations × 60fps = constant GC churn for a static-ish view).
+  if(frameCount%9===0||hudLeaderboard.length===0){
+    hudLeaderboard.length=0;
+    for(const s of snakes)if(s.alive)hudLeaderboard.push(s);
+    hudLeaderboard.sort(LB_BY_LENGTH);
+    if(hudLeaderboard.length>5)hudLeaderboard.length=5;
+  }
+  const lb=hudLeaderboard;
   ctx.textAlign='right';const lx=W-115,ly=m+130;
   ctx.fillStyle='rgba(0,0,0,0.3)';rr(lx-5,ly-14,105,lb.length*16+8,6);ctx.fill();
   for(let i=0;i<lb.length;i++){
@@ -1332,11 +1345,25 @@ function drawLeaderboard(){
 }
 
 // ═══ MENU ═══
+// Pre-render the static background grid to an offscreen canvas. The grid
+// only depends on W/H/dpr, so we redraw it lazily when those change.
+let menuBgC=null,menuBgW=0,menuBgH=0,menuBgDpr=0;
+function ensureMenuBg(){
+  if(menuBgC&&menuBgW===W&&menuBgH===H&&menuBgDpr===dpr)return;
+  menuBgC=document.createElement('canvas');
+  menuBgC.width=Math.ceil(W*dpr);menuBgC.height=Math.ceil(H*dpr);
+  const mc=menuBgC.getContext('2d');mc.setTransform(dpr,0,0,dpr,0,0);
+  mc.fillStyle='#0a0a1a';mc.fillRect(0,0,W,H);
+  mc.strokeStyle='rgba(255,255,255,0.02)';mc.lineWidth=1;
+  mc.beginPath();
+  for(let x=0;x<W;x+=40){mc.moveTo(x,0);mc.lineTo(x,H);}
+  for(let y=0;y<H;y+=40){mc.moveTo(0,y);mc.lineTo(W,y);}
+  mc.stroke();
+  menuBgW=W;menuBgH=H;menuBgDpr=dpr;
+}
 function drawMenu(){
-  ctx.fillStyle='#0a0a1a';ctx.fillRect(0,0,W,H);
-  ctx.strokeStyle='rgba(255,255,255,0.02)';ctx.lineWidth=1;
-  for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-  for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ensureMenuBg();
+  ctx.drawImage(menuBgC,0,0,menuBgC.width,menuBgC.height,0,0,W,H);
   ctx.textAlign='center';
   const uh=H-sat-sab,oy=sat;
   drawBrandTitle(W/2,oy+uh*0.22);
@@ -1411,7 +1438,6 @@ function drawDeathScreen(){
   }
   // Buttons
   const bw=Math.min(260,W-40),bh=50;
-  const COIN_REVIVE_COST=100;
   const showAd=adReady.rewarded;
   const showCoinRevive=!showAd&&coins>=COIN_REVIVE_COST;
   // Primary revive button
@@ -1663,7 +1689,6 @@ function handleLeaderboardTap(x,y){
 function handleDeathTap(x,y){
   sndMenu();const uh=H-sat-sab,oy=sat;
   const bw=Math.min(260,W-40),bh=50;
-  const COIN_REVIVE_COST=100;
   // Revive
   const ry=oy+uh*0.62;
   if(x>W/2-bw/2&&x<W/2+bw/2&&y>ry&&y<ry+bh){
