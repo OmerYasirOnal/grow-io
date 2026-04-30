@@ -7,7 +7,9 @@ import { initAds } from './src/adService';
 
 export default function App() {
   useEffect(() => {
-    initAds().catch(() => {});
+    initAds().catch((err) => {
+      if (__DEV__) console.warn('[adService] initAds failed:', err);
+    });
   }, []);
 
   return (

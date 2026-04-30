@@ -84,6 +84,9 @@ export async function initAds(): Promise<void> {
   try {
     await MobileAds().initialize();
     sdkReady = true;
+    // Tell any listener that registered before init that the SDK is alive
+    // (their initial cb call was suppressed because sdkReady was false).
+    emitStatus();
   } catch {
     return;
   }

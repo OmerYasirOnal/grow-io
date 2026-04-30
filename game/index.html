@@ -411,7 +411,14 @@ function spawnP(x,y,color,count,spd,sz){
   }
 }
 function addScorePopup(x,y,text,color){if(scorePopups.length<40)scorePopups.push({x,y,text,color:color||'#fff',life:1.2,vy:-45});}
-function updateScorePopups(dt){for(let i=scorePopups.length-1;i>=0;i--){const p=scorePopups[i];p.y+=p.vy*dt;p.vy*=0.97;p.life-=dt/1.2;if(p.life<=0)scorePopups.splice(i,1);}}
+function updateScorePopups(dt){
+  // Iterate descending and use O(1) swap-remove for dead entries — popups are
+  // visually unordered so re-ordering is harmless.
+  for(let i=scorePopups.length-1;i>=0;i--){
+    const p=scorePopups[i];p.y+=p.vy*dt;p.vy*=0.97;p.life-=dt/1.2;
+    if(p.life<=0){const last=scorePopups.length-1;if(i!==last)scorePopups[i]=scorePopups[last];scorePopups.pop();}
+  }
+}
 function drawScorePopups(){for(const p of scorePopups){ctx.globalAlpha=Math.max(0,p.life);ctx.fillStyle=p.color;ctx.font='900 14px Orbitron';ctx.textAlign='center';ctx.shadowColor=p.color;ctx.shadowBlur=8;ctx.fillText(p.text,p.x,p.y);ctx.shadowBlur=0;}ctx.globalAlpha=1;ctx.textAlign='left';}
 function updateParticles(dt){
   for(let i=particles.length-1;i>=0;i--){
@@ -656,10 +663,19 @@ function killSnake(victim,killer,cause){
 function revivePlayer(){
   if(!player)return;
   player.alive=true;player.length=Math.max(10,Math.floor(player.length*0.7));
-  player.segments=[{x:player.segments[0].x,y:player.segments[0].y}];
+  // Rebuild a body trailing behind the head along the current facing angle,
+  // instead of stacking every segment on the head and letting them fan out
+  // in the first frame (visible "snake spawned in a single point" glitch).
+  const hx=player.segments[0].x,hy=player.segments[0].y,a=player.angle;
+  const segs=[{x:hx,y:hy}];
+  for(let i=1;i<player.length;i++){
+    segs.push({x:hx-Math.cos(a)*SEG_DIST*i,y:hy-Math.sin(a)*SEG_DIST*i});
+  }
+  player.segments=segs;
   player.invulnTimer=3;player.boosting=false;player.boostFuel=100;
   for(const k of PU_TYPES)player.powerups[k]=0;
   state='playing';
+  resetTouchState();
 }
 
 // ═══ BOT AI (stage-aware) ═══
@@ -879,8 +895,9 @@ function render(){
   if(state==='paused')drawPauseScreen();
   if(state==='skinselect')drawSkinSelect();
   if(state==='leaderboard')drawLeaderboard();
-  // Tutorial overlay always renders on top so it works from menu OR pause.
-  if(showTutorial)drawTutorial();
+  // Tutorial overlay renders on top of menu / pause / playing only — never
+  // over the death screen, where it would just confuse the player.
+  if(showTutorial&&state!=='dead')drawTutorial();
   if(flashAlpha>0){ctx.fillStyle=flashColor;ctx.globalAlpha=flashAlpha;ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;}
   drawToasts();
   if(unlockToast>0&&(state==='playing'||state==='paused')){
