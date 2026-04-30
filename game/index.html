@@ -177,6 +177,17 @@ const BOT_NAMES = ['Viper','Neon','Pixel','Blaze','Zenith','Shadow','Echo','Puls
 
 // ═══ STATE ═══
 let state = 'menu';
+// Drop any stale touch/joystick state so a finger held during a state change
+// (e.g. tapping a menu button) doesn't leak into the next screen and steer
+// the snake by accident.
+function resetTouchState(){
+  for(const k in touches)delete touches[k];
+  joystick.active=false;joystick.dx=0;joystick.dy=0;
+  if(player)player.boosting=false;
+}
+// When tutorial is opened from a screen other than the initial spawn (e.g.
+// pause "How to play"), this remembers where to go back to once dismissed.
+let tutorialReturnState=null;
 let score = 0, highScore = 0, deathCount = 0, totalKills = 0, totalGames = 0;
 let player = null, snakes = [], foods = [], powerups = [], particles = [];
 let spatialGrid = {};
@@ -321,11 +332,19 @@ function markTutorialSeen(){try{localStorage.setItem('growio_tutorial','1');}cat
 function addTopScore(s){if(s<=0){currentRank=0;return;}const entry={s,d:Date.now()};topScores.push(entry);topScores.sort((a,b)=>b.s-a.s);topScores=topScores.slice(0,10);saveTopScores();currentRank=topScores.indexOf(entry)+1;}
 function skinPrice(sk){const u=sk.u;if(u==='free')return 0;const t=u[0],v=parseInt(u.slice(1));if(t==='s')return Math.max(50,Math.floor(v/10));if(t==='k')return Math.max(100,v*20);if(t==='l')return Math.max(100,v*3);if(t==='g')return Math.max(100,v*10);return 500;}
 loadHSLocal();
-postMsg({type:'LOAD_HIGH_SCORE'});
-postMsg({type:'LOAD_STATS'});
-postMsg({type:'LOAD_SKIN_STATE'});
-postMsg({type:'CHECK_AD_READY'});
 loadSkins(); loadStats(); loadCoins(); loadSettings(); loadTopScores(); loadTutorialSeen(); loadLogin(); checkDailyBonus();
+// Defer bridge LOADs until the next frame so window.ReactNativeWebView is
+// guaranteed to be ready, then retry once at +500ms if hostBridgeSeen is still
+// false (covers slow native injection on cold launch).
+function pingBridge(){
+  postMsg({type:'LOAD_HIGH_SCORE'});
+  postMsg({type:'LOAD_STATS'});
+  postMsg({type:'LOAD_SKIN_STATE'});
+  postMsg({type:'LOAD_COINS'});
+  postMsg({type:'CHECK_AD_READY'});
+}
+requestAnimationFrame(pingBridge);
+setTimeout(function(){if(!hostBridgeSeen)pingBridge();},500);
 // Re-poll ad readiness periodically (host pushes too, but this catches early misses)
 // Re-poll ad readiness every 10s in foreground only. Stored ID lets the
 // visibility/blur handlers stop & restart it (no leak across re-mounts).
@@ -622,6 +641,12 @@ function killSnake(victim,killer,cause){
     killerName=killer?killer.name:(cause==='boundary'?'the boundary':'unknown');
     deathCount++;saveHS();saveStats();saveCoins();addTopScore(score);checkUnlocks();saveSkins();
     state='dead';
+    resetTouchState();
+    // Defensive: if a King was alive at the moment of death, clear the flag so
+    // a stale snakes[] entry can't be misinterpreted by the next game's logic.
+    // (snakes[] is fully reset by startGame, but state==='dead' still ticks
+    // some banners and we want kingToast to settle to a clean baseline.)
+    kingActive=false;kingToast=0;
     // Smart interstitial trigger: every 3rd death AND score > 50 AND tutorial not active.
     // Native side also enforces a 60s cooldown; this guards against ad fatigue early on.
     if(!showTutorial&&deathCount>=3&&deathCount%3===0&&score>=50)postMsg({type:'SHOW_INTERSTITIAL'});
@@ -757,6 +782,7 @@ function startGame(){
   camera.x=WCX;camera.y=WCY;camera.zoom=1;
   state='playing';totalGames++;playTime=0;coinsAtStart=coins;saveStats();
   lastBotStageMin=BOT_STAGES[0].min;
+  resetTouchState();
 }
 
 // ═══ UPDATE ═══
@@ -848,11 +874,13 @@ function render(){
     if(joystick.active&&state==='playing')drawJoystick();
     if(state==='playing'){drawBoostFuel();drawPauseBtn();}
   }
-  if(state==='menu'){drawMenu();if(showTutorial)drawTutorial();else if(dailyToast>0)drawDailyToast();}
+  if(state==='menu'){drawMenu();if(!showTutorial&&dailyToast>0)drawDailyToast();}
   if(state==='dead')drawDeathScreen();
   if(state==='paused')drawPauseScreen();
   if(state==='skinselect')drawSkinSelect();
   if(state==='leaderboard')drawLeaderboard();
+  // Tutorial overlay always renders on top so it works from menu OR pause.
+  if(showTutorial)drawTutorial();
   if(flashAlpha>0){ctx.fillStyle=flashColor;ctx.globalAlpha=flashAlpha;ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;}
   drawToasts();
   if(unlockToast>0&&(state==='playing'||state==='paused')){
@@ -1482,6 +1510,9 @@ const DOUBLE_TAP_MS=320,DOUBLE_TAP_DIST=100;
 $.addEventListener('touchstart',function(e){
   e.preventDefault();initAudio();
   const t=e.changedTouches[0];
+  // Tutorial overlay can be shown over any state (initial spawn or pause-launched).
+  // A single tap dismisses it and returns control to the underlying screen.
+  if(showTutorial){markTutorialSeen();tutorialReturnState=null;sndMenu();return;}
   if(state==='menu'){handleMenuTap(t.clientX,t.clientY);return;}
   if(state==='dead'){handleDeathTap(t.clientX,t.clientY);return;}
   if(state==='paused'){handlePauseTap(t.clientX,t.clientY);return;}
@@ -1544,6 +1575,7 @@ $.addEventListener('touchend',function(e){
 // Mouse
 $.addEventListener('mousedown',function(e){
   initAudio();
+  if(showTutorial){markTutorialSeen();tutorialReturnState=null;sndMenu();return;}
   if(state==='menu'){handleMenuTap(e.clientX,e.clientY);return;}
   if(state==='dead'){handleDeathTap(e.clientX,e.clientY);return;}
   if(state==='paused'){handlePauseTap(e.clientX,e.clientY);return;}
@@ -1562,7 +1594,6 @@ window.addEventListener('keydown',function(e){
 window.addEventListener('keyup',function(e){if(e.code==='Space'&&player)player.boosting=false;});
 
 function handleMenuTap(x,y){
-  if(showTutorial){markTutorialSeen();sndMenu();return;}
   // Help button (top-right corner)
   if(x>W-60&&x<W-10&&y>sat+10&&y<sat+60){showTutorial=true;sndMenu();return;}
   sndMenu();const uh=H-sat-sab,oy=sat,bw=220,bh=58,bx=W/2-bw/2,by=oy+uh*0.42;
@@ -1582,7 +1613,7 @@ function handlePauseTap(x,y){
     const mw=Math.min(320,W-40),mh=Math.min(220,H-sat-sab-40);
     const mx=W/2-mw/2,my=Math.max(sat+20,(H-mh)/2);
     const cbw=120,cbh=48,cy=my+mh-cbh-20;
-    if(x>mx+20&&x<mx+20+cbw&&y>cy&&y<cy+cbh){quitConfirmTimer=0;state='menu';saveHS();saveStats();saveCoins();sndMenu();return;}
+    if(x>mx+20&&x<mx+20+cbw&&y>cy&&y<cy+cbh){quitConfirmTimer=0;state='menu';saveHS();saveStats();saveCoins();resetTouchState();sndMenu();return;}
     if(x>mx+mw-cbw-20&&x<mx+mw-20&&y>cy&&y<cy+cbh){quitConfirmTimer=0;sndMenu();return;}
     return;
   }
@@ -1604,13 +1635,13 @@ function handlePauseTap(x,y){
   }
   // How to play
   ry=oy+uh*0.50;
-  if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){showTutorial=true;state='menu';try{localStorage.removeItem('growio_tutorial');}catch(e){}return;}
+  if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){showTutorial=true;tutorialReturnState='paused';return;}
   // Main menu (open confirm)
   ry=oy+uh*0.64;
   if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){quitConfirmTimer=10;return;}
 }
 function handleLeaderboardTap(x,y){
-  if(x>=12&&x<=12+84&&y>=sat+12&&y<=sat+12+40){state='menu';sndMenu();}
+  if(x>=12&&x<=12+84&&y>=sat+12&&y<=sat+12+40){state='menu';resetTouchState();sndMenu();}
 }
 function handleDeathTap(x,y){
   sndMenu();const uh=H-sat-sab,oy=sat;
@@ -1628,7 +1659,7 @@ function handleDeathTap(x,y){
   if(x>W/2-bw/2&&x<W/2+bw/2&&y>ry2&&y<ry2+bh){startGame();return;}
   // Main Menu
   const ry3=oy+uh*0.87;
-  if(x>W/2-bw/2&&x<W/2+bw/2&&y>ry3&&y<ry3+44){state='menu';saveHS();saveStats();saveCoins();return;}
+  if(x>W/2-bw/2&&x<W/2+bw/2&&y>ry3&&y<ry3+44){state='menu';saveHS();saveStats();saveCoins();resetTouchState();return;}
 }
 function handleSkinTap(x,y){
   // If buy-confirm modal is up, route taps to its buttons only
@@ -1647,7 +1678,7 @@ function handleSkinTap(x,y){
     pendingSkinBuy=-1;sndMenu();return;
   }
   // Back chip
-  if(x>=12&&x<=12+84&&y>=sat+12&&y<=sat+12+40){state='menu';sndMenu();return;}
+  if(x>=12&&x<=12+84&&y>=sat+12&&y<=sat+12+40){state='menu';resetTouchState();sndMenu();return;}
   if(y<sat+118)return;
   const cols=5,cellW=W/cols,cellH=70,startY=sat+118-skinScroll;
   const col=Math.floor(x/cellW),row=Math.floor((y-startY)/cellH);
