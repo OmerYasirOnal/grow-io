@@ -61,10 +61,10 @@ const L={
   coinsEarned:isTR?'+100 PARA':'+100 COINS',
   time:isTR?'Süre':'Time',
   howToPlay:isTR?'NASIL OYNANIR':'HOW TO PLAY',
-  tut1:isTR?'Ekrana dokun ve sürükle':'Touch and drag to move',
-  tut2:isTR?'Çift dokun ve basılı tut: HIZ':'Double-tap & hold: BOOST',
-  tut3:isTR?'Sol alt düğme: DURAKLAT':'Bottom-left: PAUSE',
-  tut4:isTR?'Büyük yılanları yuttur':'Make bigger snakes crash',
+  tut1:isTR?'Sürükle: yön ver':'Drag to steer',
+  tut2:isTR?'Çift dokun & tut: HIZ (yakıt biter)':'Double-tap & hold: BOOST (uses fuel)',
+  tut3:isTR?'Büyükleri ezdir → AL':'Crash bigger snakes → eat them',
+  tut4:isTR?'Power-up\'lar: ⚡ hız 🛡 kalkan 🧲 mıknatıs 👻 hayalet':'Power-ups: ⚡ speed 🛡 shield 🧲 magnet 👻 ghost',
   tapContinue:isTR?'Devam için dokun':'Tap to continue',
   dailyBonus:isTR?'GÜNLÜK ÖDÜL':'DAILY BONUS',
   streak:isTR?'Seri':'Streak',
@@ -193,6 +193,7 @@ let currentRank = 0, playTime = 0, showTutorial = false;
 let lastLoginDate = '', loginStreak = 0;
 let dailyToast = 0, dailyAmount = 0, dailyStreakVal = 0;
 let quitConfirmTimer = 0, kingToast = 0, coinsAtStart = 0;
+let pendingSkinBuy = -1;
 let scorePopups = [];
 let soundOn = true, camZoomMode = 1;
 let coins = 0, topScores = [];
@@ -414,6 +415,17 @@ const BOT_STAGES = [
   { min: 12000,name: 'Apex',    reactMul: 0.55, sightMul: 1.3,  boostMul: 1.0,  aggression: 1.0  },
 ];
 function currentBotStage(){let s=BOT_STAGES[0];for(const st of BOT_STAGES)if(score>=st.min)s=st;return s;}
+let lastBotStageMin=-1;
+function checkBotStageTransition(){
+  const s=currentBotStage();
+  if(lastBotStageMin<0){lastBotStageMin=s.min;return;}
+  if(s.min!==lastBotStageMin){
+    const label=isTR?({Rookie:'Acemi',Hunter:'Avcı',Veteran:'Veteran',Elite:'Elit',Apex:'Zirve'}[s.name]||s.name):s.name;
+    showToast((isTR?'Düşmanlar zorlaştı: ':'Enemies tougher: ')+label,'info');
+    flashAlpha=0.18;flashColor='#ff5252';shakeTimer=0.18;shakeMag=4;
+    lastBotStageMin=s.min;
+  }
+}
 
 // ═══ SNAKE CREATION ═══
 function createSnake(isPlayer,x,y,skinIdx){
@@ -687,6 +699,7 @@ function startGame(){
   for(let i=0;i<50;i++){const a=rand(0,TAU),r=rand(30,200);spawnFood(WCX+Math.cos(a)*r,WCY+Math.sin(a)*r,1);}
   camera.x=WCX;camera.y=WCY;camera.zoom=1;
   state='playing';totalGames++;playTime=0;coinsAtStart=coins;saveStats();
+  lastBotStageMin=BOT_STAGES[0].min;
 }
 
 // ═══ UPDATE ═══
@@ -702,7 +715,7 @@ function update(dt){
   updateToasts(dt);
   if(state!=='playing')return;
   playTime+=dt;
-  unlockCheckTimer-=dt;if(unlockCheckTimer<=0){unlockCheckTimer=1.5;checkUnlocks();}
+  unlockCheckTimer-=dt;if(unlockCheckTimer<=0){unlockCheckTimer=1.5;checkUnlocks();checkBotStageTransition();}
   // Sync order: player physics first, then bot AI (so bots react to fresh player position),
   // then physics again for bots, then collisions.
   if(player&&player.alive)updateSnake(player,dt);
@@ -877,8 +890,10 @@ function drawHUD(){
   if(kingToast>0){
     const a=Math.min(kingToast,1);ctx.textAlign='center';ctx.globalAlpha=a;
     ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=20;
-    ctx.font='900 26px Orbitron';ctx.fillText(L.kingArrived,W/2,m+60);
-    ctx.shadowBlur=0;ctx.globalAlpha=1;ctx.textAlign='left';
+    ctx.font='900 26px Orbitron';ctx.fillText(L.kingArrived,W/2,m+60);ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(255,255,255,0.75)';ctx.font='700 13px Rajdhani';
+    ctx.fillText(isTR?'Eze bilirsen +500 ve +150 🪙':'Slay it for +500 and +150 🪙',W/2,m+80);
+    ctx.globalAlpha=1;ctx.textAlign='left';
   }
   if(player&&player.invulnTimer>0){
     ctx.textAlign='center';ctx.fillStyle='#40c4ff';ctx.shadowColor='#40c4ff';ctx.shadowBlur=12;
@@ -973,35 +988,39 @@ function drawPauseBtn(){
 function drawPauseScreen(){
   ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';
   const uh=H-sat-sab,oy=sat;
-  ctx.fillStyle='#00e5ff';ctx.font='900 40px Orbitron';ctx.shadowColor='#00e5ff';ctx.shadowBlur=20;
-  ctx.fillText(L.paused,W/2,oy+uh*0.14);ctx.shadowBlur=0;
-  const bw=260,bh=52,bx=W/2-bw/2;
+  // Layout adapts: tall screens get bigger gaps; short ones get tighter rows.
+  const titleSize=Math.min(40,Math.floor(uh*0.072));
+  ctx.fillStyle='#00e5ff';ctx.font='900 '+titleSize+'px Orbitron';ctx.shadowColor='#00e5ff';ctx.shadowBlur=20;
+  ctx.fillText(L.paused,W/2,oy+uh*0.10);ctx.shadowBlur=0;
+  const bw=Math.min(260,W-40),bh=Math.min(52,Math.floor(uh*0.08)),bx=W/2-bw/2;
   // Resume
-  let ry=oy+uh*0.26;
-  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=12;rr(bx,ry,bw,bh,26);ctx.fill();ctx.shadowBlur=0;
-  ctx.fillStyle='#0a0a1a';ctx.font='900 18px Orbitron';ctx.fillText('▶ '+L.resume,W/2,ry+34);
+  let ry=oy+uh*0.20;
+  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=12;rr(bx,ry,bw,bh,bh/2);ctx.fill();ctx.shadowBlur=0;
+  const txtY=ry+bh*0.65;
+  ctx.fillStyle='#0a0a1a';ctx.font='900 17px Orbitron';ctx.fillText('▶ '+L.resume,W/2,txtY);
   // Sound
-  ry=oy+uh*0.38;
-  ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=2;rr(bx,ry,bw,bh,26);ctx.stroke();
-  ctx.fillStyle='#fff';ctx.font='700 18px Rajdhani';ctx.fillText((soundOn?'🔊 ':'🔇 ')+L.sound+': '+(soundOn?L.on:L.off),W/2,ry+33);
+  ry=oy+uh*0.32;
+  ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=2;rr(bx,ry,bw,bh,bh/2);ctx.stroke();
+  ctx.fillStyle='#fff';ctx.font='700 17px Rajdhani';ctx.fillText((soundOn?'🔊 ':'🔇 ')+L.sound+': '+(soundOn?L.on:L.off),W/2,ry+bh*0.65);
   // Camera
-  ry=oy+uh*0.50;
-  ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=2;rr(bx,ry,bw,bh,26);ctx.stroke();
+  ry=oy+uh*0.44;
+  ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=2;rr(bx,ry,bw,bh,bh/2);ctx.stroke();
   const zt=camZoomMode===1?L.zoomNormal:(camZoomMode<1?L.zoomClose:L.zoomFar);
-  ctx.fillStyle='#fff';ctx.fillText('🔍 '+L.camera+': '+zt,W/2,ry+33);
+  ctx.fillStyle='#fff';ctx.fillText('🔍 '+L.camera+': '+zt,W/2,ry+bh*0.65);
   // How to play (re-accessible tutorial)
-  ry=oy+uh*0.62;
-  ctx.strokeStyle='rgba(124,77,255,0.7)';ctx.lineWidth=2;rr(bx,ry,bw,bh,26);ctx.stroke();
-  ctx.fillStyle='#b39dff';ctx.font='700 18px Rajdhani';ctx.fillText('❓ '+L.howToPlay,W/2,ry+33);
+  ry=oy+uh*0.56;
+  ctx.strokeStyle='rgba(124,77,255,0.7)';ctx.lineWidth=2;rr(bx,ry,bw,bh,bh/2);ctx.stroke();
+  ctx.fillStyle='#b39dff';ctx.font='700 17px Rajdhani';ctx.fillText('❓ '+L.howToPlay,W/2,ry+bh*0.65);
   // Main menu (single tap)
-  ry=oy+uh*0.74;
+  ry=oy+uh*0.68;
   ctx.fillStyle='rgba(255,23,68,0.25)';ctx.strokeStyle='#ff1744';ctx.lineWidth=2;
-  rr(bx,ry,bw,bh,26);ctx.fill();ctx.stroke();
-  ctx.fillStyle='#fff';ctx.font='900 18px Orbitron';ctx.fillText(L.mainMenu,W/2,ry+34);
+  rr(bx,ry,bw,bh,bh/2);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#fff';ctx.font='900 17px Orbitron';ctx.fillText(L.mainMenu,W/2,ry+bh*0.65);
   // Confirm modal overlay if quitting
   if(quitConfirmTimer>0){
     ctx.fillStyle='rgba(0,0,0,0.92)';ctx.fillRect(0,0,W,H);
-    const mw=Math.min(320,W-40),mh=200,mx=W/2-mw/2,my=H/2-mh/2;
+    const mw=Math.min(320,W-40),mh=Math.min(220,H-sat-sab-40);
+    const mx=W/2-mw/2,my=Math.max(sat+20,(H-mh)/2);
     ctx.fillStyle='#10102a';rr(mx,my,mw,mh,16);ctx.fill();
     ctx.strokeStyle='#ff1744';ctx.lineWidth=2;rr(mx,my,mw,mh,16);ctx.stroke();
     ctx.fillStyle='#ff1744';ctx.font='900 22px Orbitron';ctx.shadowColor='#ff1744';ctx.shadowBlur=12;
@@ -1026,9 +1045,10 @@ function drawPauseScreen(){
 // ═══ DAILY TOAST ═══
 function drawDailyToast(){
   const a=Math.min(dailyToast,1),uh=H-sat-sab,oy=sat,ty=oy+uh*0.08;
+  const tw=Math.min(300,W-32);
   ctx.globalAlpha=a;ctx.textAlign='center';
-  ctx.fillStyle='rgba(0,0,0,0.85)';rr(W/2-150,ty,300,70,14);ctx.fill();
-  ctx.strokeStyle='#ffd600';ctx.lineWidth=2;rr(W/2-150,ty,300,70,14);ctx.stroke();
+  ctx.fillStyle='rgba(0,0,0,0.85)';rr(W/2-tw/2,ty,tw,70,14);ctx.fill();
+  ctx.strokeStyle='#ffd600';ctx.lineWidth=2;rr(W/2-tw/2,ty,tw,70,14);ctx.stroke();
   ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=12;
   ctx.font='900 16px Orbitron';ctx.fillText(L.dailyBonus,W/2,ty+22);ctx.shadowBlur=0;
   ctx.fillStyle='#fff';ctx.font='900 22px Orbitron';ctx.fillText('+'+dailyAmount+' 🪙',W/2,ty+46);
@@ -1039,20 +1059,39 @@ function drawDailyToast(){
 
 // ═══ TUTORIAL ═══
 function drawTutorial(){
-  ctx.fillStyle='rgba(0,0,0,0.9)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';
+  ctx.fillStyle='rgba(0,0,0,0.92)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';
   const uh=H-sat-sab,oy=sat;
   ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=15;
-  ctx.font='900 28px Orbitron';ctx.fillText(L.howToPlay,W/2,oy+uh*0.15);ctx.shadowBlur=0;
-  ctx.fillStyle='#fff';ctx.font='700 18px Rajdhani';
-  const lines=[L.tut1,L.tut2,L.tut3,L.tut4];
+  const titleSize=Math.min(28,Math.floor(W*0.07));
+  ctx.font='900 '+titleSize+'px Orbitron';ctx.fillText(L.howToPlay,W/2,oy+uh*0.12);ctx.shadowBlur=0;
+  // Animated boost-gesture visual: two pulsing rings at bottom-left of icon column
+  const py=oy+uh*0.22;
+  const pulse=(Math.sin(frameCount*0.08)+1)/2; // 0..1
+  ctx.strokeStyle='rgba(255,171,0,'+(0.5-pulse*0.3)+')';ctx.lineWidth=3;
+  ctx.beginPath();ctx.arc(W/2-90,py,18+pulse*6,0,TAU);ctx.stroke();
+  ctx.fillStyle='#ffab00';ctx.shadowColor='#ffab00';ctx.shadowBlur=8;
+  ctx.beginPath();ctx.arc(W/2-90,py,8,0,TAU);ctx.fill();ctx.shadowBlur=0;
+  ctx.fillStyle='#fff';ctx.font='700 18px Rajdhani';ctx.textAlign='left';
+  ctx.fillText(isTR?'Çift dokun & tut → HIZ':'Double-tap & hold → BOOST',W/2-65,py+5);
+  // Other lines
+  const lines=[L.tut1,L.tut3,L.tut4];
+  const colors=['#00e5ff','#ff4081','#76ff03'];
+  const symbols=['↗','✕','★'];
   for(let i=0;i<lines.length;i++){
-    ctx.fillStyle=i===0?'#00e5ff':(i===1?'#ffab00':(i===2?'#7c4dff':'#ff4081'));
-    ctx.beginPath();ctx.arc(W/2-100,oy+uh*0.32+i*48,10,0,TAU);ctx.fill();
-    ctx.fillStyle='#fff';ctx.textAlign='left';ctx.font='600 16px Rajdhani';
-    ctx.fillText(lines[i],W/2-85,oy+uh*0.32+i*48+5);ctx.textAlign='center';
+    const ly=oy+uh*0.32+i*46;
+    ctx.fillStyle=colors[i];ctx.shadowColor=colors[i];ctx.shadowBlur=10;
+    ctx.beginPath();ctx.arc(W/2-90,ly,18,0,TAU);ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle='#0a0a1a';ctx.font='900 18px Orbitron';ctx.textAlign='center';
+    ctx.fillText(symbols[i],W/2-90,ly+6);
+    ctx.fillStyle='#fff';ctx.textAlign='left';ctx.font='600 15px Rajdhani';
+    ctx.fillText(lines[i],W/2-65,ly+5);
   }
-  ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='600 14px Rajdhani';
-  ctx.fillText(L.tapContinue,W/2,oy+uh*0.85);
+  // Pause hint
+  ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='600 13px Rajdhani';ctx.textAlign='center';
+  ctx.fillText(isTR?'Sol alt köşeden duraklatabilirsin':'Tap bottom-left to pause',W/2,oy+uh*0.74);
+  // Tap to continue
+  ctx.fillStyle='rgba(255,255,255,0.45)';ctx.font='600 14px Rajdhani';
+  ctx.fillText(L.tapContinue,W/2,oy+uh*0.86);
   ctx.textAlign='left';
 }
 
@@ -1251,6 +1290,29 @@ function drawSkinSelect(){
       ctx.fillStyle=coins>=p?'#ffd600':'rgba(255,214,0,0.3)';ctx.font='bold 9px Rajdhani';ctx.fillText('🪙'+p,cx,cy+24);
     }
   }
+  // Buy confirm modal
+  if(pendingSkinBuy>=0){
+    const idx=pendingSkinBuy,sk=SKINS[idx],p=skinPrice(sk);
+    ctx.fillStyle='rgba(0,0,0,0.92)';ctx.fillRect(0,0,W,H);
+    const mw=Math.min(320,W-40),mh=Math.min(240,H-sat-sab-40);
+    const mx=W/2-mw/2,my=Math.max(sat+20,(H-mh)/2);
+    ctx.fillStyle='#10102a';rr(mx,my,mw,mh,16);ctx.fill();
+    ctx.strokeStyle=zoneAccent;ctx.lineWidth=2;rr(mx,my,mw,mh,16);ctx.stroke();
+    ctx.textAlign='center';
+    // Skin preview
+    for(let j=0;j<8;j++){const t=j/8;let c;if(sk.p==='rainbow')c=hsl((j*45+frameCount*2)%360,80,60);else c=lerpColor(sk.c[1],sk.c[0],t);ctx.fillStyle=c;ctx.beginPath();ctx.arc(mx+mw/2-18+j*5,my+44,6-t*2,0,TAU);ctx.fill();}
+    ctx.fillStyle='#fff';ctx.font='900 22px Orbitron';ctx.fillText(sk.name,W/2,my+86);
+    ctx.fillStyle='#ffd600';ctx.font='900 26px Orbitron';ctx.shadowColor='#ffd600';ctx.shadowBlur=10;
+    ctx.fillText('🪙 '+p,W/2,my+126);ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='600 13px Rajdhani';
+    ctx.fillText(isTR?'Bu görünümü satın al?':'Buy this skin?',W/2,my+150);
+    const cbw=120,cbh=48,cy=my+mh-cbh-20;
+    ctx.fillStyle='#00e676';rr(mx+20,cy,cbw,cbh,24);ctx.fill();
+    ctx.fillStyle='#0a0a1a';ctx.font='900 16px Orbitron';ctx.fillText(isTR?'AL':'BUY',mx+20+cbw/2,cy+30);
+    ctx.fillStyle='rgba(255,255,255,0.15)';ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=2;rr(mx+mw-cbw-20,cy,cbw,cbh,24);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#fff';ctx.fillText(isTR?'İPTAL':'CANCEL',mx+mw-cbw-20+cbw/2,cy+30);
+    ctx.textAlign='left';
+  }
   // Scrollbar indicator
   const maxScroll=Math.max(0,Math.ceil(SKINS.length/5)*70-H+sat+sab+128);
   if(maxScroll>0){
@@ -1311,15 +1373,21 @@ $.addEventListener('touchend',function(e){
   for(let i=0;i<e.changedTouches.length;i++){
     const t=e.changedTouches[i];
     const kind=touches[t.identifier];
-    if(kind==='joy'||kind==='joyboost')joystick.active=false;
     if(kind==='joyboost'&&player)player.boosting=false;
     // Track recent finger-up for double-tap-hold detection
     if(state==='playing'&&kind==='joy'){lastTapEndAt=performance.now();lastTapX=t.clientX;lastTapY=t.clientY;}
     delete touches[t.identifier];
   }
-  // If no fingers remain, kill any lingering boost
-  let any=false;for(const k in touches){if(k!=='_lastY'&&touches[k]){any=true;break;}}
-  if(!any&&player)player.boosting=false;
+  // After removing this touch, recompute who owns the joystick.
+  // If any joy/joyboost touch is still down, transfer joystick anchor to it
+  // so the player can lift one finger but keep steering with the other.
+  let owner=null;for(const k in touches){if(k==='_lastY')continue;const v=touches[k];if(v==='joy'||v==='joyboost'){owner=k;break;}}
+  if(owner==null){
+    joystick.active=false;
+    if(player)player.boosting=false;
+  }
+  // (joystick anchor is updated in touchstart; on transfer, the stick keeps
+  //  its previous direction until the surviving finger moves and re-anchors.)
   touches._lastY=undefined;
 },{passive:false});
 
@@ -1357,32 +1425,27 @@ function handleMenuTap(x,y){
   }
 }
 function handlePauseTap(x,y){
-  const uh=H-sat-sab,oy=sat,bw=260,bh=52,bx=W/2-bw/2;
+  const uh=H-sat-sab,oy=sat;
+  const bw=Math.min(260,W-40),bh=Math.min(52,Math.floor(uh*0.08)),bx=W/2-bw/2;
   // If the confirm modal is up, only Yes/No respond.
   if(quitConfirmTimer>0){
-    const mw=Math.min(320,W-40),mh=200,mx=W/2-mw/2,my=H/2-mh/2;
+    const mw=Math.min(320,W-40),mh=Math.min(220,H-sat-sab-40);
+    const mx=W/2-mw/2,my=Math.max(sat+20,(H-mh)/2);
     const cbw=120,cbh=48,cy=my+mh-cbh-20;
-    // Yes
     if(x>mx+20&&x<mx+20+cbw&&y>cy&&y<cy+cbh){quitConfirmTimer=0;state='menu';saveHS();saveStats();saveCoins();sndMenu();return;}
-    // No
     if(x>mx+mw-cbw-20&&x<mx+mw-20&&y>cy&&y<cy+cbh){quitConfirmTimer=0;sndMenu();return;}
     return;
   }
   sndMenu();
-  // Resume
-  let ry=oy+uh*0.26;
+  let ry=oy+uh*0.20;
   if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){state='playing';if(player)player.invulnTimer=Math.max(player.invulnTimer,1.2);quitConfirmTimer=0;return;}
-  // Sound
-  ry=oy+uh*0.38;
+  ry=oy+uh*0.32;
   if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){soundOn=!soundOn;saveSettings();return;}
-  // Camera
-  ry=oy+uh*0.50;
+  ry=oy+uh*0.44;
   if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){camZoomMode=camZoomMode===1?0.75:(camZoomMode===0.75?1.35:1);saveSettings();return;}
-  // How to play
-  ry=oy+uh*0.62;
+  ry=oy+uh*0.56;
   if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){showTutorial=true;state='menu';try{localStorage.removeItem('growio_tutorial');}catch(e){}return;}
-  // Main menu (open confirm modal)
-  ry=oy+uh*0.74;
+  ry=oy+uh*0.68;
   if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){quitConfirmTimer=10;return;}
 }
 function handleLeaderboardTap(x,y){
@@ -1407,9 +1470,23 @@ function handleDeathTap(x,y){
   if(x>W/2-bw/2&&x<W/2+bw/2&&y>ry3&&y<ry3+44){state='menu';saveHS();saveStats();saveCoins();return;}
 }
 function handleSkinTap(x,y){
+  // If buy-confirm modal is up, route taps to its buttons only
+  if(pendingSkinBuy>=0){
+    const mw=Math.min(320,W-40),mh=Math.min(240,H-sat-sab-40);
+    const mx=W/2-mw/2,my=Math.max(sat+20,(H-mh)/2);
+    const cbw=120,cbh=48,cy=my+mh-cbh-20;
+    // Yes (left)
+    if(x>mx+20&&x<mx+20+cbw&&y>cy&&y<cy+cbh){
+      const idx=pendingSkinBuy,p=skinPrice(SKINS[idx]);
+      if(p>0&&coins>=p){coins-=p;unlockedSkins.push(idx);currentSkin=idx;saveCoins();saveSkins();saveStats();sndPowerup();showToast(SKINS[idx].name+' ✓','success');}
+      else{buyFailedMsg=2;showToast(L.notEnough,'error');sndDeath();}
+      pendingSkinBuy=-1;return;
+    }
+    // No (right) — also acts as cancel for tap-outside
+    pendingSkinBuy=-1;sndMenu();return;
+  }
   // Back chip
   if(x>=12&&x<=12+84&&y>=sat+12&&y<=sat+12+40){state='menu';sndMenu();return;}
-  // Grid (skip header)
   if(y<sat+118)return;
   const cols=5,cellW=W/cols,cellH=70,startY=sat+118-skinScroll;
   const col=Math.floor(x/cellW),row=Math.floor((y-startY)/cellH);
@@ -1417,8 +1494,10 @@ function handleSkinTap(x,y){
   if(idx<0||idx>=SKINS.length)return;
   if(unlockedSkins.includes(idx)){currentSkin=idx;saveStats();sndMenu();return;}
   const p=skinPrice(SKINS[idx]);
-  if(p>0&&coins>=p){coins-=p;unlockedSkins.push(idx);currentSkin=idx;saveCoins();saveSkins();saveStats();sndPowerup();}
-  else{buyFailedMsg=2;sndDeath();showToast(L.notEnough,'error');}
+  if(p<=0){return;}
+  if(coins<p){buyFailedMsg=2;sndDeath();showToast(L.notEnough,'error');return;}
+  // Open buy confirm modal
+  pendingSkinBuy=idx;sndMenu();
 }
 
 // ═══ AUTO-PAUSE (background / focus loss / phone call / notification) ═══
