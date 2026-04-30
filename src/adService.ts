@@ -27,10 +27,16 @@ let statusListener: ((s: AdStatus) => void) | null = null;
 
 export function setAdStatusListener(cb: ((s: AdStatus) => void) | null): void {
   statusListener = cb;
-  if (cb) cb({ interstitial: interstitialLoaded, rewarded: rewardedLoaded });
+  // Only push initial state if the SDK actually reached the point where
+  // ad instances exist. Before that, interstitialLoaded/rewardedLoaded are
+  // both false anyway — but the listener should learn the true ready state
+  // through emitStatus() once the LOADED events fire, not from this stale
+  // synchronous push.
+  if (cb && sdkReady) cb({ interstitial: interstitialLoaded, rewarded: rewardedLoaded });
 }
 
 function emitStatus(): void {
+  if (!sdkReady) return;
   statusListener?.({ interstitial: interstitialLoaded, rewarded: rewardedLoaded });
 }
 

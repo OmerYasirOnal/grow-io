@@ -327,7 +327,11 @@ postMsg({type:'LOAD_SKIN_STATE'});
 postMsg({type:'CHECK_AD_READY'});
 loadSkins(); loadStats(); loadCoins(); loadSettings(); loadTopScores(); loadTutorialSeen(); loadLogin(); checkDailyBonus();
 // Re-poll ad readiness periodically (host pushes too, but this catches early misses)
-setInterval(function(){if(hostBridgeSeen)postMsg({type:'CHECK_AD_READY'});},10000);
+// Re-poll ad readiness every 10s in foreground only. Stored ID lets the
+// visibility/blur handlers stop & restart it (no leak across re-mounts).
+let adReadyPollTimer=setInterval(function(){if(hostBridgeSeen)postMsg({type:'CHECK_AD_READY'});},10000);
+function stopAdReadyPoll(){if(adReadyPollTimer){clearInterval(adReadyPollTimer);adReadyPollTimer=null;}}
+function startAdReadyPoll(){if(!adReadyPollTimer)adReadyPollTimer=setInterval(function(){if(hostBridgeSeen)postMsg({type:'CHECK_AD_READY'});},10000);}
 
 // ═══ TOAST SYSTEM (unified info/success/error) ═══
 let toastList=[];
@@ -537,13 +541,15 @@ function checkCollisions(){
     for(let i=0;i<s.segments.length;i++)gridInsert({snake:s,idx:i},s.segments[i].x,s.segments[i].y);
   }
   for(const s of snakes){
-    if(!s.alive||s.invulnTimer>0)continue;
+    if(!s.alive)continue;
     const head=s.segments[0];
     const sw=6+Math.min(s.length*0.03,14);
     const hr=sw/2;
-    // Head-vs-body / head-vs-head
+    // Head-vs-body / head-vs-head — skipped while invulnerable (spawn protection).
+    // Food + powerup collection still runs below so the player can grow during
+    // those first 2.5 s instead of starving.
     let died=false;
-    if(s.powerups.ghost<=0){
+    if(s.invulnTimer<=0&&s.powerups.ghost<=0){
       // Wider search radius (covers max possible other-snake body width too).
       const nearby=gridQuery(head.x,head.y,hr+24);
       for(const n of nearby){
@@ -589,6 +595,9 @@ function checkCollisions(){
 function killSnake(victim,killer,cause){
   if(!victim.alive)return;
   victim.alive=false;
+  // Defensive: clear transient flags so a respawning bot can't inherit
+  // boost/joystick state from its previous life.
+  victim.boosting=false;
   for(let i=0;i<victim.segments.length;i+=3){
     const seg=victim.segments[i];
     spawnFood(seg.x+rand(-10,10),seg.y+rand(-10,10),2,SKINS[victim.skin].c[0]);
@@ -902,22 +911,28 @@ function drawPowerups(){
 }
 
 function drawSnake(s){
-  const skin=SKINS[s.skin];const w=6+Math.min(s.segments.length*0.03,14);
+  const skin=SKINS[s.skin];
+  const segs=s.segments;
+  const segLen=segs.length;
+  const denom=Math.max(1,segLen-1);
+  const w=6+Math.min(segLen*0.03,14);
+  const halfW=w/2;
   if(s.powerups.ghost>0)ctx.globalAlpha=0.4;
   if(s.invulnTimer>0&&Math.floor(s.invulnTimer*10)%2===0)ctx.globalAlpha=0.3;
-  // Subtle outline pass (helps prevent visual overlap between snakes)
+  // Outline pass — fillStyle set once for the whole pass (was per-segment).
   ctx.shadowBlur=0;
-  for(let i=s.segments.length-1;i>=0;i--){
-    const seg=s.segments[i];const t=1-i/Math.max(1,s.segments.length-1);
-    const r=w/2*(0.55+t*0.45);
-    ctx.fillStyle='rgba(0,0,0,0.35)';
-    ctx.beginPath();ctx.arc(seg.x,seg.y,r+1.2,0,TAU);ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,0.35)';
+  for(let i=segLen-1;i>=0;i--){
+    const seg=segs[i];const t=1-i/denom;
+    const r=halfW*(0.55+t*0.45)+1.2;
+    ctx.beginPath();ctx.arc(seg.x,seg.y,r,0,TAU);ctx.fill();
   }
-  for(let i=s.segments.length-1;i>=0;i--){
-    const seg=s.segments[i];const t=1-i/Math.max(1,s.segments.length-1);
-    const r=w/2*(0.55+t*0.45);let color;
+  // Fill pass with skin colours.
+  for(let i=segLen-1;i>=0;i--){
+    const seg=segs[i];const t=1-i/denom;
+    const r=halfW*(0.55+t*0.45);let color;
     if(skin.p==='rainbow')color=hsl((i*8+frameCount*2)%360,80,60);
-    else if(skin.p==='striped')color=Math.floor(i/3)%2===0?skin.c[0]:skin.c[1];
+    else if(skin.p==='striped')color=((i/3)|0)%2===0?skin.c[0]:skin.c[1];
     else color=lerpColor(skin.c[1],skin.c[0],t);
     ctx.fillStyle=color;
     if(i===0){ctx.shadowColor=skin.c[0];ctx.shadowBlur=skin.p==='neon'?22:14;}
@@ -1655,14 +1670,25 @@ function autoPauseIfPlaying(){
     for(const k in touches)if(k!=='_lastY')delete touches[k];
     quitConfirmTimer=0;
   }
+  // Always halt music tick on background — saves CPU + battery, avoids
+  // overlapping notes when the WebView resumes. Ad-ready poll also stops
+  // (the host pushes status when it changes; foreground polling is just a
+  // safety net we don't need while hidden).
+  stopMusic();
+  stopAdReadyPoll();
+}
+function resumeFromBackground(){
+  lt=0;
+  if(musicOn&&ac&&ac.state!=='suspended')startMusic();
+  startAdReadyPoll();
+  if(hostBridgeSeen)postMsg({type:'CHECK_AD_READY'});
 }
 document.addEventListener('visibilitychange',function(){
-  if(document.hidden)autoPauseIfPlaying();
-  lt=0;
+  if(document.hidden)autoPauseIfPlaying();else resumeFromBackground();
 });
 window.addEventListener('blur',autoPauseIfPlaying);
 window.addEventListener('pagehide',autoPauseIfPlaying);
-window.addEventListener('focus',function(){lt=0;});
+window.addEventListener('focus',resumeFromBackground);
 
 // ═══ GAME LOOP ═══
 let lt=0;
