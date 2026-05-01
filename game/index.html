@@ -189,6 +189,9 @@ function resetTouchState(){
 // When tutorial is opened from a screen other than the initial spawn (e.g.
 // pause "How to play"), this remembers where to go back to once dismissed.
 let tutorialReturnState=null;
+// Main-menu Settings overlay: same Sound / Music / Vibration toggles as the
+// pause screen, but reachable without starting a game.
+let showSettings=false;
 let score = 0, highScore = 0, deathCount = 0, totalKills = 0, totalGames = 0;
 let player = null, snakes = [], foods = [], powerups = [], particles = [];
 let spatialGrid = {};
@@ -499,14 +502,37 @@ function drawParticles(){
 }
 
 // ═══ FOOD ═══
-function spawnFood(x,y,val,color){
-  if(foods.length>=MAX_FOOD)return;
+function spawnFood(x,y,val,color,force){
+  if(foods.length>=MAX_FOOD){
+    if(!force)return;
+    // Drop the oldest food to make room — kill-drops from a 300-segment Boss
+    // were silently lost when MAX_FOOD was already reached; force=true keeps
+    // the explosion visible and rewarding.
+    foods.shift();
+  }
   if(x==null){const a=rand(0,TAU),r=rand(0,WR-50);x=WCX+Math.cos(a)*r;y=WCY+Math.sin(a)*r;}
   val=val||1;
   const colors=['#00e5ff','#76ff03','#ff4081','#ffab00','#7c4dff','#00bfa5','#ff6e40','#ea80fc'];
   foods.push({x,y,val,color:color||colors[randInt(0,colors.length-1)],r:3+val*1.5,pulse:rand(0,TAU)});
 }
 function spawnInitialFood(){for(let i=0;i<400;i++)spawnFood();}
+// Pick a spawn point at least minD pixels from the player. Prevents bots
+// from popping into existence right on top of the head and instakilling a
+// passive player.
+function pickSafeBotSpawn(minD){
+  const md=minD||450;
+  const phx=player&&player.alive?player.segments[0].x:WCX;
+  const phy=player&&player.alive?player.segments[0].y:WCY;
+  for(let attempts=0;attempts<10;attempts++){
+    const a=rand(0,TAU),r=rand(200,WR-100);
+    const x=WCX+Math.cos(a)*r,y=WCY+Math.sin(a)*r;
+    const dx=x-phx,dy=y-phy;
+    if(dx*dx+dy*dy>md*md)return{x,y};
+  }
+  // Fallback: spawn on the world's far side relative to the player.
+  const a=Math.atan2(WCY-phy,WCX-phx);
+  return{x:WCX+Math.cos(a)*(WR-200),y:WCY+Math.sin(a)*(WR-200)};
+}
 
 // ═══ POWERUPS ═══
 const PU_TYPES = ['speed','shield','magnet','ghost'];
@@ -679,7 +705,12 @@ function checkCollisions(){
       const f=foods[i];const d=dist(head,f);
       if(magR>0&&d<magR&&d>hr+f.r){const a=angleTo(f,head);f.x+=Math.cos(a)*200*gdt;f.y+=Math.sin(a)*200*gdt;}
       if(d<hr+f.r){
-        s.length+=f.val*3;s.score+=f.val;
+        // Diminishing growth: each food contributes more to a small snake
+        // than to a giant. Floor(1.5 + 1.5 * 200/(200+length)): length 0 → 3,
+        // length 100 → 2, length 300 → 2, length 800 → 1. Min 1 always.
+        const growMul=1.5+1.5*(200/(200+s.length));
+        const grow=Math.max(1,Math.floor(f.val*growMul));
+        s.length+=grow;s.score+=f.val;
         if(s.isPlayer){
           const comboMult=collectCombo>=10?3:(collectCombo>=5?2:1);
           const inZone=isInComboZone(head.x,head.y);
@@ -715,7 +746,7 @@ function killSnake(victim,killer,cause){
   if(victim.isPlayer||(killer&&killer.isPlayer))hitPauseTimer=0.06;
   for(let i=0;i<victim.segments.length;i+=3){
     const seg=victim.segments[i];
-    spawnFood(seg.x+rand(-10,10),seg.y+rand(-10,10),2,SKINS[victim.skin].c[0]);
+    spawnFood(seg.x+rand(-10,10),seg.y+rand(-10,10),2,SKINS[victim.skin].c[0],true);
   }
   if(killer&&killer.alive){
     killer.killCount++;killer.score+=100;
@@ -800,9 +831,27 @@ function updateBot(bot,dt){
     if(s.length>bot.length*1.2&&d<nbD){nbD=d;nearBig=s;}
   }
 
-  // Avoid the wall
+  // Avoid the wall — look-ahead version: project where the head will be in
+  // ~0.4s and steer if THAT point is past the safety ring, not just the
+  // current one. Smarter bots steer earlier and don't hug the boundary.
   const bDist=dist(head,{x:WCX,y:WCY});
   if(bDist>WR-220){bot.targetAngle=angleTo(head,{x:WCX,y:WCY});bot.boosting=false;return;}
+  const lookT=0.4;
+  const px=head.x+Math.cos(bot.angle)*bot.speed*lookT;
+  const py=head.y+Math.sin(bot.angle)*bot.speed*lookT;
+  if(dist({x:px,y:py},{x:WCX,y:WCY})>WR-150){
+    bot.targetAngle=angleTo({x:px,y:py},{x:WCX,y:WCY});
+    bot.boosting=false;
+    return;
+  }
+
+  // Panic flee: if a much bigger snake's head is close and we still have
+  // some body to spend, flee away with boost regardless of personality.
+  if(nearBig&&nbD<240&&bot.length>14){
+    bot.targetAngle=angleTo(nearBig.segments[0],head);
+    bot.boosting=true;
+    return;
+  }
 
   // Avoid the player's body too (smarter bots steer around it)
   if(player&&player.alive&&player.segments.length>5){
@@ -904,7 +953,10 @@ function startGame(){
     player.segments[i].y=WCY-Math.sin(player.angle)*SEG_DIST*i;
   }
   snakes.push(player);
-  for(let i=0;i<MAX_BOTS;i++){const b=createSnake(false);b.length=randInt(10,40);snakes.push(b);}
+  for(let i=0;i<MAX_BOTS;i++){
+    const sp=pickSafeBotSpawn(500);
+    const b=createSnake(false,sp.x,sp.y);b.length=randInt(10,40);snakes.push(b);
+  }
   for(let i=0;i<50;i++){const a=rand(0,TAU),r=rand(30,200);spawnFood(WCX+Math.cos(a)*r,WCY+Math.sin(a)*r,1);}
   camera.x=WCX;camera.y=WCY;camera.zoom=1;
   state='playing';totalGames++;playTime=0;coinsAtStart=coins;saveStats();
@@ -976,19 +1028,27 @@ function update(dt){
   // Respawn bots
   for(let i=snakes.length-1;i>=0;i--){
     const s=snakes[i];
-    if(!s.alive&&!s.isPlayer){s.respawnTimer-=dt;if(s.respawnTimer<=0){snakes.splice(i,1);const nb=createSnake(false);nb.length=randInt(10,30+Math.floor(score/200));snakes.push(nb);}}
+    if(!s.alive&&!s.isPlayer){s.respawnTimer-=dt;if(s.respawnTimer<=0){
+      snakes.splice(i,1);
+      const sp=pickSafeBotSpawn(450);
+      const nb=createSnake(false,sp.x,sp.y);
+      nb.length=randInt(10,30+Math.floor(score/200));
+      snakes.push(nb);
+    }}
   }
   // King
   if(!kingActive&&score>=nextKingScore){
     kingActive=true;sndKing();
-    const k=createSnake(false);k.name='KING';k.isKing=true;k.length=200+Math.floor(score/50);
+    const ksp=pickSafeBotSpawn(600);
+    const k=createSnake(false,ksp.x,ksp.y);k.name='KING';k.isKing=true;k.length=200+Math.floor(score/50);
     k.personality='aggressive';k.skin=randInt(0,4);snakes.push(k);
     kingToast=3.5;flashAlpha=0.35;flashColor='#ffd600';shakeTimer=0.3;shakeMag=6;postMsg({type:'HAPTIC',data:'heavy'});
   }
   // Boss (D1) — rarer, every 5k score, length 300+, +30% speed, big rewards.
   if(!bossActive&&score>=nextBossScore){
     bossActive=true;sndKingSlain(); // dramatic chord, reused
-    const b=createSnake(false);b.name='BOSS';b.isBoss=true;b.length=300+Math.floor(score/120);
+    const bsp=pickSafeBotSpawn(700);
+    const b=createSnake(false,bsp.x,bsp.y);b.name='BOSS';b.isBoss=true;b.length=300+Math.floor(score/120);
     b.personality='aggressive';b.skin=17;b.skill=1.0; // Blood skin, max skill
     snakes.push(b);
     bossToast=4;flashAlpha=0.45;flashColor='#ff1744';shakeTimer=0.45;shakeMag=9;
@@ -1034,7 +1094,7 @@ function render(){
     if(joystick.active&&state==='playing')drawJoystick();
     if(state==='playing'){drawBoostFuel();drawPauseBtn();}
   }
-  if(state==='menu'){drawMenu();if(!showTutorial&&dailyToast>0)drawDailyToast();}
+  if(state==='menu'){drawMenu();if(!showTutorial&&!showSettings&&dailyToast>0)drawDailyToast();if(showSettings)drawSettingsOverlay();}
   if(state==='dead')drawDeathScreen();
   if(state==='paused')drawPauseScreen();
   if(state==='skinselect')drawSkinSelect();
@@ -1072,13 +1132,16 @@ function drawBoundary(){
   ctx.strokeStyle='rgba(255,50,50,0.06)';ctx.lineWidth=20;ctx.stroke();
 }
 function drawFood(){
+  // Dropped per-food shadowBlur (was 6 with on/off per pellet × ~600 visible
+  // foods = the biggest draw-op contributor). Pellets are 4-5 px and barely
+  // showed the glow anyway; this is a major thermal/perf win on iPhone.
   const vx1=camera.x-W/2/camera.zoom-20,vx2=camera.x+W/2/camera.zoom+20;
   const vy1=camera.y-H/2/camera.zoom-20,vy2=camera.y+H/2/camera.zoom+20;
   for(const f of foods){
     if(f.x<vx1||f.x>vx2||f.y<vy1||f.y>vy2)continue;
     f.pulse+=0.05;const r=f.r+Math.sin(f.pulse)*1;
-    ctx.fillStyle=f.color;ctx.shadowColor=f.color;ctx.shadowBlur=6;
-    ctx.beginPath();ctx.arc(f.x,f.y,r,0,TAU);ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle=f.color;
+    ctx.beginPath();ctx.arc(f.x,f.y,r,0,TAU);ctx.fill();
   }
 }
 function drawPowerups(){
@@ -1386,6 +1449,38 @@ function drawPauseScreen(){
 }
 
 // ═══ DAILY TOAST ═══
+// Settings overlay — same pill row used in pause, available from main menu.
+function drawSettingsOverlay(){
+  ctx.fillStyle='rgba(0,0,0,0.92)';ctx.fillRect(0,0,W,H);
+  const uh=H-sat-sab,oy=sat;
+  const titleSize=Math.min(34,Math.floor(W*0.085));
+  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=18;
+  ctx.font='900 '+titleSize+'px Orbitron';ctx.textAlign='center';
+  ctx.fillText(isTR?'AYARLAR':'SETTINGS',W/2,oy+uh*0.18);ctx.shadowBlur=0;
+  // Pill row (reused layout from pause)
+  const bw=Math.min(280,W-40),bh=Math.min(60,Math.floor(uh*0.09));
+  const ry=oy+uh*0.36;
+  const pillW=Math.floor(bw/3)-6,pillGap=9;
+  const totalPills=pillW*3+pillGap*2,pillsX=W/2-totalPills/2;
+  const pills=[
+    {x:pillsX,                  on:soundOn,    icon:soundOn?'🔊':'🔇', label:isTR?'Ses':'Sound'},
+    {x:pillsX+pillW+pillGap,    on:musicOn,    icon:musicOn?'🎵':'🔕', label:isTR?'Müzik':'Music'},
+    {x:pillsX+2*(pillW+pillGap),on:vibrationOn,icon:vibrationOn?'📳':'📴',label:isTR?'Titreşim':'Vibe'},
+  ];
+  for(const p of pills){
+    if(p.on){ctx.fillStyle='rgba(0,229,255,0.15)';rr(p.x,ry,pillW,bh,bh/2);ctx.fill();}
+    ctx.strokeStyle=p.on?'#00e5ff':'rgba(255,255,255,0.3)';ctx.lineWidth=2;rr(p.x,ry,pillW,bh,bh/2);ctx.stroke();
+    ctx.fillStyle=p.on?'#00e5ff':'rgba(255,255,255,0.5)';
+    ctx.font='700 18px Rajdhani';ctx.fillText(p.icon,p.x+pillW/2,ry+bh*0.45);
+    ctx.font='700 11px Rajdhani';ctx.fillText(p.label,p.x+pillW/2,ry+bh*0.78);
+  }
+  // Done button
+  const dy=oy+uh*0.55;
+  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=12;rr(W/2-bw/2,dy,bw,bh,bh/2);ctx.fill();ctx.shadowBlur=0;
+  ctx.fillStyle='#0a0a1a';ctx.font='900 17px Orbitron';
+  ctx.fillText(isTR?'TAMAM':'DONE',W/2,dy+bh*0.65);
+  ctx.textAlign='left';
+}
 function drawDailyToast(){
   const a=Math.min(dailyToast,1),uh=H-sat-sab,oy=sat,ty=oy+uh*0.08;
   const tw=Math.min(300,W-32);
@@ -1524,6 +1619,10 @@ function drawMenu(){
   ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=2;
   ctx.beginPath();ctx.arc(W-35,sat+35,18,0,TAU);ctx.stroke();
   ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font='900 18px Orbitron';ctx.fillText('?',W-35,sat+42);
+  // Settings button (top-left)
+  ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(35,sat+35,18,0,TAU);ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.75)';ctx.font='700 20px Rajdhani';ctx.fillText('⚙',35,sat+43);
   const bw=220,bh=58,bx=W/2-bw/2,by=oy+uh*0.42;
   ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=15;rr(bx,by,bw,bh,28);ctx.fill();ctx.shadowBlur=0;
   ctx.fillStyle='#0a0a1a';ctx.font='900 24px Orbitron';ctx.fillText(L.play,W/2,by+38);
@@ -1802,6 +1901,28 @@ window.addEventListener('keydown',function(e){
 window.addEventListener('keyup',function(e){if(e.code==='Space'&&player)player.boosting=false;});
 
 function handleMenuTap(x,y){
+  // Settings overlay swallows taps when open.
+  if(showSettings){
+    const uh=H-sat-sab,oy=sat;
+    const bw=Math.min(280,W-40),bh=Math.min(60,Math.floor(uh*0.09));
+    // Pill row
+    const ry=oy+uh*0.36;
+    if(y>ry&&y<ry+bh){
+      const pillW=Math.floor(bw/3)-6,pillGap=9;
+      const totalPills=pillW*3+pillGap*2,pillsX=W/2-totalPills/2;
+      const p2X=pillsX+pillW+pillGap,p3X=pillsX+2*(pillW+pillGap);
+      if(x>pillsX&&x<pillsX+pillW){soundOn=!soundOn;saveSettings();sndMenu();return;}
+      if(x>p2X&&x<p2X+pillW){musicOn=!musicOn;saveSettings();if(musicOn)startMusic();else stopMusic();sndMenu();return;}
+      if(x>p3X&&x<p3X+pillW){vibrationOn=!vibrationOn;saveSettings();sndMenu();return;}
+    }
+    // Done button
+    const dy=oy+uh*0.55;
+    if(y>dy&&y<dy+bh&&x>W/2-bw/2&&x<W/2+bw/2){showSettings=false;sndMenu();return;}
+    // Tap anywhere else outside the modal also dismisses
+    return;
+  }
+  // Settings button (top-left corner)
+  if(x<60&&x>10&&y>sat+10&&y<sat+60){showSettings=true;sndMenu();return;}
   // Help button (top-right corner)
   if(x>W-60&&x<W-10&&y>sat+10&&y<sat+60){showTutorial=true;sndMenu();return;}
   sndMenu();const uh=H-sat-sab,oy=sat,bw=220,bh=58,bx=W/2-bw/2,by=oy+uh*0.42;
