@@ -222,6 +222,48 @@ let kingActive = false, nextKingScore = 2000;
 let bossActive = false, nextBossScore = 5000, bossToast = 0;
 const BOSS_SCORE_REWARD = 1000;
 const BOSS_COIN_REWARD = 300;
+// Combo zones (D2): two roaming bonus circles. Anything the player eats with
+// their head inside one is multiplied. Zones move every 30 s to keep the
+// camera flowing.
+const comboZones = []; // pre-allocated (reused on relocate)
+let comboZoneTimer = 0;
+const COMBO_ZONE_INTERVAL = 30;
+const COMBO_ZONE_RADIUS = 200;
+const COMBO_ZONE_MULT = 2.5;
+function spawnComboZones(silent){
+  comboZones.length=0;
+  for(let i=0;i<2;i++){
+    const a=rand(0,TAU),r=rand(300,WR-300);
+    comboZones.push({x:WCX+Math.cos(a)*r,y:WCY+Math.sin(a)*r});
+  }
+  comboZoneTimer=COMBO_ZONE_INTERVAL;
+  if(!silent)showToast(isTR?'Bonus bölge taşındı!':'Bonus zone moved!','info');
+}
+function isInComboZone(x,y){
+  for(let i=0;i<comboZones.length;i++){
+    const z=comboZones[i],dx=x-z.x,dy=y-z.y;
+    if(dx*dx+dy*dy<COMBO_ZONE_RADIUS*COMBO_ZONE_RADIUS)return true;
+  }
+  return false;
+}
+function drawComboZones(){
+  if(!comboZones.length)return;
+  ctx.lineWidth=2;
+  ctx.setLineDash([10,8]);
+  ctx.textAlign='center';
+  ctx.font='900 14px Orbitron';
+  for(let i=0;i<comboZones.length;i++){
+    const z=comboZones[i];
+    ctx.fillStyle='rgba(255,214,0,0.06)';
+    ctx.beginPath();ctx.arc(z.x,z.y,COMBO_ZONE_RADIUS,0,TAU);ctx.fill();
+    ctx.strokeStyle='rgba(255,214,0,0.55)';
+    ctx.beginPath();ctx.arc(z.x,z.y,COMBO_ZONE_RADIUS,0,TAU);ctx.stroke();
+    ctx.fillStyle='#ffd600';
+    ctx.fillText('x'+COMBO_ZONE_MULT,z.x,z.y+5);
+  }
+  ctx.setLineDash([]);
+  ctx.textAlign='left';
+}
 let collectCombo = 0, collectTimer = 0;
 let zoneBg = '#0a0a1a', zoneAccent = '#00e5ff';
 let targetZoneBg = '#0a0a1a', targetZoneAccent = '#00e5ff';
@@ -638,7 +680,15 @@ function checkCollisions(){
       if(magR>0&&d<magR&&d>hr+f.r){const a=angleTo(f,head);f.x+=Math.cos(a)*200*gdt;f.y+=Math.sin(a)*200*gdt;}
       if(d<hr+f.r){
         s.length+=f.val*3;s.score+=f.val;
-        if(s.isPlayer){const mult=collectCombo>=10?3:(collectCombo>=5?2:1);const pts=f.val*mult;score+=pts;coins+=pts;collectCombo++;collectTimer=0.8;if(mult>1||collectCombo%3===0)addScorePopup(f.x,f.y,'+'+pts,mult>1?'#ffd600':f.color);sndCollect();postMsg({type:'HAPTIC',data:'light'});}
+        if(s.isPlayer){
+          const comboMult=collectCombo>=10?3:(collectCombo>=5?2:1);
+          const inZone=isInComboZone(head.x,head.y);
+          const totalMult=comboMult*(inZone?COMBO_ZONE_MULT:1);
+          const pts=Math.max(1,Math.floor(f.val*totalMult));
+          score+=pts;coins+=pts;collectCombo++;collectTimer=0.8;
+          if(totalMult>1||collectCombo%3===0)addScorePopup(f.x,f.y,'+'+pts,inZone?'#ffd600':(comboMult>1?'#ffd600':f.color));
+          sndCollect();postMsg({type:'HAPTIC',data:'light'});
+        }
         spawnP(f.x,f.y,f.color,3,60,2);foods.splice(i,1);
       }
     }
@@ -838,6 +888,7 @@ function startGame(){
   foods=[];powerups=[];particles=[];snakes=[];scorePopups=[];
   kingActive=false;nextKingScore=2000;
   bossActive=false;nextBossScore=5000;bossToast=0;
+  spawnComboZones(true); // silent on first spawn — no "moved" toast at game start
   spawnInitialFood();
   // Player starts with extra length so they have a real "boost reserve" up front.
   // Lock initial heading to "up" instead of random so the snake doesn't drift
@@ -920,6 +971,8 @@ function update(dt){
   updateParticles(dt);updateScorePopups(dt);
   foodSpawnTimer-=dt;if(foodSpawnTimer<=0){foodSpawnTimer=0.2;spawnFood();}
   puSpawnTimer-=dt;if(puSpawnTimer<=0){puSpawnTimer=5;spawnPowerup();}
+  // Combo zones drift to a fresh pair every COMBO_ZONE_INTERVAL seconds.
+  comboZoneTimer-=dt;if(comboZoneTimer<=0)spawnComboZones(false);
   // Respawn bots
   for(let i=snakes.length-1;i>=0;i--){
     const s=snakes[i];
@@ -971,7 +1024,7 @@ function render(){
     }
     const sx=shakeTimer>0?rand(-shakeMag,shakeMag):0,sy=shakeTimer>0?rand(-shakeMag,shakeMag):0;
     ctx.save();ctx.translate(W/2+sx,H/2+sy);ctx.scale(zoom,zoom);ctx.translate(-camera.x,-camera.y);
-    drawGrid();drawBoundary();drawFood();drawPowerups();
+    drawGrid();drawBoundary();drawComboZones();drawFood();drawPowerups();
     // Z-sort snakes: smaller bots first, bigger bots above; player always on top.
     const liveBots=snakes.filter(s=>s.alive&&!s.isPlayer).sort((a,b)=>a.length-b.length);
     for(const s of liveBots)drawSnake(s);
