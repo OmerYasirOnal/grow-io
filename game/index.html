@@ -459,6 +459,18 @@ const COIN_REVIVE_COST = 100;
 // Reusable HUD leaderboard buffer + comparator (drawHUD refreshes ~7×/s).
 const hudLeaderboard = [];
 function LB_BY_LENGTH(a,b){return b.length-a.length;}
+// Tutorial cards — isTR is fixed at module load, so this whole array can be
+// frozen once instead of allocated on every drawTutorial call.
+const TUT_CARDS = [
+  {color:'#00e5ff',icon:'↗',title:isTR?'YÖN':'STEER',
+   desc:isTR?'Ekrana parmak koy, sürükle':'Drag finger to steer'},
+  {color:'#ffab00',icon:'⚡',title:isTR?'HIZ (BOOST)':'BOOST',
+   desc:isTR?'Çift dokun ve basılı tut':'Double-tap & hold',animated:true},
+  {color:'#ff4081',icon:'✕',title:isTR?'EZDİR':'CRASH',
+   desc:isTR?'Büyük yılanları kafanla ezdir':'Make bigger snakes hit your body'},
+  {color:'#76ff03',icon:'⚙',title:isTR?'GÜÇLER':'POWER-UPS',
+   desc:isTR?'⚡ hız · 🛡 kalkan · 🧲 mıknatıs · 👻 hayalet':'⚡ speed · 🛡 shield · 🧲 magnet · 👻 ghost'},
+];
 function spawnPowerup(){
   if(powerups.length>=MAX_POWERUPS)return;
   const t=PU_TYPES[randInt(0,3)];let x,y;
@@ -509,7 +521,7 @@ function createSnake(isPlayer,x,y,skinIdx){
     segments:segs,angle,targetAngle:angle,
     speed:BASE_SPEED,length:10,score:0,alive:true,
     isPlayer:!!isPlayer,personality:isPlayer?null:pers[randInt(0,11)],
-    boosting:false,boostFuel:100,
+    boosting:false,
     powerups:{speed:0,shield:0,magnet:0,ghost:0},
     killCount:0,invulnTimer:0,
     aiTimer:rand(0,0.2),respawnTimer:0,isKing:false,
@@ -678,7 +690,7 @@ function revivePlayer(){
     segs.push({x:hx-Math.cos(a)*SEG_DIST*i,y:hy-Math.sin(a)*SEG_DIST*i});
   }
   player.segments=segs;
-  player.invulnTimer=3;player.boosting=false;player.boostFuel=100;
+  player.invulnTimer=3;player.boosting=false;
   for(const k of PU_TYPES)player.powerups[k]=0;
   state='playing';
   resetTouchState();
@@ -1261,18 +1273,8 @@ function drawTutorial(){
   const cardH=Math.min(82,Math.floor(uh*0.13));
   const startY=oy+uh*0.21;
   const pulse=(Math.sin(frameCount*0.06)+1)/2;
-  const cards=[
-    {color:'#00e5ff',icon:'↗',title:isTR?'YÖN':'STEER',
-     desc:isTR?'Ekrana parmak koy, sürükle':'Drag finger to steer'},
-    {color:'#ffab00',icon:'⚡',title:isTR?'HIZ (BOOST)':'BOOST',
-     desc:isTR?'Çift dokun ve basılı tut · yakıt biter':'Double-tap & hold · uses fuel',animated:true},
-    {color:'#ff4081',icon:'✕',title:isTR?'EZDİR':'CRASH',
-     desc:isTR?'Büyük yılanları kafanla ezdir':'Make bigger snakes hit your body'},
-    {color:'#76ff03',icon:'⚙',title:isTR?'GÜÇLER':'POWER-UPS',
-     desc:isTR?'⚡ hız · 🛡 kalkan · 🧲 mıknatıs · 👻 hayalet':'⚡ speed · 🛡 shield · 🧲 magnet · 👻 ghost'},
-  ];
-  for(let i=0;i<cards.length;i++){
-    const c=cards[i];
+  for(let i=0;i<TUT_CARDS.length;i++){
+    const c=TUT_CARDS[i];
     const cy=startY+i*(cardH+8);
     if(cy+cardH>H-sab-60)break;
     // Card background
@@ -1631,6 +1633,10 @@ $.addEventListener('mousemove',function(e){if(state==='playing'&&player&&player.
 $.addEventListener('mouseup',function(e){if(player)player.boosting=false;});
 $.addEventListener('contextmenu',function(e){e.preventDefault();});
 window.addEventListener('keydown',function(e){
+  // Tutorial overlay swallows everything: any key dismisses it and the
+  // event does NOT fall through to gameplay (otherwise ESC+tutorial open
+  // would resume the game while the overlay was still drawn on top).
+  if(showTutorial){if(e.code==='Space'||e.code==='Enter'||e.code==='Escape'){markTutorialSeen();tutorialReturnState=null;sndMenu();}return;}
   if(e.code==='Space'&&player){player.boosting=true;sndBoost();}
   if(e.code==='Escape'){if(state==='playing'){state='paused';if(player)player.boosting=false;joystick.active=false;sndMenu();}else if(state==='paused'){state='playing';if(player)player.invulnTimer=Math.max(player.invulnTimer,1.2);quitConfirmTimer=0;sndMenu();}}
 });
