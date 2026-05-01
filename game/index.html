@@ -204,6 +204,9 @@ let currentRank = 0, playTime = 0, showTutorial = false;
 let lastLoginDate = '', loginStreak = 0;
 let dailyToast = 0, dailyAmount = 0, dailyStreakVal = 0;
 let quitConfirmTimer = 0, kingToast = 0, coinsAtStart = 0;
+// Hit-pause: short global freeze the moment the player kills or is killed,
+// gives every collision a beat of weight (D3 in the polish plan).
+let hitPauseTimer = 0;
 let pendingSkinBuy = -1;
 let scorePopups = [];
 let soundOn = true, musicOn = true, vibrationOn = true;
@@ -647,6 +650,9 @@ function killSnake(victim,killer,cause){
   // Defensive: clear transient flags so a respawning bot can't inherit
   // boost/joystick state from its previous life.
   victim.boosting=false;
+  // Hit-pause when the player is on either side of the kill (D3): tiny
+  // freeze that makes every meaningful collision feel like it landed.
+  if(victim.isPlayer||(killer&&killer.isPlayer))hitPauseTimer=0.06;
   for(let i=0;i<victim.segments.length;i+=3){
     const seg=victim.segments[i];
     spawnFood(seg.x+rand(-10,10),seg.y+rand(-10,10),2,SKINS[victim.skin].c[0]);
@@ -831,6 +837,7 @@ function startGame(){
   camera.x=WCX;camera.y=WCY;camera.zoom=1;
   state='playing';totalGames++;playTime=0;coinsAtStart=coins;saveStats();
   lastBotStageMin=BOT_STAGES[0].min;
+  hitPauseTimer=0;
   // Reset zone colours to ZONES[0] so a fresh run doesn't trigger a "new
   // zone entered" flash on the first frame just because the last run had
   // already reached a deeper zone.
@@ -852,6 +859,10 @@ function update(dt){
   if(kingToast>0&&state==='playing')kingToast-=dt;
   updateToasts(dt);
   if(state!=='playing')return;
+  // Hit-pause: render keeps running (camera shake / death flash stay
+  // animated) but physics + AI freeze for ~60ms after a player kill or
+  // player death, giving the moment a beat of weight.
+  if(hitPauseTimer>0){hitPauseTimer-=dt;return;}
   playTime+=dt;
   unlockCheckTimer-=dt;if(unlockCheckTimer<=0){unlockCheckTimer=1.5;checkUnlocks();checkBotStageTransition();}
   // 1) AI decisions once per frame (full dt for stable timer accumulation)
