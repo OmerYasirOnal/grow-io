@@ -218,6 +218,10 @@ let soundOn = true, musicOn = true, vibrationOn = true;
 let coins = 0, topScores = [];
 let shakeTimer = 0, shakeMag = 0;
 let kingActive = false, nextKingScore = 2000;
+// Boss snake (D1): rarer, tougher than King, every 5k score points.
+let bossActive = false, nextBossScore = 5000, bossToast = 0;
+const BOSS_SCORE_REWARD = 1000;
+const BOSS_COIN_REWARD = 300;
 let collectCombo = 0, collectTimer = 0;
 let zoneBg = '#0a0a1a', zoneAccent = '#00e5ff';
 let targetZoneBg = '#0a0a1a', targetZoneAccent = '#00e5ff';
@@ -564,6 +568,7 @@ function updateSnake(s,dt){
     s.boosting=false;
   }
   if(s.powerups.speed>0)spd*=1.8;
+  if(s.isBoss)spd*=1.3; // Boss is 30% faster than a normal aggressive bot.
   // Turn
   let diff=normAngle(s.targetAngle-s.angle);
   s.angle+=Math.sign(diff)*Math.min(Math.abs(diff),TURN_SPEED*dt);
@@ -674,8 +679,16 @@ function killSnake(victim,killer,cause){
       score+=500;coins+=150;sndKingSlain();postMsg({type:'HAPTIC',data:'heavy'});
       flashAlpha=0.3;flashColor='#ffd600';nextKingScore=score+2000;
     }
+    if(victim.isBoss&&killer.isPlayer){
+      score+=BOSS_SCORE_REWARD;coins+=BOSS_COIN_REWARD;sndKingSlain();
+      postMsg({type:'HAPTIC',data:'heavy'});
+      flashAlpha=0.5;flashColor='#ffd600';shakeTimer=0.35;shakeMag=8;
+      addScorePopup(victim.segments[0].x,victim.segments[0].y-30,'+'+BOSS_SCORE_REWARD+' BOSS','#ffd600');
+      showToast(isTR?'BOSS YENİLDİ! +'+BOSS_COIN_REWARD+' 🪙':'BOSS DEFEATED! +'+BOSS_COIN_REWARD+' 🪙','success');
+    }
   }
   if(victim.isKing){kingActive=false;if(!nextKingScore||nextKingScore<=score)nextKingScore=score+2000;}
+  if(victim.isBoss){bossActive=false;if(!nextBossScore||nextBossScore<=score)nextBossScore=score+5000;}
   if(victim.isPlayer){
     sndDeath();postMsg({type:'HAPTIC',data:'heavy'});
     flashAlpha=0.4;flashColor='#ff1744';shakeTimer=0.3;shakeMag=8;
@@ -687,7 +700,7 @@ function killSnake(victim,killer,cause){
     // a stale snakes[] entry can't be misinterpreted by the next game's logic.
     // (snakes[] is fully reset by startGame, but state==='dead' still ticks
     // some banners and we want kingToast to settle to a clean baseline.)
-    kingActive=false;kingToast=0;
+    kingActive=false;kingToast=0;bossActive=false;bossToast=0;
     // Death cam: kick off the zoom-in + fade-in window (D4).
     deathCamTimer=DEATH_CAM_S;
     // Smart interstitial trigger: every 3rd death AND score > 50 AND tutorial not active.
@@ -824,6 +837,7 @@ function startGame(){
   initAudio();score=0;collectCombo=0;collectTimer=0;
   foods=[];powerups=[];particles=[];snakes=[];scorePopups=[];
   kingActive=false;nextKingScore=2000;
+  bossActive=false;nextBossScore=5000;bossToast=0;
   spawnInitialFood();
   // Player starts with extra length so they have a real "boost reserve" up front.
   // Lock initial heading to "up" instead of random so the snake doesn't drift
@@ -864,6 +878,7 @@ function update(dt){
   if(dailyToast>0&&!showTutorial)dailyToast-=dt;
   if(quitConfirmTimer>0)quitConfirmTimer-=dt;
   if(kingToast>0&&state==='playing')kingToast-=dt;
+  if(bossToast>0&&state==='playing')bossToast-=dt;
   if(deathCamTimer>0)deathCamTimer-=dt;
   updateToasts(dt);
   if(state!=='playing')return;
@@ -916,6 +931,16 @@ function update(dt){
     const k=createSnake(false);k.name='KING';k.isKing=true;k.length=200+Math.floor(score/50);
     k.personality='aggressive';k.skin=randInt(0,4);snakes.push(k);
     kingToast=3.5;flashAlpha=0.35;flashColor='#ffd600';shakeTimer=0.3;shakeMag=6;postMsg({type:'HAPTIC',data:'heavy'});
+  }
+  // Boss (D1) — rarer, every 5k score, length 300+, +30% speed, big rewards.
+  if(!bossActive&&score>=nextBossScore){
+    bossActive=true;sndKingSlain(); // dramatic chord, reused
+    const b=createSnake(false);b.name='BOSS';b.isBoss=true;b.length=300+Math.floor(score/120);
+    b.personality='aggressive';b.skin=17;b.skill=1.0; // Blood skin, max skill
+    snakes.push(b);
+    bossToast=4;flashAlpha=0.45;flashColor='#ff1744';shakeTimer=0.45;shakeMag=9;
+    postMsg({type:'HAPTIC',data:'heavy'});
+    showToast(isTR?'⚠ BOSS GELDİ!':'⚠ BOSS INCOMING!','error');
   }
   // Camera
   if(player&&player.alive){
@@ -1065,6 +1090,18 @@ function drawSnake(s){
   ctx.beginPath();ctx.arc(ex2+Math.cos(s.angle)*eyeR*0.4,ey2+Math.sin(s.angle)*eyeR*0.4,eyeR*0.5,0,TAU);ctx.fill();
   // King crown
   if(s.isKing){ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=10;const cx=head.x,cy=head.y-w/2-2;ctx.beginPath();ctx.moveTo(cx-6,cy+4);ctx.lineTo(cx-6,cy-2);ctx.lineTo(cx-3,cy+1);ctx.lineTo(cx,cy-4);ctx.lineTo(cx+3,cy+1);ctx.lineTo(cx+6,cy-2);ctx.lineTo(cx+6,cy+4);ctx.closePath();ctx.fill();ctx.shadowBlur=0;}
+  // Boss aura: pulsating red halo + skull mark above the head.
+  if(s.isBoss){
+    const bp=0.5+0.5*Math.sin(frameCount*0.12);
+    ctx.strokeStyle='rgba(255,23,68,'+(0.35+bp*0.45)+')';
+    ctx.lineWidth=3+bp*3;
+    ctx.shadowColor='#ff1744';ctx.shadowBlur=18;
+    ctx.beginPath();ctx.arc(head.x,head.y,w/2+10+bp*6,0,TAU);ctx.stroke();
+    ctx.shadowBlur=0;
+    // Skull mark
+    ctx.fillStyle='#ff1744';ctx.font='900 14px Orbitron';ctx.textAlign='center';
+    ctx.fillText('☠',head.x,head.y-w/2-12);ctx.textAlign='left';
+  }
   // Name
   ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font='bold 10px Rajdhani';ctx.textAlign='center';
   ctx.fillText(s.name,head.x,head.y-w/2-8);
@@ -1115,6 +1152,15 @@ function drawHUD(){
     ctx.font='900 26px Orbitron';ctx.fillText(L.kingArrived,W/2,m+60);ctx.shadowBlur=0;
     ctx.fillStyle='rgba(255,255,255,0.75)';ctx.font='700 13px Rajdhani';
     ctx.fillText(isTR?'Eze bilirsen +500 ve +150 🪙':'Slay it for +500 and +150 🪙',W/2,m+80);
+    ctx.globalAlpha=1;ctx.textAlign='left';
+  }
+  if(bossToast>0){
+    const a=Math.min(bossToast,1);ctx.textAlign='center';ctx.globalAlpha=a;
+    ctx.fillStyle='#ff1744';ctx.shadowColor='#ff1744';ctx.shadowBlur=22;
+    ctx.font='900 28px Orbitron';
+    ctx.fillText(isTR?'☠ BOSS GELDİ!':'☠ BOSS INCOMING!',W/2,m+60);ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(255,255,255,0.78)';ctx.font='700 13px Rajdhani';
+    ctx.fillText(isTR?'Yenersen +'+BOSS_SCORE_REWARD+' skor & +'+BOSS_COIN_REWARD+' 🪙':'Defeat it for +'+BOSS_SCORE_REWARD+' & +'+BOSS_COIN_REWARD+' 🪙',W/2,m+80);
     ctx.globalAlpha=1;ctx.textAlign='left';
   }
   if(player&&player.invulnTimer>0){
