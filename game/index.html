@@ -732,24 +732,37 @@ function checkCollisions(){
     const head=s.segments[0];
     const sw=6+Math.min(s.length*0.03,14);
     const hr=sw/2;
-    // Head-vs-body / head-vs-head — skipped while invulnerable (spawn protection).
+    // Head-vs-body / head-vs-head — skipped while invulnerable (spawn protection),
+    // ghost (phase through), or shield (active barrier blocks the hit).
     // Food + powerup collection still runs below so the player can grow during
     // those first 2.5 s instead of starving.
     let died=false;
-    if(s.invulnTimer<=0&&s.powerups.ghost<=0){
+    if(s.invulnTimer<=0&&s.powerups.ghost<=0&&s.powerups.shield<=0){
       // Wider search radius (covers max possible other-snake body width too).
       const nearby=gridQuery(head.x,head.y,hr+24);
       for(const n of nearby){
         if(n.snake===s||!n.snake.alive)continue;
-        // Invulnerable snakes are intangible to others (spawn protection).
+        // Spawn-invulnerable opponents are completely intangible.
         if(n.snake.invulnTimer>0)continue;
         const seg=n.snake.segments[n.idx];
         const ow=6+Math.min(n.snake.length*0.03,14);
         // Tight threshold without fudge so brushing past misses cleanly while
         // any actual overlap registers. (Substepping handles fast movement.)
         if(dist(head,seg)<hr+ow/2){
-          if(n.idx===0){if(s.length<=n.snake.length)killSnake(s,n.snake,'head');else killSnake(n.snake,s,'head');}
-          else killSnake(s,n.snake,'body');
+          if(n.idx===0){
+            // Head-vs-head: smaller dies — unless the would-be victim has an
+            // active shield, which absorbs the hit and leaves both alive.
+            if(s.length<=n.snake.length){
+              killSnake(s,n.snake,'head');
+            }else{
+              if(n.snake.powerups.shield>0)continue;
+              killSnake(n.snake,s,'head');
+            }
+          }else{
+            // Head-vs-body: head's owner (s) dies — opponent's body stays solid
+            // even when they're shielded, so attackers can't phase through us.
+            killSnake(s,n.snake,'body');
+          }
           died=true;break;
         }
       }
@@ -1770,7 +1783,7 @@ function drawMenu(){
   ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='600 12px Rajdhani';ctx.fillText(skin.name,W/2,py+50);
   // Version stamp (bottom)
   ctx.fillStyle='rgba(255,255,255,0.18)';ctx.font='600 10px Rajdhani';ctx.textAlign='center';
-  ctx.fillText('v1.1.8',W/2,H-sab-8);
+  ctx.fillText('v1.1.9',W/2,H-sab-8);
   ctx.textAlign='left';
 }
 
