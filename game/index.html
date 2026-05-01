@@ -183,6 +183,7 @@ let state = 'menu';
 function resetTouchState(){
   for(const k in touches)delete touches[k];
   joystick.active=false;joystick.dx=0;joystick.dy=0;
+  skinScrollLastY=null;
   if(player)player.boosting=false;
 }
 // When tutorial is opened from a screen other than the initial spawn (e.g.
@@ -207,6 +208,10 @@ let quitConfirmTimer = 0, kingToast = 0, coinsAtStart = 0;
 // Hit-pause: short global freeze the moment the player kills or is killed,
 // gives every collision a beat of weight (D3 in the polish plan).
 let hitPauseTimer = 0;
+// Death cam: timed zoom-in + death-screen fade-in window (D4). Counts down
+// in the banner-decay block so it ticks even though the world is in 'dead'.
+let deathCamTimer = 0;
+const DEATH_CAM_S = 0.55;
 let pendingSkinBuy = -1;
 let scorePopups = [];
 let soundOn = true, musicOn = true, vibrationOn = true;
@@ -683,6 +688,8 @@ function killSnake(victim,killer,cause){
     // (snakes[] is fully reset by startGame, but state==='dead' still ticks
     // some banners and we want kingToast to settle to a clean baseline.)
     kingActive=false;kingToast=0;
+    // Death cam: kick off the zoom-in + fade-in window (D4).
+    deathCamTimer=DEATH_CAM_S;
     // Smart interstitial trigger: every 3rd death AND score > 50 AND tutorial not active.
     // Native side also enforces a 60s cooldown; this guards against ad fatigue early on.
     if(!showTutorial&&deathCount>=3&&deathCount%3===0&&score>=50)postMsg({type:'SHOW_INTERSTITIAL'});
@@ -837,7 +844,7 @@ function startGame(){
   camera.x=WCX;camera.y=WCY;camera.zoom=1;
   state='playing';totalGames++;playTime=0;coinsAtStart=coins;saveStats();
   lastBotStageMin=BOT_STAGES[0].min;
-  hitPauseTimer=0;
+  hitPauseTimer=0;deathCamTimer=0;
   // Reset zone colours to ZONES[0] so a fresh run doesn't trigger a "new
   // zone entered" flash on the first frame just because the last run had
   // already reached a deeper zone.
@@ -857,6 +864,7 @@ function update(dt){
   if(dailyToast>0&&!showTutorial)dailyToast-=dt;
   if(quitConfirmTimer>0)quitConfirmTimer-=dt;
   if(kingToast>0&&state==='playing')kingToast-=dt;
+  if(deathCamTimer>0)deathCamTimer-=dt;
   updateToasts(dt);
   if(state!=='playing')return;
   // Hit-pause: render keeps running (camera shake / death flash stay
@@ -927,7 +935,15 @@ function render(){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.fillStyle=zoneBg;ctx.fillRect(0,0,W,H);
   if(state==='playing'||state==='dead'||state==='paused'){
-    const zoom=camera.zoom;
+    // Death cam: while the timer is running, ease the zoom up to ~1.25× over
+    // the window so the moment of death feels heavier before the death screen
+    // takes over. Cube-easing (1 - (1-t)^3) ramps fast then settles.
+    let zoom=camera.zoom;
+    if(state==='dead'&&deathCamTimer>0){
+      const tProg=1-(deathCamTimer/DEATH_CAM_S);
+      const eased=1-(1-tProg)*(1-tProg)*(1-tProg);
+      zoom=camera.zoom*(1+0.25*eased);
+    }
     const sx=shakeTimer>0?rand(-shakeMag,shakeMag):0,sy=shakeTimer>0?rand(-shakeMag,shakeMag):0;
     ctx.save();ctx.translate(W/2+sx,H/2+sy);ctx.scale(zoom,zoom);ctx.translate(-camera.x,-camera.y);
     drawGrid();drawBoundary();drawFood();drawPowerups();
@@ -1438,6 +1454,11 @@ function drawMenu(){
 
 // ═══ DEATH SCREEN ═══
 function drawDeathScreen(){
+  // Death cam fade: alpha ramps 0→1 across DEATH_CAM_S so the death screen
+  // doesn't slam in the same frame the snake dies — gives the zoom-in beat
+  // some breathing room. Once the timer expires, stays at full alpha.
+  const fade=deathCamTimer>0?1-(deathCamTimer/DEATH_CAM_S):1;
+  ctx.globalAlpha=Math.max(0,Math.min(1,fade));
   ctx.fillStyle='rgba(0,0,0,0.78)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';
   const uh=H-sat-sab,oy=sat;
   // Title
@@ -1504,6 +1525,7 @@ function drawDeathScreen(){
     ctx.font='600 13px Rajdhani';
     ctx.fillText(L.adNotAvailable,W/2,ry+bh+18);
   }
+  ctx.globalAlpha=1;
   ctx.textAlign='left';
 }
 
@@ -1581,7 +1603,13 @@ function drawSkinSelect(){
 }
 
 // ═══ INPUT ═══
+// touches: { [identifier:number]: 'joy' | 'joyboost' } — ONLY numeric identifiers,
+// never any other keys. Keep that invariant so iteration doesn't need a guard.
 let touches={};
+// Skin-select scroll uses its own state instead of stuffing a string key into
+// the touches map (used to be touches._lastY which made every iteration need
+// a `k !== '_lastY'` filter).
+let skinScrollLastY=null;
 let lastTapEndAt=0,lastTapX=0,lastTapY=0;
 const DOUBLE_TAP_MS=320,DOUBLE_TAP_DIST=100;
 $.addEventListener('touchstart',function(e){
@@ -1594,12 +1622,12 @@ $.addEventListener('touchstart',function(e){
   if(state==='dead'){handleDeathTap(t.clientX,t.clientY);return;}
   if(state==='paused'){handlePauseTap(t.clientX,t.clientY);return;}
   if(state==='leaderboard'){handleLeaderboardTap(t.clientX,t.clientY);return;}
-  if(state==='skinselect'){handleSkinTap(t.clientX,t.clientY);touches._lastY=t.clientY;return;}
+  if(state==='skinselect'){handleSkinTap(t.clientX,t.clientY);skinScrollLastY=t.clientY;return;}
   if(state==='playing'){
     // Pause button (bottom-left) — only remaining HUD button
     if(dist({x:t.clientX,y:t.clientY},{x:50,y:H-sab-60})<46){state='paused';if(player)player.boosting=false;joystick.active=false;sndMenu();return;}
     // If a second finger is already on screen → boost while held
-    let extraFinger=false;for(const k in touches){if(k!=='_lastY'&&touches[k]){extraFinger=true;break;}}
+    let extraFinger=false;for(const k in touches){if(touches[k]){extraFinger=true;break;}}
     // Double-tap-and-hold: tap recently, this touch begins quickly nearby → boost
     const now=performance.now();
     const isDoubleTap=(now-lastTapEndAt<DOUBLE_TAP_MS)&&Math.hypot(t.clientX-lastTapX,t.clientY-lastTapY)<DOUBLE_TAP_DIST;
@@ -1613,7 +1641,7 @@ $.addEventListener('touchstart',function(e){
 
 $.addEventListener('touchmove',function(e){
   e.preventDefault();
-  if(state==='skinselect'){const t=e.changedTouches[0];skinScroll-=t.clientY-(touches._lastY||t.clientY);skinScroll=Math.max(0,Math.min(skinScroll,Math.max(0,Math.ceil(SKINS.length/5)*70-H+sat+sab+128)));touches._lastY=t.clientY;return;}
+  if(state==='skinselect'){const t=e.changedTouches[0];skinScroll-=t.clientY-(skinScrollLastY!=null?skinScrollLastY:t.clientY);skinScroll=Math.max(0,Math.min(skinScroll,Math.max(0,Math.ceil(SKINS.length/5)*70-H+sat+sab+128)));skinScrollLastY=t.clientY;return;}
   for(let i=0;i<e.changedTouches.length;i++){
     const t=e.changedTouches[i];
     const kind=touches[t.identifier];
@@ -1639,14 +1667,14 @@ $.addEventListener('touchend',function(e){
   // After removing this touch, recompute who owns the joystick.
   // If any joy/joyboost touch is still down, transfer joystick anchor to it
   // so the player can lift one finger but keep steering with the other.
-  let owner=null;for(const k in touches){if(k==='_lastY')continue;const v=touches[k];if(v==='joy'||v==='joyboost'){owner=k;break;}}
+  let owner=null;for(const k in touches){const v=touches[k];if(v==='joy'||v==='joyboost'){owner=k;break;}}
   if(owner==null){
     joystick.active=false;
     if(player)player.boosting=false;
   }
   // (joystick anchor is updated in touchstart; on transfer, the stick keeps
   //  its previous direction until the surviving finger moves and re-anchors.)
-  touches._lastY=undefined;
+  skinScrollLastY=null;
 },{passive:false});
 
 // Mouse
@@ -1778,7 +1806,7 @@ function autoPauseIfPlaying(){
     state='paused';
     if(player)player.boosting=false;
     joystick.active=false;
-    for(const k in touches)if(k!=='_lastY')delete touches[k];
+    for(const k in touches)delete touches[k];
     quitConfirmTimer=0;
   }
   // Always halt music tick on background — saves CPU + battery, avoids
