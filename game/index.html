@@ -596,14 +596,16 @@ function createSnake(isPlayer,x,y,skinIdx){
   const segs=[{x,y}];
   for(let i=1;i<10;i++)segs.push({x:x-Math.cos(angle)*SEG_DIST*i,y:y-Math.sin(angle)*SEG_DIST*i});
   // Pre-seed the path history so the body has a trail to follow on frame 1.
-  // Without this, a snake that grows fast would leave its segments stacked
-  // on top of each other until the head had walked far enough.
+  // cumDist is monotonic-increasing absolute distance traveled by the head;
+  // pathHistory[0] (head) holds the LARGEST cumDist, older entries decrease.
+  // Seeds therefore start at 0 (head) and go negative going back, so head
+  // begins at cumDist=0 and grows as the snake moves.
   const pathHistory=[];
   for(let i=0;i<200;i++){
     pathHistory.push({
       x:x-Math.cos(angle)*i*0.5,
       y:y-Math.sin(angle)*i*0.5,
-      cumDist:i*0.5
+      cumDist:-i*0.5
     });
   }
   const pers=['collector','collector','collector','collector','collector','aggressive','aggressive','aggressive','coiler','coiler','ambush','ambush'];
@@ -685,16 +687,19 @@ function updateSnake(s,dt){
     s.pathHistory.unshift({x:head.x,y:head.y,cumDist:prevCum+movedH});
   }
   // Walk the (descending-by-recency) history with a single advancing pointer.
+  // pathHistory[0] = head with the largest cumDist; entries get smaller cumDist
+  // moving toward the tail end. To place segment i at i*SEG_DIST behind the
+  // head we look for the first entry whose cumDist is <= headCum - i*SEG_DIST.
   // HYBRID: when the recorded path isn't deep enough yet (long snake +
   // recent growth), fall back to chain-pull physics for the segments past
   // the path's reach so segments don't all stack on the last known point.
+  const headCum=s.pathHistory.length?s.pathHistory[0].cumDist:0;
   let hIdx=0;
-  const lastCum=s.pathHistory.length?s.pathHistory[s.pathHistory.length-1].cumDist:0;
   for(let i=1;i<s.segments.length;i++){
-    const targetDist=i*SEG_DIST;
-    while(hIdx<s.pathHistory.length-1&&s.pathHistory[hIdx].cumDist<targetDist)hIdx++;
+    const targetCum=headCum-i*SEG_DIST;
+    while(hIdx<s.pathHistory.length-1&&s.pathHistory[hIdx].cumDist>targetCum)hIdx++;
     const p=s.pathHistory[hIdx];
-    if(p&&p.cumDist>=targetDist){
+    if(p&&p.cumDist<=targetCum){
       s.segments[i].x=p.x;s.segments[i].y=p.y;
     }else{
       // Path doesn't reach this segment — chain-follow from the previous one.
@@ -704,9 +709,10 @@ function updateSnake(s,dt){
       if(d>SEG_DIST){curr.x+=(dx/d)*(d-SEG_DIST);curr.y+=(dy/d)*(d-SEG_DIST);}
     }
   }
-  // Trim history past the last segment (+ a small safety margin).
+  // Trim history older than the tail (oldest entries have the smallest cumDist).
   const maxNeeded=(s.segments.length+2)*SEG_DIST;
-  while(s.pathHistory.length>2&&s.pathHistory[s.pathHistory.length-1].cumDist>maxNeeded){
+  const minKeep=headCum-maxNeeded;
+  while(s.pathHistory.length>2&&s.pathHistory[s.pathHistory.length-1].cumDist<minKeep){
     s.pathHistory.pop();
   }
   while(s.segments.length<s.length){const t=s.segments[s.segments.length-1];s.segments.push({x:t.x,y:t.y});}
@@ -1018,13 +1024,15 @@ function startGame(){
     player.segments[i].y=WCY-Math.sin(player.angle)*SEG_DIST*i;
   }
   // Re-seed path history along the new heading so the spawn body has a
-  // proper trail to follow from frame 1.
+  // proper trail to follow from frame 1. cumDist is negative for fake
+  // pre-spawn history so the head's running cumDist (=0 at spawn) is
+  // always the largest entry in pathHistory.
   player.pathHistory=[];
   for(let i=0;i<300;i++){
     player.pathHistory.push({
       x:WCX-Math.cos(player.angle)*i*0.5,
       y:WCY-Math.sin(player.angle)*i*0.5,
-      cumDist:i*0.5
+      cumDist:-i*0.5
     });
   }
   player._lastHX=WCX;player._lastHY=WCY;
@@ -1411,7 +1419,8 @@ function drawHUD(){
     ctx.fillStyle=col;ctx.fillRect(W/2-30,m+58,60*pip,2);
     ctx.shadowBlur=0;ctx.textAlign='left';
   }
-  let py=m+100;
+  // Powerup labels render below the AI stage badge so they never overlap.
+  let py=m+118;
   if(player){for(const k of PU_TYPES){if(player.powerups[k]>0){ctx.fillStyle=PU_COLORS[k];ctx.font='bold 14px Rajdhani';ctx.fillText(PU_ICONS[k]+' '+player.powerups[k].toFixed(1)+'s',15,py);py+=18;}}}
   // Leaderboard — refresh ranking ~7×/s. Was filter+sort+slice every frame
   // (3 array allocations × 60fps = constant GC churn for a static-ish view).
@@ -1761,7 +1770,7 @@ function drawMenu(){
   ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='600 12px Rajdhani';ctx.fillText(skin.name,W/2,py+50);
   // Version stamp (bottom)
   ctx.fillStyle='rgba(255,255,255,0.18)';ctx.font='600 10px Rajdhani';ctx.textAlign='center';
-  ctx.fillText('v1.1.7',W/2,H-sab-8);
+  ctx.fillText('v1.1.8',W/2,H-sab-8);
   ctx.textAlign='left';
 }
 
