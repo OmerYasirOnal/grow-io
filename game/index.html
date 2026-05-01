@@ -361,17 +361,22 @@ function showToast(text,kind){
 function updateToasts(dt){for(let i=toastList.length-1;i>=0;i--){const t=toastList[i];t.age+=dt;t.life-=dt;if(t.life<=0)toastList.splice(i,1);}}
 function drawToasts(){
   if(!toastList.length)return;
+  // Loop-invariant ctx state: every toast uses the same alignment, font,
+  // line width, and background colour — set them once before the loop.
   ctx.textAlign='center';
+  ctx.font='700 14px Rajdhani';
+  ctx.lineWidth=2;
   const baseY=sat+72;
+  const bx=W/2-150;
   for(let i=0;i<toastList.length;i++){
     const t=toastList[i];const a=Math.min(1,t.life/0.5)*Math.min(1,t.age/0.18);
     const y=baseY+i*46;
     const col=t.kind==='success'?'#00e676':(t.kind==='error'?'#ff5252':'#00e5ff');
     ctx.globalAlpha=a;
-    ctx.fillStyle='rgba(10,10,30,0.92)';rr(W/2-150,y-20,300,40,12);ctx.fill();
-    ctx.strokeStyle=col;ctx.lineWidth=2;rr(W/2-150,y-20,300,40,12);ctx.stroke();
+    ctx.fillStyle='rgba(10,10,30,0.92)';rr(bx,y-20,300,40,12);ctx.fill();
+    ctx.strokeStyle=col;rr(bx,y-20,300,40,12);ctx.stroke();
     ctx.fillStyle=col;ctx.shadowColor=col;ctx.shadowBlur=8;
-    ctx.font='700 14px Rajdhani';ctx.fillText(t.text,W/2,y+5);ctx.shadowBlur=0;
+    ctx.fillText(t.text,W/2,y+5);ctx.shadowBlur=0;
   }
   ctx.globalAlpha=1;ctx.textAlign='left';
 }
@@ -808,14 +813,30 @@ function startGame(){
   kingActive=false;nextKingScore=2000;
   spawnInitialFood();
   // Player starts with extra length so they have a real "boost reserve" up front.
+  // Lock initial heading to "up" instead of random so the snake doesn't drift
+  // in an unexpected direction during the spawn-protection window.
   player=createSnake(true,WCX,WCY,currentSkin);
   player.length=22;player.invulnTimer=2.5;
+  player.angle=-PI/2;player.targetAngle=-PI/2;
+  // Re-anchor the body trail so the visible segments line up behind the head
+  // along the new facing — otherwise the random initial trail drawn by
+  // createSnake stays one frame before physics catches up.
+  for(let i=0;i<player.segments.length;i++){
+    player.segments[i].x=WCX-Math.cos(player.angle)*SEG_DIST*i;
+    player.segments[i].y=WCY-Math.sin(player.angle)*SEG_DIST*i;
+  }
   snakes.push(player);
   for(let i=0;i<MAX_BOTS;i++){const b=createSnake(false);b.length=randInt(10,40);snakes.push(b);}
   for(let i=0;i<50;i++){const a=rand(0,TAU),r=rand(30,200);spawnFood(WCX+Math.cos(a)*r,WCY+Math.sin(a)*r,1);}
   camera.x=WCX;camera.y=WCY;camera.zoom=1;
   state='playing';totalGames++;playTime=0;coinsAtStart=coins;saveStats();
   lastBotStageMin=BOT_STAGES[0].min;
+  // Reset zone colours to ZONES[0] so a fresh run doesn't trigger a "new
+  // zone entered" flash on the first frame just because the last run had
+  // already reached a deeper zone.
+  const z0=ZONES[0];
+  zoneBg=z0.bg;targetZoneBg=z0.bg;
+  zoneAccent=z0.accent;targetZoneAccent=z0.accent;
   resetTouchState();
 }
 
