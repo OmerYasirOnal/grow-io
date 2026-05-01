@@ -240,7 +240,13 @@ function drawComboZones(){
   ctx.setLineDash([]);
   ctx.textAlign='left';
 }
-let collectCombo = 0, collectTimer = 0;
+// Kill-based combo: chains while the player keeps killing. Window resets
+// to KILL_COMBO_S on every fresh kill; tiered multiplier kicks in at 2 / 3 / 5.
+let killCombo = 0, killComboTimer = 0;
+const KILL_COMBO_S = 8;
+function killComboMult(){
+  return killCombo>=5?3:(killCombo>=3?2:(killCombo>=2?1.5:1));
+}
 let zoneBg = '#0a0a1a', zoneAccent = '#00e5ff';
 let targetZoneBg = '#0a0a1a', targetZoneAccent = '#00e5ff';
 let gdt = 0;
@@ -260,7 +266,7 @@ function tone(f,t,d,v,dl){
     o.start(now);o.stop(now+(d||0.1)+0.01);
   }catch(e){}
 }
-function sndCollect(){const f=440+collectCombo*40;tone(f,'sine',0.04,0.05);tone(f*1.5,'sine',0.03,0.03,0.02);}
+function sndCollect(){tone(520,'sine',0.04,0.05);tone(780,'sine',0.03,0.03,0.02);}
 function sndKill(){tone(200,'sawtooth',0.15,0.07);tone(400,'square',0.1,0.04,0.02);}
 function sndDeath(){tone(300,'sawtooth',0.4,0.06);tone(200,'sawtooth',0.3,0.04,0.1);tone(100,'sawtooth',0.3,0.03,0.2);}
 function sndPowerup(){tone(660,'sine',0.08,0.05);tone(880,'sine',0.08,0.04,0.08);tone(1100,'sine',0.1,0.05,0.16);}
@@ -589,6 +595,17 @@ function createSnake(isPlayer,x,y,skinIdx){
   const angle=rand(0,TAU);
   const segs=[{x,y}];
   for(let i=1;i<10;i++)segs.push({x:x-Math.cos(angle)*SEG_DIST*i,y:y-Math.sin(angle)*SEG_DIST*i});
+  // Pre-seed the path history so the body has a trail to follow on frame 1.
+  // Without this, a snake that grows fast would leave its segments stacked
+  // on top of each other until the head had walked far enough.
+  const pathHistory=[];
+  for(let i=0;i<200;i++){
+    pathHistory.push({
+      x:x-Math.cos(angle)*i*0.5,
+      y:y-Math.sin(angle)*i*0.5,
+      cumDist:i*0.5
+    });
+  }
   const pers=['collector','collector','collector','collector','collector','aggressive','aggressive','aggressive','coiler','coiler','ambush','ambush'];
   return{
     id:Math.random().toString(36).substr(2,6),
@@ -597,11 +614,12 @@ function createSnake(isPlayer,x,y,skinIdx){
     segments:segs,angle,targetAngle:angle,
     speed:BASE_SPEED,length:10,score:0,alive:true,
     isPlayer:!!isPlayer,personality:isPlayer?null:pers[randInt(0,11)],
-    boosting:false,
+    boosting:false,boostFuel:100,
     powerups:{speed:0,shield:0,magnet:0,ghost:0},
     killCount:0,invulnTimer:0,
     aiTimer:rand(0,0.2),respawnTimer:0,isKing:false,
-    skill:0.5+rand(0,0.5) // per-bot skill multiplier 0.5..1
+    skill:0.5+rand(0,0.5), // per-bot skill multiplier 0.5..1
+    pathHistory:pathHistory,_lastHX:x,_lastHY:y
   };
 }
 
@@ -611,20 +629,15 @@ function updateSnake(s,dt){
   if(s.invulnTimer>0)s.invulnTimer-=dt;
   for(const k of PU_TYPES)if(s.powerups[k]>0)s.powerups[k]-=dt;
   let spd=s.speed;
-  // Boost is now length-based: each boosted segment is shed as food. Below MIN
-  // length the snake can't boost — preventing infinite-press abuse and turning
-  // length itself into the boost resource.
-  const MIN_BOOST_LEN=10;
-  if(s.boosting&&s.length>MIN_BOOST_LEN){
-    spd*=2;
-    if(frameCount%6===0){
-      s.length--;
-      const tail=s.segments[s.segments.length-1];
-      spawnFood(tail.x,tail.y,1,SKINS[s.skin].c[0]);
-    }
-  }else if(s.boosting){
-    // Forced off when too short
-    s.boosting=false;
+  // Timer-based boost. boostFuel goes 0..100. Burns ~50/sec while held
+  // (≈2 s of full boost), regens 25/sec when off (≈4 s to refill). No
+  // segment shed — that loop fed the player's own dropped tail back as
+  // +3 popups during boost, which was the spam the user reported.
+  if(s.boosting){
+    if(s.boostFuel<=0){s.boostFuel=0;s.boosting=false;}
+    else{spd*=2;s.boostFuel-=50*dt;}
+  }else{
+    if(s.boostFuel<100)s.boostFuel=Math.min(100,s.boostFuel+25*dt);
   }
   if(s.powerups.speed>0)spd*=1.8;
   if(s.isBoss)spd*=1.3; // Boss is 30% faster than a normal aggressive bot.
@@ -635,12 +648,28 @@ function updateSnake(s,dt){
   // Move head
   s.segments[0].x+=Math.cos(s.angle)*spd*dt;
   s.segments[0].y+=Math.sin(s.angle)*spd*dt;
-  // Boundary
+  // Boundary — slide along the rim instead of clamping or killing.
+  // Project the head back onto the safe ring and rotate the heading to
+  // the tangent so the snake glides around the edge instead of getting
+  // stuck pushing into it (or instantly dying like before).
   const head=s.segments[0];
   const dfc=dist(head,{x:WCX,y:WCY});
-  if(dfc>WR-10){
-    const c=clampWorld(head.x,head.y);head.x=c.x;head.y=c.y;
-    if(dfc>WR){killSnake(s,null,'boundary');return;}
+  if(dfc>WR-12){
+    const ang=Math.atan2(head.y-WCY,head.x-WCX);
+    head.x=WCX+Math.cos(ang)*(WR-12);
+    head.y=WCY+Math.sin(ang)*(WR-12);
+    // If we're aiming outward, deflect to the closer tangent direction.
+    const inward=ang+PI;
+    const aimDelta=normAngle(s.angle-inward);
+    if(Math.abs(aimDelta)<PI/2){
+      const t1=ang+PI/2,t2=ang-PI/2;
+      const d1=Math.abs(normAngle(s.angle-t1));
+      const d2=Math.abs(normAngle(s.angle-t2));
+      const tan=d1<d2?t1:t2;
+      s.angle=tan;
+      // Bots: keep targetAngle in sync so the AI doesn't fight the slide.
+      if(!s.isPlayer)s.targetAngle=tan;
+    }
   }
   // Path-following body: record where the head has been (with cumulative
   // distance along the trail), then place each segment at the point that
@@ -656,12 +685,24 @@ function updateSnake(s,dt){
     s.pathHistory.unshift({x:head.x,y:head.y,cumDist:prevCum+movedH});
   }
   // Walk the (descending-by-recency) history with a single advancing pointer.
+  // HYBRID: when the recorded path isn't deep enough yet (long snake +
+  // recent growth), fall back to chain-pull physics for the segments past
+  // the path's reach so segments don't all stack on the last known point.
   let hIdx=0;
+  const lastCum=s.pathHistory.length?s.pathHistory[s.pathHistory.length-1].cumDist:0;
   for(let i=1;i<s.segments.length;i++){
     const targetDist=i*SEG_DIST;
     while(hIdx<s.pathHistory.length-1&&s.pathHistory[hIdx].cumDist<targetDist)hIdx++;
     const p=s.pathHistory[hIdx];
-    if(p){s.segments[i].x=p.x;s.segments[i].y=p.y;}
+    if(p&&p.cumDist>=targetDist){
+      s.segments[i].x=p.x;s.segments[i].y=p.y;
+    }else{
+      // Path doesn't reach this segment — chain-follow from the previous one.
+      const prev=s.segments[i-1],curr=s.segments[i];
+      const dx=prev.x-curr.x,dy=prev.y-curr.y;
+      const d=Math.sqrt(dx*dx+dy*dy);
+      if(d>SEG_DIST){curr.x+=(dx/d)*(d-SEG_DIST);curr.y+=(dy/d)*(d-SEG_DIST);}
+    }
   }
   // Trim history past the last segment (+ a small safety margin).
   const maxNeeded=(s.segments.length+2)*SEG_DIST;
@@ -722,14 +763,15 @@ function checkCollisions(){
         const grow=Math.max(1,Math.floor(f.val*growMul));
         s.length+=grow;s.score+=f.val;
         if(s.isPlayer){
-          const comboMult=collectCombo>=10?3:(collectCombo>=5?2:1);
+          // Combo is no longer driven by food (it was the source of the
+          // +3+3 spam). Only the combo-zone x2.5 still applies; the
+          // kill-combo multiplier kicks in on snake kills, not pellets.
           const inZone=isInComboZone(head.x,head.y);
-          const totalMult=comboMult*(inZone?COMBO_ZONE_MULT:1);
-          const pts=Math.max(1,Math.floor(f.val*totalMult));
-          // Coin economy nerf: food now pays half its score in coins (was 1:1).
+          const mult=inZone?COMBO_ZONE_MULT:1;
+          const pts=Math.max(1,Math.floor(f.val*mult));
+          // Coin economy nerf: food pays half its score in coins.
           score+=pts;coins+=Math.max(1,Math.floor(pts*0.5));
-          collectCombo++;collectTimer=0.8;
-          if(totalMult>1||collectCombo%3===0)addScorePopup(f.x,f.y,'+'+pts,inZone?'#ffd600':(comboMult>1?'#ffd600':f.color));
+          if(inZone)addScorePopup(f.x,f.y,'+'+pts,'#ffd600');
           sndCollect();postMsg({type:'HAPTIC',data:'light'});
         }
         spawnP(f.x,f.y,f.color,3,60,2);foods.splice(i,1);
@@ -763,9 +805,17 @@ function killSnake(victim,killer,cause){
   if(killer&&killer.alive){
     killer.killCount++;killer.score+=100;
     if(killer.isPlayer){
-      // Kill coin reward halved as part of the economy nerf.
-      score+=100;coins+=12;totalKills++;sndKill();postMsg({type:'HAPTIC',data:'medium'});
-      addScorePopup(victim.segments[0].x,victim.segments[0].y,'+100','#ff1744');
+      // Bump kill-combo BEFORE awarding so multiplier reflects this kill.
+      killCombo++;killComboTimer=KILL_COMBO_S;
+      const km=killComboMult();
+      const baseScore=100,baseCoin=12;
+      const gainScore=Math.floor(baseScore*km);
+      const gainCoin=Math.max(1,Math.floor(baseCoin*km));
+      score+=gainScore;coins+=gainCoin;totalKills++;
+      sndKill();postMsg({type:'HAPTIC',data:'medium'});
+      const popupCol=km>=3?'#ff1744':(km>=2?'#ffab00':'#ff80ab');
+      const popupTxt=km>1?'+'+gainScore+' COMBO x'+killCombo:'+'+gainScore;
+      addScorePopup(victim.segments[0].x,victim.segments[0].y,popupTxt,popupCol);
       if(victim.length>killer.length){const bonus=Math.min((victim.length-killer.length)*2,500);score+=bonus;coins+=Math.ceil(bonus/6);flashAlpha=0.25;flashColor='#ff1744';addScorePopup(victim.segments[0].x,victim.segments[0].y-25,'+'+bonus+' BIG','#ffd600');}
       spawnP(victim.segments[0].x,victim.segments[0].y,SKINS[victim.skin].c[0],20,120,3);
     }
@@ -817,7 +867,7 @@ function revivePlayer(){
   player.segments=segs;
   // Reset path history so the new body trail starts from the revive point.
   player.pathHistory=[];player._lastHX=hx;player._lastHY=hy;
-  player.invulnTimer=3;player.boosting=false;
+  player.invulnTimer=3;player.boosting=false;player.boostFuel=100;
   for(const k of PU_TYPES)player.powerups[k]=0;
   state='playing';
   resetTouchState();
@@ -897,7 +947,7 @@ function updateBot(bot,dt){
         const px=nearSmall.segments[0].x+Math.cos(nearSmall.angle)*nearSmall.speed*t*0.55;
         const py=nearSmall.segments[0].y+Math.sin(nearSmall.angle)*nearSmall.speed*t*0.55;
         bot.targetAngle=angleTo(head,{x:px,y:py});
-        bot.boosting=useBoost&&nsD<260&&bot.length>16;break;
+        bot.boosting=useBoost&&nsD<260&&bot.boostFuel>30;break;
       }
       if(nearFood)bot.targetAngle=angleTo(head,nearFood);else bot.targetAngle+=rand(-0.3,0.3);
       bot.boosting=false;break;
@@ -913,7 +963,7 @@ function updateBot(bot,dt){
     case 'ambush':
       if(nearSmall&&nsD<sightSmall*0.45){
         bot.targetAngle=angleTo(head,nearSmall.segments[0]);
-        bot.boosting=useBoost&&bot.length>18;break;
+        bot.boosting=useBoost&&bot.boostFuel>40;break;
       }
       bot.boosting=false;
       if(nearFood&&nfD<sight*0.6)bot.targetAngle=angleTo(head,nearFood);else bot.targetAngle+=rand(-0.2,0.2);break;
@@ -948,7 +998,7 @@ function updateZone(){
 
 // ═══ GAME INIT ═══
 function startGame(){
-  initAudio();score=0;collectCombo=0;collectTimer=0;
+  initAudio();score=0;killCombo=0;killComboTimer=0;
   foods=[];powerups=[];particles=[];snakes=[];scorePopups=[];
   kingActive=false;nextKingScore=2000;
   bossActive=false;nextBossScore=5000;bossToast=0;
@@ -967,6 +1017,17 @@ function startGame(){
     player.segments[i].x=WCX-Math.cos(player.angle)*SEG_DIST*i;
     player.segments[i].y=WCY-Math.sin(player.angle)*SEG_DIST*i;
   }
+  // Re-seed path history along the new heading so the spawn body has a
+  // proper trail to follow from frame 1.
+  player.pathHistory=[];
+  for(let i=0;i<300;i++){
+    player.pathHistory.push({
+      x:WCX-Math.cos(player.angle)*i*0.5,
+      y:WCY-Math.sin(player.angle)*i*0.5,
+      cumDist:i*0.5
+    });
+  }
+  player._lastHX=WCX;player._lastHY=WCY;
   snakes.push(player);
   for(let i=0;i<MAX_BOTS;i++){
     const sp=pickSafeBotSpawn(500);
@@ -991,7 +1052,7 @@ function update(dt){
   gdt=dt;frameCount++;
   if(flashAlpha>0)flashAlpha-=dt*2;
   if(shakeTimer>0)shakeTimer-=dt;
-  if(collectTimer>0){collectTimer-=dt;if(collectTimer<=0)collectCombo=0;}
+  if(killComboTimer>0){killComboTimer-=dt;if(killComboTimer<=0)killCombo=0;}
   if(unlockToast>0)unlockToast-=dt;
   if(dailyToast>0&&!showTutorial)dailyToast-=dt;
   if(quitConfirmTimer>0)quitConfirmTimer-=dt;
@@ -1077,7 +1138,10 @@ function update(dt){
     // Smooth power-curve auto-zoom: 1.0 (small) → 0.45 (very long). Faster early, plateaus.
     const t=Math.min(1,player.length/800);
     const targetZoom=1.0-(1-Math.pow(1-t,1.6))*0.55;
-    camera.zoom=lerp(camera.zoom,targetZoom,0.025);
+    // Asymmetric lerp: zoom IN faster (snake just lost length, the player
+    // wants to feel the recovery) and OUT slower so growth feels gradual.
+    const zLerp=targetZoom>camera.zoom?0.07:0.03;
+    camera.zoom=lerp(camera.zoom,targetZoom,zLerp);
   }
   updateZone();
   if(player&&player.alive&&player.boosting){const tail=player.segments[player.segments.length-1];spawnP(tail.x,tail.y,SKINS[player.skin].c[0],1,40,2);}
@@ -1336,12 +1400,15 @@ function drawHUD(){
     ctx.fillText('🛡 '+L.protected+' '+Math.ceil(player.invulnTimer)+'s',W/2,m+20);
     ctx.shadowBlur=0;ctx.textAlign='left';
   }
-  if(collectCombo>=3){
-    const mult=collectCombo>=10?3:(collectCombo>=5?2:1);
-    const col=collectCombo>=10?'#ff1744':(collectCombo>=5?'#ffab00':'#00e676');
+  if(killCombo>=2){
+    const mult=killComboMult();
+    const col=mult>=3?'#ff1744':(mult>=2?'#ffab00':'#ff80ab');
     ctx.textAlign='center';ctx.fillStyle=col;ctx.shadowColor=col;ctx.shadowBlur=10;
-    ctx.font='900 22px Orbitron';ctx.fillText('COMBO x'+collectCombo,W/2,m+34);
-    if(mult>1){ctx.font='700 12px Rajdhani';ctx.fillText(mult+'x '+L.score,W/2,m+52);}
+    ctx.font='900 22px Orbitron';ctx.fillText('KILL COMBO x'+killCombo,W/2,m+34);
+    ctx.font='700 12px Rajdhani';ctx.fillText(mult+'x '+L.score+' & 🪙',W/2,m+52);
+    // Tiny timer pip so the player can see the chain about to break
+    const pip=Math.max(0,Math.min(1,killComboTimer/KILL_COMBO_S));
+    ctx.fillStyle=col;ctx.fillRect(W/2-30,m+58,60*pip,2);
     ctx.shadowBlur=0;ctx.textAlign='left';
   }
   let py=m+100;
@@ -1403,23 +1470,20 @@ function drawJoystick(){
   ctx.fillStyle='rgba(0,229,255,0.25)';ctx.shadowColor='#00e5ff';ctx.shadowBlur=8;
   ctx.beginPath();ctx.arc(kx,ky,20,0,TAU);ctx.fill();ctx.shadowBlur=0;
 }
-// Boost reserve indicator: length itself is the fuel. Bar fills toward 1
-// once player has enough segments to spend (length above min); empty/red below.
+// Boost fuel indicator (timer-based now). Bar empties as the player holds
+// boost (~2 s to drain), refills while they're not boosting (~4 s to fill).
 function drawBoostFuel(){
   if(!player||!player.alive)return;
   const fw=110,fh=8,fx=W-fw-12,fy=sat+108;
   ctx.fillStyle='rgba(255,255,255,0.08)';rr(fx,fy,fw,fh,4);ctx.fill();
-  const MIN=10;
-  const reserve=Math.max(0,player.length-MIN);
-  // Show reserve relative to a "comfortable" 30-segment buffer.
-  const pct=Math.max(0,Math.min(1,reserve/30));
-  const ready=reserve>0;
-  const col=player.boosting?'#ffab00':(ready?(pct>0.4?'#00e5ff':'#ffab00'):'#ff5252');
+  const pct=Math.max(0,Math.min(1,(player.boostFuel||0)/100));
+  const empty=pct<=0;
+  const col=player.boosting?'#ffab00':(empty?'#ff5252':(pct>0.4?'#00e5ff':'#ffab00'));
   ctx.fillStyle=col;ctx.shadowColor=col;ctx.shadowBlur=player.boosting?10:4;
   rr(fx,fy,fw*pct,fh,4);ctx.fill();ctx.shadowBlur=0;
-  ctx.fillStyle=ready?'rgba(255,255,255,0.5)':'rgba(255,82,82,0.85)';
+  ctx.fillStyle=empty?'rgba(255,82,82,0.85)':'rgba(255,255,255,0.5)';
   ctx.font='700 9px Rajdhani';ctx.textAlign='right';
-  ctx.fillText(L.boost+(ready?'':' ✕'),fx+fw,fy-3);ctx.textAlign='left';
+  ctx.fillText(L.boost+(empty?' ✕':''),fx+fw,fy-3);ctx.textAlign='left';
 }
 
 // ═══ PAUSE BUTTON ═══
