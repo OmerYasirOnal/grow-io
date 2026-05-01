@@ -109,60 +109,33 @@ const JOY_RADIUS = 55, JOY_DEAD = 5;
 const PI = Math.PI, TAU = PI*2;
 
 // ═══ SKINS (52) ═══
+// 20-skin curated lineup. Free 5 → score 6 → kill 4 → length 3 → games 1
+// → Rainbow as the final hardest. Names + colours stay close to the
+// originals so existing localStorage migrations don't lose much.
 const SKINS = [
-  {name:'Classic',c:['#00e5ff','#006064'],p:'solid',u:'free'},
-  {name:'Lime',c:['#76ff03','#33691e'],p:'solid',u:'free'},
-  {name:'Sunset',c:['#ff9100','#e65100'],p:'solid',u:'free'},
-  {name:'Hot Pink',c:['#ff4081','#880e4f'],p:'solid',u:'free'},
-  {name:'Gold',c:['#ffd600','#f57f17'],p:'solid',u:'free'},
-  {name:'Neon Blue',c:['#448aff','#1a237e'],p:'neon',u:'s500'},
-  {name:'Neon Green',c:['#69f0ae','#1b5e20'],p:'neon',u:'s1000'},
-  {name:'Neon Pink',c:['#ff80ab','#880e4f'],p:'neon',u:'s1500'},
-  {name:'Ice',c:['#80d8ff','#01579b'],p:'gradient',u:'s2000'},
-  {name:'Lava',c:['#ff6e40','#bf360c'],p:'gradient',u:'s2500'},
-  {name:'Toxic',c:['#b2ff59','#827717'],p:'gradient',u:'s3000'},
-  {name:'Royal',c:['#7c4dff','#311b92'],p:'neon',u:'s4000'},
-  {name:'Fire',c:['#ff3d00','#ff9100'],p:'striped',u:'s5000'},
-  {name:'Ocean',c:['#00b0ff','#00e5ff'],p:'striped',u:'s6000'},
-  {name:'Forest',c:['#00c853','#76ff03'],p:'striped',u:'s8000'},
-  {name:'Candy',c:['#f50057','#ff4081'],p:'striped',u:'s10000'},
-  {name:'Shadow',c:['#616161','#212121'],p:'solid',u:'k5'},
-  {name:'Blood',c:['#d50000','#b71c1c'],p:'neon',u:'k10'},
-  {name:'Venom',c:['#76ff03','#d500f9'],p:'striped',u:'k20'},
-  {name:'Reaper',c:['#ffffff','#424242'],p:'striped',u:'k50'},
-  {name:'Skull',c:['#e0e0e0','#37474f'],p:'gradient',u:'k100'},
-  {name:'Dragon',c:['#ff6d00','#d50000'],p:'neon',u:'k200'},
-  {name:'Python',c:['#ffeb3b','#4caf50'],p:'striped',u:'l50'},
-  {name:'Anaconda',c:['#8bc34a','#33691e'],p:'gradient',u:'l100'},
-  {name:'Cobra',c:['#9c27b0','#e91e63'],p:'neon',u:'l150'},
-  {name:'Viper',c:['#00bcd4','#009688'],p:'gradient',u:'l200'},
-  {name:'Titan',c:['#ff5722','#795548'],p:'striped',u:'l300'},
-  {name:'Leviathan',c:['#3f51b5','#1a237e'],p:'neon',u:'l500'},
-  {name:'Pixel',c:['#00e676','#1de9b6'],p:'dotted',u:'g10'},
-  {name:'Retro',c:['#ffab00','#ff6d00'],p:'dotted',u:'g25'},
-  {name:'Glitch',c:['#e040fb','#7c4dff'],p:'dotted',u:'g50'},
-  {name:'Matrix',c:['#00e676','#1b5e20'],p:'dotted',u:'g100'},
-  {name:'Cyber',c:['#18ffff','#f50057'],p:'dotted',u:'g200'},
-  {name:'Vapor',c:['#ea80fc','#80d8ff'],p:'gradient',u:'g500'},
-  {name:'Rainbow',c:['#ff0000','#ff0000'],p:'rainbow',u:'s15000'},
-  {name:'Prism',c:['#ffffff','#ffffff'],p:'rainbow',u:'s20000'},
-  {name:'Aurora',c:['#69f0ae','#448aff'],p:'rainbow',u:'s30000'},
-  {name:'Inferno',c:['#ff6d00','#dd2c00'],p:'neon',u:'s40000'},
-  {name:'Glacier',c:['#e0f7fa','#006064'],p:'neon',u:'s50000'},
-  {name:'Phantom',c:['#b388ff','#6200ea'],p:'neon',u:'k30'},
-  {name:'Storm',c:['#90caf9','#0d47a1'],p:'gradient',u:'k75'},
-  {name:'Eclipse',c:['#ffd740','#000000'],p:'gradient',u:'l250'},
-  {name:'Nebula',c:['#ce93d8','#4a148c'],p:'neon',u:'l400'},
-  {name:'Crimson',c:['#ef5350','#c62828'],p:'solid',u:'s7000'},
-  {name:'Jade',c:['#26a69a','#004d40'],p:'solid',u:'s9000'},
-  {name:'Amber',c:['#ffca28','#ff6f00'],p:'solid',u:'k15'},
-  {name:'Onyx',c:['#455a64','#000000'],p:'solid',u:'g75'},
-  {name:'Pearl',c:['#fafafa','#bdbdbd'],p:'gradient',u:'g150'},
-  {name:'Sapphire',c:['#2979ff','#0d47a1'],p:'neon',u:'g300'},
-  {name:'Emerald',c:['#00e676','#00695c'],p:'neon',u:'g400'},
-  {name:'Ruby',c:['#ff1744','#b71c1c'],p:'neon',u:'l350'},
-  {name:'Diamond',c:['#e0f7fa','#b2ebf2'],p:'rainbow',u:'s25000'},
+  {name:'Classic',  c:['#00e5ff','#006064'],p:'solid',   u:'free'},
+  {name:'Lime',     c:['#76ff03','#33691e'],p:'solid',   u:'free'},
+  {name:'Sunset',   c:['#ff9100','#e65100'],p:'solid',   u:'free'},
+  {name:'Hot Pink', c:['#ff4081','#880e4f'],p:'solid',   u:'free'},
+  {name:'Gold',     c:['#ffd600','#f57f17'],p:'solid',   u:'free'},
+  {name:'Neon Blue',c:['#448aff','#1a237e'],p:'neon',    u:'s1000'},
+  {name:'Neon Green',c:['#69f0ae','#1b5e20'],p:'neon',   u:'s2500'},
+  {name:'Ice',      c:['#80d8ff','#01579b'],p:'gradient',u:'s5000'},
+  {name:'Lava',     c:['#ff6e40','#bf360c'],p:'gradient',u:'s8000'},
+  {name:'Royal',    c:['#7c4dff','#311b92'],p:'neon',    u:'s12000'},
+  {name:'Fire',     c:['#ff3d00','#ff9100'],p:'striped', u:'s15000'},
+  {name:'Forest',   c:['#00c853','#76ff03'],p:'striped', u:'k20'},
+  {name:'Blood',    c:['#d50000','#b71c1c'],p:'neon',    u:'k50'},
+  {name:'Reaper',   c:['#ffffff','#424242'],p:'striped', u:'k100'},
+  {name:'Phantom',  c:['#b388ff','#6200ea'],p:'neon',    u:'k150'},
+  {name:'Python',   c:['#ffeb3b','#4caf50'],p:'striped', u:'l100'},
+  {name:'Cobra',    c:['#9c27b0','#e91e63'],p:'neon',    u:'l250'},
+  {name:'Leviathan',c:['#3f51b5','#1a237e'],p:'neon',    u:'l500'},
+  {name:'Matrix',   c:['#00e676','#1b5e20'],p:'dotted',  u:'g100'},
+  {name:'Rainbow',  c:['#ff0000','#ff0000'],p:'rainbow', u:'s30000'},
 ];
+// Stable index for Boss skin (decoupled from layout reordering).
+const BOSS_SKIN_IDX = SKINS.findIndex(s => s.name === 'Blood');
 
 // ═══ ZONES ═══
 const ZONES = [
@@ -224,7 +197,7 @@ let kingActive = false, nextKingScore = 2000;
 // Boss snake (D1): rarer, tougher than King, every 5k score points.
 let bossActive = false, nextBossScore = 5000, bossToast = 0;
 const BOSS_SCORE_REWARD = 1000;
-const BOSS_COIN_REWARD = 300;
+const BOSS_COIN_REWARD = 180; // Was 300; nerfed alongside the wider economy.
 // Combo zones (D2): two roaming bonus circles. Anything the player eats with
 // their head inside one is multiplied. Zones move every 30 s to keep the
 // camera flowing.
@@ -365,7 +338,13 @@ window.addEventListener('message',function(e){
 function saveHS(){if(score>highScore){highScore=score;try{localStorage.setItem('growio_hs',String(highScore));}catch(e){}postMsg({type:'SAVE_HIGH_SCORE',data:highScore});}}
 function loadHSLocal(){try{const v=parseInt(localStorage.getItem('growio_hs'));if(!isNaN(v)&&v>highScore)highScore=v;}catch(e){}}
 function saveSkins(){try{localStorage.setItem('growio_skins',JSON.stringify(unlockedSkins));}catch(e){}postMsg({type:'SAVE_SKIN_STATE',data:{current:currentSkin,unlocked:unlockedSkins.slice()}});}
-function loadSkins(){try{const d=localStorage.getItem('growio_skins');if(d)unlockedSkins=JSON.parse(d);}catch(e){}}
+function loadSkins(){
+  try{const d=localStorage.getItem('growio_skins');if(d)unlockedSkins=JSON.parse(d);}catch(e){}
+  // Migrate: drop indexes outside the new SKINS layout, ensure free 5 stay.
+  unlockedSkins=(Array.isArray(unlockedSkins)?unlockedSkins:[]).filter(i=>typeof i==='number'&&i>=0&&i<SKINS.length);
+  for(let i=0;i<5;i++)if(!unlockedSkins.includes(i))unlockedSkins.push(i);
+  if(currentSkin<0||currentSkin>=SKINS.length)currentSkin=0;
+}
 function saveStats(){try{localStorage.setItem('growio_stats',JSON.stringify({tk:totalKills,tg:totalGames,cs:currentSkin,td:deathCount}));}catch(e){}postMsg({type:'SAVE_STATS',data:{totalKills:totalKills,totalGames:totalGames,totalDeaths:deathCount}});postMsg({type:'SAVE_SKIN_STATE',data:{current:currentSkin,unlocked:unlockedSkins.slice()}});}
 function loadStats(){try{const d=localStorage.getItem('growio_stats');if(d){const s=JSON.parse(d);totalKills=s.tk||0;totalGames=s.tg||0;currentSkin=s.cs||0;deathCount=s.td||0;}}catch(e){}}
 function saveCoins(){try{localStorage.setItem('growio_coins',String(coins));}catch(e){}postMsg({type:'SAVE_COINS',data:coins});}
@@ -382,12 +361,24 @@ function checkDailyBonus(){
   const today=todayKey();if(today===lastLoginDate)return;
   const y=new Date();y.setDate(y.getDate()-1);const yKey=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();
   loginStreak=(lastLoginDate===yKey)?loginStreak+1:1;lastLoginDate=today;saveLogin();
-  const bonus=Math.min(50+loginStreak*10,500);coins+=bonus;saveCoins();
+  // Daily bonus floor + cap halved (was 50+streak*10, max 500).
+  const bonus=Math.min(25+loginStreak*5,250);coins+=bonus;saveCoins();
   dailyToast=5;dailyAmount=bonus;dailyStreakVal=loginStreak;
 }
 function markTutorialSeen(){try{localStorage.setItem('growio_tutorial','1');}catch(e){}showTutorial=false;}
 function addTopScore(s){if(s<=0){currentRank=0;return;}const entry={s,d:Date.now()};topScores.push(entry);topScores.sort((a,b)=>b.s-a.s);topScores=topScores.slice(0,10);saveTopScores();currentRank=topScores.indexOf(entry)+1;}
-function skinPrice(sk){const u=sk.u;if(u==='free')return 0;const t=u[0],v=parseInt(u.slice(1));if(t==='s')return Math.max(50,Math.floor(v/10));if(t==='k')return Math.max(100,v*20);if(t==='l')return Math.max(100,v*3);if(t==='g')return Math.max(100,v*10);return 500;}
+// Tougher prices: every category roughly doubled vs. v1.1.x. The plan asks
+// for a steeper economy curve so Rainbow at s30000 → 6000 coin and the
+// other tiers scale with it.
+function skinPrice(sk){
+  const u=sk.u;if(u==='free')return 0;
+  const t=u[0],v=parseInt(u.slice(1));
+  if(t==='s')return Math.max(100,Math.floor(v/5));   // s1000 → 200,  s30000 → 6000
+  if(t==='k')return Math.max(200,v*40);              // k20  → 800,  k150  → 6000
+  if(t==='l')return Math.max(200,v*6);               // l100 → 600,  l500  → 3000
+  if(t==='g')return Math.max(200,v*20);              // g100 → 2000
+  return 1000;
+}
 loadHSLocal();
 loadSkins(); loadStats(); loadCoins(); loadSettings(); loadTopScores(); loadTutorialSeen(); loadLogin(); checkDailyBonus();
 // Defer bridge LOADs until the next frame so window.ReactNativeWebView is
@@ -651,12 +642,31 @@ function updateSnake(s,dt){
     const c=clampWorld(head.x,head.y);head.x=c.x;head.y=c.y;
     if(dfc>WR){killSnake(s,null,'boundary');return;}
   }
-  // Follow
+  // Path-following body: record where the head has been (with cumulative
+  // distance along the trail), then place each segment at the point that
+  // sits exactly i*SEG_DIST behind the head along that path. Means the
+  // body actually walks the same line the head walked, instead of cutting
+  // the inside of every turn the way pure pull-physics did.
+  if(!s.pathHistory){s.pathHistory=[];s._lastHX=head.x;s._lastHY=head.y;}
+  const dxH=head.x-s._lastHX,dyH=head.y-s._lastHY;
+  const movedH=Math.sqrt(dxH*dxH+dyH*dyH);
+  s._lastHX=head.x;s._lastHY=head.y;
+  if(movedH>0.01){
+    const prevCum=s.pathHistory.length?s.pathHistory[0].cumDist:0;
+    s.pathHistory.unshift({x:head.x,y:head.y,cumDist:prevCum+movedH});
+  }
+  // Walk the (descending-by-recency) history with a single advancing pointer.
+  let hIdx=0;
   for(let i=1;i<s.segments.length;i++){
-    const prev=s.segments[i-1],curr=s.segments[i];
-    const dx=prev.x-curr.x,dy=prev.y-curr.y;
-    const d=Math.sqrt(dx*dx+dy*dy);
-    if(d>SEG_DIST){curr.x+=(dx/d)*(d-SEG_DIST);curr.y+=(dy/d)*(d-SEG_DIST);}
+    const targetDist=i*SEG_DIST;
+    while(hIdx<s.pathHistory.length-1&&s.pathHistory[hIdx].cumDist<targetDist)hIdx++;
+    const p=s.pathHistory[hIdx];
+    if(p){s.segments[i].x=p.x;s.segments[i].y=p.y;}
+  }
+  // Trim history past the last segment (+ a small safety margin).
+  const maxNeeded=(s.segments.length+2)*SEG_DIST;
+  while(s.pathHistory.length>2&&s.pathHistory[s.pathHistory.length-1].cumDist>maxNeeded){
+    s.pathHistory.pop();
   }
   while(s.segments.length<s.length){const t=s.segments[s.segments.length-1];s.segments.push({x:t.x,y:t.y});}
   if(s.segments.length>s.length)s.segments.length=s.length;
@@ -716,7 +726,9 @@ function checkCollisions(){
           const inZone=isInComboZone(head.x,head.y);
           const totalMult=comboMult*(inZone?COMBO_ZONE_MULT:1);
           const pts=Math.max(1,Math.floor(f.val*totalMult));
-          score+=pts;coins+=pts;collectCombo++;collectTimer=0.8;
+          // Coin economy nerf: food now pays half its score in coins (was 1:1).
+          score+=pts;coins+=Math.max(1,Math.floor(pts*0.5));
+          collectCombo++;collectTimer=0.8;
           if(totalMult>1||collectCombo%3===0)addScorePopup(f.x,f.y,'+'+pts,inZone?'#ffd600':(comboMult>1?'#ffd600':f.color));
           sndCollect();postMsg({type:'HAPTIC',data:'light'});
         }
@@ -751,13 +763,14 @@ function killSnake(victim,killer,cause){
   if(killer&&killer.alive){
     killer.killCount++;killer.score+=100;
     if(killer.isPlayer){
-      score+=100;coins+=25;totalKills++;sndKill();postMsg({type:'HAPTIC',data:'medium'});
+      // Kill coin reward halved as part of the economy nerf.
+      score+=100;coins+=12;totalKills++;sndKill();postMsg({type:'HAPTIC',data:'medium'});
       addScorePopup(victim.segments[0].x,victim.segments[0].y,'+100','#ff1744');
-      if(victim.length>killer.length){const bonus=Math.min((victim.length-killer.length)*2,500);score+=bonus;coins+=Math.ceil(bonus/3);flashAlpha=0.25;flashColor='#ff1744';addScorePopup(victim.segments[0].x,victim.segments[0].y-25,'+'+bonus+' BIG','#ffd600');}
+      if(victim.length>killer.length){const bonus=Math.min((victim.length-killer.length)*2,500);score+=bonus;coins+=Math.ceil(bonus/6);flashAlpha=0.25;flashColor='#ff1744';addScorePopup(victim.segments[0].x,victim.segments[0].y-25,'+'+bonus+' BIG','#ffd600');}
       spawnP(victim.segments[0].x,victim.segments[0].y,SKINS[victim.skin].c[0],20,120,3);
     }
     if(victim.isKing&&killer.isPlayer){
-      score+=500;coins+=150;sndKingSlain();postMsg({type:'HAPTIC',data:'heavy'});
+      score+=500;coins+=80;sndKingSlain();postMsg({type:'HAPTIC',data:'heavy'});
       flashAlpha=0.3;flashColor='#ffd600';nextKingScore=score+2000;
     }
     if(victim.isBoss&&killer.isPlayer){
@@ -802,6 +815,8 @@ function revivePlayer(){
     segs.push({x:hx-Math.cos(a)*SEG_DIST*i,y:hy-Math.sin(a)*SEG_DIST*i});
   }
   player.segments=segs;
+  // Reset path history so the new body trail starts from the revive point.
+  player.pathHistory=[];player._lastHX=hx;player._lastHY=hy;
   player.invulnTimer=3;player.boosting=false;
   for(const k of PU_TYPES)player.powerups[k]=0;
   state='playing';
@@ -1049,7 +1064,7 @@ function update(dt){
     bossActive=true;sndKingSlain(); // dramatic chord, reused
     const bsp=pickSafeBotSpawn(700);
     const b=createSnake(false,bsp.x,bsp.y);b.name='BOSS';b.isBoss=true;b.length=300+Math.floor(score/120);
-    b.personality='aggressive';b.skin=17;b.skill=1.0; // Blood skin, max skill
+    b.personality='aggressive';b.skin=BOSS_SKIN_IDX;b.skill=1.0; // Blood skin, max skill
     snakes.push(b);
     bossToast=4;flashAlpha=0.45;flashColor='#ff1744';shakeTimer=0.45;shakeMag=9;
     postMsg({type:'HAPTIC',data:'heavy'});
@@ -1084,7 +1099,7 @@ function render(){
     }
     const sx=shakeTimer>0?rand(-shakeMag,shakeMag):0,sy=shakeTimer>0?rand(-shakeMag,shakeMag):0;
     ctx.save();ctx.translate(W/2+sx,H/2+sy);ctx.scale(zoom,zoom);ctx.translate(-camera.x,-camera.y);
-    drawGrid();drawBoundary();drawComboZones();drawFood();drawPowerups();
+    drawGrid();drawStars();drawBoundary();drawComboZones();drawFood();drawPowerups();
     // Z-sort snakes: smaller bots first, bigger bots above; player always on top.
     const liveBots=snakes.filter(s=>s.alive&&!s.isPlayer).sort((a,b)=>a.length-b.length);
     for(const s of liveBots)drawSnake(s);
@@ -1125,6 +1140,42 @@ function drawGrid(){
   for(let x=x1;x<=x2;x+=gs){ctx.moveTo(x,y1);ctx.lineTo(x,y2);}
   for(let y=y1;y<=y2;y+=gs){ctx.moveTo(x1,y);ctx.lineTo(x2,y);}
   ctx.stroke();
+}
+// Drifting parallax stars: a small persistent set of slow points scattered
+// across the world. They tint with the current zone accent so each biome
+// reads differently. Cheap (~80 dots) and stays under 1ms render.
+const BG_STARS = [];
+const BG_STAR_COUNT = 80;
+(function seedStars(){
+  for(let i=0;i<BG_STAR_COUNT;i++){
+    BG_STARS.push({
+      x:rand(0,WS),y:rand(0,WS),
+      r:rand(0.6,2.2),
+      a:rand(0.18,0.55),
+      tw:rand(0,TAU), // twinkle phase
+      tws:rand(0.5,2.0), // twinkle speed
+      vx:rand(-3,3),vy:rand(-3,3) // very slow drift
+    });
+  }
+})();
+function drawStars(){
+  // Cull to viewport with a margin so stars at edges still appear.
+  const vx1=camera.x-W/2/camera.zoom-50,vx2=camera.x+W/2/camera.zoom+50;
+  const vy1=camera.y-H/2/camera.zoom-50,vy2=camera.y+H/2/camera.zoom+50;
+  ctx.fillStyle=zoneAccent;
+  for(let i=0;i<BG_STARS.length;i++){
+    const s=BG_STARS[i];
+    // Drift + wrap inside the world
+    s.x+=s.vx*gdt;s.y+=s.vy*gdt;
+    if(s.x<0)s.x+=WS;else if(s.x>WS)s.x-=WS;
+    if(s.y<0)s.y+=WS;else if(s.y>WS)s.y-=WS;
+    if(s.x<vx1||s.x>vx2||s.y<vy1||s.y>vy2)continue;
+    s.tw+=s.tws*gdt;
+    const a=s.a*(0.6+0.4*Math.sin(s.tw));
+    ctx.globalAlpha=a;
+    ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,TAU);ctx.fill();
+  }
+  ctx.globalAlpha=1;
 }
 function drawBoundary(){
   ctx.beginPath();ctx.arc(WCX,WCY,WR,0,TAU);
