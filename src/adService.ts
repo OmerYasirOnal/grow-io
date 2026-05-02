@@ -240,14 +240,6 @@ export function showRewarded(callback: (reward: string) => void): boolean {
   }
 }
 
-export function isInterstitialReady(): boolean {
-  return sdkReady && interstitialLoaded;
-}
-
-export function isRewardedReady(): boolean {
-  return sdkReady && rewardedLoaded;
-}
-
 export function getAdStatus(): AdStatus {
   return snapshot();
 }
