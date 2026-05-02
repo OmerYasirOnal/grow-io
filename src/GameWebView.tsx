@@ -9,7 +9,7 @@ import {
   type Stats, type SkinState,
 } from './storage';
 import {
-  showInterstitial, showRewarded, isInterstitialReady, isRewardedReady,
+  showInterstitial, showRewarded, getAdStatus,
   setAdStatusListener,
 } from './adService';
 
@@ -68,10 +68,7 @@ export default function GameWebView() {
           break;
         }
         case 'CHECK_AD_READY': {
-          sendToGame({
-            type: 'AD_STATUS',
-            data: { interstitial: isInterstitialReady(), rewarded: isRewardedReady() },
-          });
+          sendToGame({ type: 'AD_STATUS', data: getAdStatus() });
           break;
         }
         case 'SAVE_HIGH_SCORE':

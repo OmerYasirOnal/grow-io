@@ -174,7 +174,7 @@ let currentSkin = 0, unlockedSkins = [0,1,2,3,4];
 let skinScroll = 0, killerName = '';
 let frameCount = 0, foodSpawnTimer = 0, puSpawnTimer = 0;
 let flashAlpha = 0, flashColor = '#fff';
-let adFailedMsg = 0, buyFailedMsg = 0;
+let adFailedMsg = 0, buyFailedMsg = 0, hasRevived = false;
 let unlockToast = 0, unlockToastName = '';
 let unlockCheckTimer = 0;
 let currentRank = 0, playTime = 0, showTutorial = false;
@@ -305,7 +305,7 @@ function stopMusic(){
 }
 
 // ═══ POSTMESSAGE BRIDGE ═══
-let adReady = {interstitial:false, rewarded:false};
+let adReady = {interstitial:false, rewarded:false, rewardedLoading:false};
 let hostBridgeSeen = false;
 function postMsg(m){try{
   if(m.type==='HAPTIC'&&!vibrationOn)return;
@@ -323,7 +323,7 @@ window.addEventListener('message',function(e){
       showToast(L.adNotAvailable,'error');
       if(reward==='continue'){adFailedMsg=3;}
     }
-    if(m.type==='AD_STATUS'&&m.data){adReady={interstitial:!!m.data.interstitial,rewarded:!!m.data.rewarded};}
+    if(m.type==='AD_STATUS'&&m.data){adReady={interstitial:!!m.data.interstitial,rewarded:!!m.data.rewarded,rewardedLoading:!!m.data.rewardedLoading};}
     if(m.type==='HIGH_SCORE_LOADED'){highScore=Math.max(highScore,m.data||0);try{localStorage.setItem('growio_hs',String(highScore));}catch(e){}}
     if(m.type==='COINS_LOADED'){const rn=m.data||0;if(rn>coins){coins=rn;try{localStorage.setItem('growio_coins',String(coins));}catch(e){}}}
     if(m.type==='STATS_LOADED'&&m.data){
@@ -365,9 +365,9 @@ function loadLogin(){try{const d=localStorage.getItem('growio_login');if(d){cons
 function saveLogin(){try{localStorage.setItem('growio_login',JSON.stringify({d:lastLoginDate,s:loginStreak}));}catch(e){}}
 function checkDailyBonus(){
   const today=todayKey();if(today===lastLoginDate)return;
+  if(!lastLoginDate){lastLoginDate=today;saveLogin();return;}
   const y=new Date();y.setDate(y.getDate()-1);const yKey=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();
   loginStreak=(lastLoginDate===yKey)?loginStreak+1:1;lastLoginDate=today;saveLogin();
-  // Daily bonus floor + cap halved (was 50+streak*10, max 500).
   const bonus=Math.min(25+loginStreak*5,250);coins+=bonus;saveCoins();
   dailyToast=5;dailyAmount=bonus;dailyStreakVal=loginStreak;
 }
@@ -439,6 +439,7 @@ function drawToasts(){
 function rand(a,b){return a+Math.random()*(b-a);}
 function randInt(a,b){return Math.floor(rand(a,b+1));}
 function dist(a,b){const dx=a.x-b.x,dy=a.y-b.y;return Math.sqrt(dx*dx+dy*dy);}
+function dist2(a,b){const dx=a.x-b.x,dy=a.y-b.y;return dx*dx+dy*dy;}
 function angleTo(a,b){return Math.atan2(b.y-a.y,b.x-a.x);}
 function normAngle(a){while(a>PI)a-=TAU;while(a<-PI)a+=TAU;return a;}
 function lerp(a,b,t){return a+(b-a)*t;}
@@ -536,8 +537,6 @@ const PU_TYPES = ['speed','shield','magnet','ghost'];
 const PU_COLORS = {speed:'#ffab00',shield:'#40c4ff',magnet:'#76ff03',ghost:'#d500f9'};
 const PU_DUR = {speed:8,shield:10,magnet:12,ghost:6};
 const PU_ICONS = {speed:'⚡',shield:'🛡',magnet:'🧲',ghost:'👻'};
-// Coin price for the death-screen revive fallback when no rewarded ad is loaded.
-const COIN_REVIVE_COST = 100;
 // Reusable HUD leaderboard buffer + comparator (drawHUD refreshes ~7×/s).
 const hudLeaderboard = [];
 function LB_BY_LENGTH(a,b){return b.length-a.length;}
@@ -570,11 +569,11 @@ function spawnPowerup(){
 // Bots get smarter / faster / more aggressive as the player progresses.
 // Each stage tunes: reactionTime, sightRange, boostUse, aggression, planning.
 const BOT_STAGES = [
-  { min: 0,    name: 'Rookie',  reactMul: 1.7,  sightMul: 0.7,  boostMul: 0.3,  aggression: 0.30 },
-  { min: 500,  name: 'Hunter',  reactMul: 1.3,  sightMul: 0.85, boostMul: 0.55, aggression: 0.50 },
-  { min: 2000, name: 'Veteran', reactMul: 1.0,  sightMul: 1.0,  boostMul: 0.75, aggression: 0.70 },
-  { min: 5000, name: 'Elite',   reactMul: 0.75, sightMul: 1.15, boostMul: 0.9,  aggression: 0.85 },
-  { min: 12000,name: 'Apex',    reactMul: 0.55, sightMul: 1.3,  boostMul: 1.0,  aggression: 1.0  },
+  { min: 0,    name: 'Rookie',  reactMul: 1.5,  sightMul: 0.75, boostMul: 0.4,  aggression: 0.40 },
+  { min: 300,  name: 'Hunter',  reactMul: 1.15, sightMul: 0.9,  boostMul: 0.6,  aggression: 0.55 },
+  { min: 1200, name: 'Veteran', reactMul: 0.85, sightMul: 1.05, boostMul: 0.8,  aggression: 0.75 },
+  { min: 3500, name: 'Elite',   reactMul: 0.65, sightMul: 1.2,  boostMul: 0.95, aggression: 0.90 },
+  { min: 8000, name: 'Apex',    reactMul: 0.45, sightMul: 1.4,  boostMul: 1.0,  aggression: 1.0  },
 ];
 function currentBotStage(){let s=BOT_STAGES[0];for(const st of BOT_STAGES)if(score>=st.min)s=st;return s;}
 let lastBotStageMin=-1;
@@ -620,7 +619,7 @@ function createSnake(isPlayer,x,y,skinIdx){
     powerups:{speed:0,shield:0,magnet:0,ghost:0},
     killCount:0,invulnTimer:0,
     aiTimer:rand(0,0.2),respawnTimer:0,isKing:false,
-    skill:0.5+rand(0,0.5), // per-bot skill multiplier 0.5..1
+    skill:0.6+rand(0,0.4), // per-bot skill multiplier 0.6..1
     pathHistory:pathHistory,_lastHX:x,_lastHY:y
   };
 }
@@ -748,7 +747,7 @@ function checkCollisions(){
         const ow=6+Math.min(n.snake.length*0.03,14);
         // Tight threshold without fudge so brushing past misses cleanly while
         // any actual overlap registers. (Substepping handles fast movement.)
-        if(dist(head,seg)<hr+ow/2){
+        const collR=hr+ow/2;if(dist2(head,seg)<collR*collR){
           if(n.idx===0){
             // Head-vs-head: smaller dies — unless the would-be victim has an
             // active shield, which absorbs the hit and leaves both alive.
@@ -772,9 +771,9 @@ function checkCollisions(){
     // Food
     const magR=s.powerups.magnet>0?200:0;
     for(let i=foods.length-1;i>=0;i--){
-      const f=foods[i];const d=dist(head,f);
-      if(magR>0&&d<magR&&d>hr+f.r){const a=angleTo(f,head);f.x+=Math.cos(a)*200*gdt;f.y+=Math.sin(a)*200*gdt;}
-      if(d<hr+f.r){
+      const f=foods[i];const d2=dist2(head,f);
+      if(magR>0&&d2<magR*magR&&d2>(hr+f.r)*(hr+f.r)){const a=angleTo(f,head);f.x+=Math.cos(a)*200*gdt;f.y+=Math.sin(a)*200*gdt;}
+      if(d2<(hr+f.r)*(hr+f.r)){
         // Diminishing growth: each food contributes more to a small snake
         // than to a giant. Floor(1.5 + 1.5 * 200/(200+length)): length 0 → 3,
         // length 100 → 2, length 300 → 2, length 800 → 1. Min 1 always.
@@ -789,7 +788,7 @@ function checkCollisions(){
           const mult=inZone?COMBO_ZONE_MULT:1;
           const pts=Math.max(1,Math.floor(f.val*mult));
           // Coin economy nerf: food pays half its score in coins.
-          score+=pts;coins+=Math.max(1,Math.floor(pts*0.5));
+          score+=pts;coins+=Math.max(1,Math.floor(pts*0.3));
           if(inZone)addScorePopup(f.x,f.y,'+'+pts,'#ffd600');
           sndCollect();postMsg({type:'HAPTIC',data:'light'});
         }
@@ -799,7 +798,7 @@ function checkCollisions(){
     // Powerups
     for(let i=powerups.length-1;i>=0;i--){
       const pu=powerups[i];
-      if(dist(head,pu)<hr+15){
+      if(dist2(head,pu)<(hr+15)*(hr+15)){
         s.powerups[pu.type]=PU_DUR[pu.type];
         if(s.isPlayer){sndPowerup();postMsg({type:'HAPTIC',data:'light'});}
         spawnP(pu.x,pu.y,PU_COLORS[pu.type],10,100,3);powerups.splice(i,1);
@@ -874,6 +873,7 @@ function killSnake(victim,killer,cause){
 
 function revivePlayer(){
   if(!player)return;
+  hasRevived=true;
   player.alive=true;player.length=Math.max(10,Math.floor(player.length*0.7));
   // Rebuild a body trailing behind the head along the current facing angle,
   // instead of stacking every segment on the head and letting them fan out
@@ -1017,7 +1017,7 @@ function updateZone(){
 
 // ═══ GAME INIT ═══
 function startGame(){
-  initAudio();score=0;killCombo=0;killComboTimer=0;
+  initAudio();score=0;killCombo=0;killComboTimer=0;hasRevived=false;
   foods=[];powerups=[];particles=[];snakes=[];scorePopups=[];
   kingActive=false;nextKingScore=2000;
   bossActive=false;nextBossScore=5000;bossToast=0;
@@ -1052,7 +1052,7 @@ function startGame(){
   snakes.push(player);
   for(let i=0;i<MAX_BOTS;i++){
     const sp=pickSafeBotSpawn(500);
-    const b=createSnake(false,sp.x,sp.y);b.length=randInt(10,40);snakes.push(b);
+    const b=createSnake(false,sp.x,sp.y);b.length=randInt(15,50);snakes.push(b);
   }
   for(let i=0;i<50;i++){const a=rand(0,TAU),r=rand(30,200);spawnFood(WCX+Math.cos(a)*r,WCY+Math.sin(a)*r,1);}
   camera.x=WCX;camera.y=WCY;camera.zoom=1;
@@ -1828,38 +1828,44 @@ function drawDeathScreen(){
   }
   // Buttons
   const bw=Math.min(260,W-40),bh=50;
-  const showAd=adReady.rewarded;
-  const showCoinRevive=!showAd&&coins>=COIN_REVIVE_COST;
-  // Primary revive button
-  const ry=oy+uh*0.62;
-  if(showAd){
-    ctx.fillStyle='#7c4dff';ctx.shadowColor='#7c4dff';ctx.shadowBlur=12;rr(W/2-bw/2,ry,bw,bh,25);ctx.fill();ctx.shadowBlur=0;
-    ctx.fillStyle='#fff';ctx.font='900 17px Orbitron';ctx.fillText(L.watchRevive,W/2,ry+32);
-  }else if(showCoinRevive){
-    ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=12;rr(W/2-bw/2,ry,bw,bh,25);ctx.fill();ctx.shadowBlur=0;
-    ctx.fillStyle='#0a0a1a';ctx.font='900 17px Orbitron';ctx.fillText('🪙 '+COIN_REVIVE_COST+'  '+(isTR?'İLE DİRİL':'TO REVIVE'),W/2,ry+32);
-  }else{
-    ctx.globalAlpha=0.45;
-    ctx.fillStyle='#7c4dff';rr(W/2-bw/2,ry,bw,bh,25);ctx.fill();
-    ctx.fillStyle='#fff';ctx.font='900 17px Orbitron';ctx.fillText(L.watchRevive,W/2,ry+32);
-    ctx.globalAlpha=1;
+  const canRevive=!hasRevived;
+  const showAd=canRevive&&adReady.rewarded;
+  const adLoading=canRevive&&!adReady.rewarded&&adReady.rewardedLoading;
+  // Revive button (only if not already revived this game)
+  const ry=oy+uh*0.58;
+  if(canRevive){
+    if(showAd){
+      ctx.fillStyle='#7c4dff';ctx.shadowColor='#7c4dff';ctx.shadowBlur=12;rr(W/2-bw/2,ry,bw,bh,25);ctx.fill();ctx.shadowBlur=0;
+      ctx.fillStyle='#fff';ctx.font='900 17px Orbitron';ctx.fillText(L.watchRevive,W/2,ry+32);
+    }else if(adLoading){
+      ctx.globalAlpha=0.55;
+      ctx.fillStyle='#7c4dff';rr(W/2-bw/2,ry,bw,bh,25);ctx.fill();
+      ctx.fillStyle='#fff';ctx.font='900 15px Orbitron';
+      ctx.fillText(isTR?'REKLAM YÜKLENİYOR...':'AD LOADING...',W/2,ry+32);
+      ctx.globalAlpha=1;
+    }else{
+      ctx.globalAlpha=0.35;
+      ctx.fillStyle='#7c4dff';rr(W/2-bw/2,ry,bw,bh,25);ctx.fill();
+      ctx.fillStyle='#fff';ctx.font='900 17px Orbitron';ctx.fillText(L.watchRevive,W/2,ry+32);
+      ctx.globalAlpha=1;
+    }
   }
-  // Play Again
-  const ry2=oy+uh*0.745;
-  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=10;rr(W/2-bw/2,ry2,bw,bh,25);ctx.fill();ctx.shadowBlur=0;
-  ctx.fillStyle='#0a0a1a';ctx.font='900 17px Orbitron';ctx.fillText('▶ '+L.playAgain,W/2,ry2+32);
-  // Main Menu (link-style, smaller)
-  const ry3=oy+uh*0.87;
-  ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=2;rr(W/2-bw/2,ry3,bw,44,22);ctx.stroke();
-  ctx.fillStyle='rgba(255,255,255,0.85)';ctx.font='700 15px Rajdhani';
-  ctx.fillText('⌂ '+L.mainMenu,W/2,ry3+28);
   // Ad-failed inline message
   if(adFailedMsg>0){
     adFailedMsg-=0.016;
     ctx.fillStyle='rgba(255,100,100,'+(Math.min(adFailedMsg,1))+')';
     ctx.font='600 13px Rajdhani';
-    ctx.fillText(L.adNotAvailable,W/2,ry+bh+18);
+    ctx.fillText(L.adNotAvailable,W/2,ry+bh+16);
   }
+  // Play Again
+  const ry2=oy+uh*(canRevive?0.71:0.62);
+  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=10;rr(W/2-bw/2,ry2,bw,bh,25);ctx.fill();ctx.shadowBlur=0;
+  ctx.fillStyle='#0a0a1a';ctx.font='900 17px Orbitron';ctx.fillText('▶ '+L.playAgain,W/2,ry2+32);
+  // Main Menu
+  const ry3=oy+uh*(canRevive?0.84:0.75);
+  ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=2;rr(W/2-bw/2,ry3,bw,44,22);ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.85)';ctx.font='700 15px Rajdhani';
+  ctx.fillText('⌂ '+L.mainMenu,W/2,ry3+28);
   ctx.globalAlpha=1;
   ctx.textAlign='left';
 }
@@ -2112,18 +2118,18 @@ function handleLeaderboardTap(x,y){
 function handleDeathTap(x,y){
   sndMenu();const uh=H-sat-sab,oy=sat;
   const bw=Math.min(260,W-40),bh=50;
-  // Revive
-  const ry=oy+uh*0.62;
-  if(x>W/2-bw/2&&x<W/2+bw/2&&y>ry&&y<ry+bh){
+  const canRevive=!hasRevived;
+  // Revive (only once per game, ad only)
+  const ry=oy+uh*0.58;
+  if(canRevive&&x>W/2-bw/2&&x<W/2+bw/2&&y>ry&&y<ry+bh){
     if(adReady.rewarded){postMsg({type:'SHOW_REWARDED_AD',data:{reward:'continue'}});return;}
-    if(coins>=COIN_REVIVE_COST){coins-=COIN_REVIVE_COST;saveCoins();sndPowerup();revivePlayer();return;}
     showToast(L.adNotAvailable,'error');postMsg({type:'CHECK_AD_READY'});return;
   }
   // Play Again
-  const ry2=oy+uh*0.745;
+  const ry2=oy+uh*(canRevive?0.71:0.62);
   if(x>W/2-bw/2&&x<W/2+bw/2&&y>ry2&&y<ry2+bh){startGame();return;}
   // Main Menu
-  const ry3=oy+uh*0.87;
+  const ry3=oy+uh*(canRevive?0.84:0.75);
   if(x>W/2-bw/2&&x<W/2+bw/2&&y>ry3&&y<ry3+44){state='menu';saveHS();saveStats();saveCoins();resetTouchState();return;}
 }
 function handleSkinTap(x,y){
