@@ -1,15 +1,13 @@
-Sürüm 1.1.2 — Düzeltmeler ve Uyumluluk
+Sürüm 1.2.0 — İkinci Şans ve Akıllı Zorluk
 
 YENİ
-• Uygulama arka plana alındığında, telefon geldiğinde veya odak kaybolduğunda otomatik duraklatma
-• Daha büyük ve doğru algılayan duraklat düğmesi
-• iPhone X / 11 / 12 / 13 / 14 / 15 / 16 çentik ve Dynamic Island tam uyumluluğu
-• Mini haritanın Dynamic Island ile çakışmayacak şekilde yeniden konumlandırılması
-• Tüm ekranlarda güvenli alan (safe area) desteği
+• Ölünce CANLAN — kısa bir reklam izleyerek tam uzunluk ve güçlerinle anında devam et
+• Akıllı zorluk eğrisi: Sen büyüdükçe botlar zekileşir, her oyun zorlu kalır
 
 İYİLEŞTİRMELER
-• Eski iPhone'larda daha akıcı oyun döngüsü
-• HUD elemanları her ekran boyutunda net okunuyor
-• Arka plan / ön plan geçişlerinde kare atlama düzeltildi
+• Günlük bonus sıfırlama hatası düzeltildi — serin artık günler arası doğru korunuyor
+• Kalkan gücü çarpışmada gerçekten koruyor (artık nadir haksız ölüm yok)
+• Yoğun sahnelerde yılan gövdeleri görünür kalıyor
+• Daha sıkı reklam yaşam döngüsü — daha az yükleme gecikmesi, slot hata verirse hızlı toparlanma
 
 Grow.io'yu oynadığın için teşekkürler! Oyunu beğendiysen App Store'da puanlamayı unutma, çok yardımcı oluyor.
