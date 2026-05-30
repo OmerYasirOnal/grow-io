@@ -194,6 +194,10 @@ let soundOn = true, musicOn = true, vibrationOn = true;
 let coins = 0, topScores = [];
 let shakeTimer = 0, shakeMag = 0;
 let kingActive = false, nextKingScore = 2000;
+// King-slay rewards. Single source of truth so the payout (killSnake) and the
+// arrival banner (drawHUD) can never drift apart again.
+const KING_SCORE_REWARD = 500;
+const KING_COIN_REWARD = 150;
 // Boss snake (D1): rarer, tougher than King, every 5k score points.
 let bossActive = false, nextBossScore = 5000, bossToast = 0;
 const BOSS_SCORE_REWARD = 1000;
@@ -325,7 +329,17 @@ window.addEventListener('message',function(e){
     }
     if(m.type==='AD_STATUS'&&m.data){adReady={interstitial:!!m.data.interstitial,rewarded:!!m.data.rewarded,rewardedLoading:!!m.data.rewardedLoading};}
     if(m.type==='HIGH_SCORE_LOADED'){highScore=Math.max(highScore,m.data||0);try{localStorage.setItem('growio_hs',String(highScore));}catch(e){}}
-    if(m.type==='COINS_LOADED'){const rn=m.data||0;if(rn>coins){coins=rn;try{localStorage.setItem('growio_coins',String(coins));}catch(e){}}}
+    if(m.type==='COINS_LOADED'){
+      const rn=Math.max(0,m.data|0);
+      if(!coinsReconciled){
+        coinsReconciled=true;
+        const next=reconcileLoadedCoins(coins,coinsHadLocal,rn,true);
+        if(next!==coins){coins=next;try{localStorage.setItem('growio_coins',String(coins));}catch(e){}}
+        // Local was authoritative but native disagrees → heal native to local.
+        if(coinsHadLocal&&rn!==coins)postMsg({type:'SAVE_COINS',data:coins});
+      }
+      // Later native pushes are ignored: the game owns coins after boot.
+    }
     if(m.type==='STATS_LOADED'&&m.data){
       const s=m.data;
       if(typeof s.totalKills==='number')totalKills=Math.max(totalKills,s.totalKills);
@@ -354,7 +368,19 @@ function loadSkins(){
 function saveStats(){try{localStorage.setItem('growio_stats',JSON.stringify({tk:totalKills,tg:totalGames,cs:currentSkin,td:deathCount}));}catch(e){}postMsg({type:'SAVE_STATS',data:{totalKills:totalKills,totalGames:totalGames,totalDeaths:deathCount}});postMsg({type:'SAVE_SKIN_STATE',data:{current:currentSkin,unlocked:unlockedSkins.slice()}});}
 function loadStats(){try{const d=localStorage.getItem('growio_stats');if(d){const s=JSON.parse(d);totalKills=s.tk||0;totalGames=s.tg||0;currentSkin=s.cs||0;deathCount=s.td||0;}}catch(e){}}
 function saveCoins(){try{localStorage.setItem('growio_coins',String(coins));}catch(e){}postMsg({type:'SAVE_COINS',data:coins});}
-function loadCoins(){try{coins=parseInt(localStorage.getItem('growio_coins'))||0;}catch(e){}postMsg({type:'LOAD_COINS'});}
+// Coins reconciliation. localStorage is authoritative for THIS device — it
+// always reflects what the player actually did here. The native AsyncStorage
+// value is a backup, adopted only on the first load when local has no value
+// (fresh install / cleared WebView cache). This closes a refund vector: a
+// dropped SAVE_COINS during the cold-start bridge race used to let a later
+// stale-high native push "restore" spent coins via max-merge. Pure +
+// window-exposed so it can be asserted in isolation.
+function reconcileLoadedCoins(localCoins,hadLocal,nativeCoins,firstLoad){
+  if(firstLoad&&!hadLocal)return Math.max(0,nativeCoins|0);
+  return localCoins;
+}
+let coinsHadLocal=false,coinsReconciled=false;
+function loadCoins(){try{const raw=localStorage.getItem('growio_coins');coinsHadLocal=raw!=null;coins=parseInt(raw)||0;}catch(e){}postMsg({type:'LOAD_COINS'});}
 function saveSettings(){try{localStorage.setItem('growio_settings',JSON.stringify({s:soundOn,m:musicOn,v:vibrationOn}));}catch(e){}}
 function loadSettings(){try{const d=localStorage.getItem('growio_settings');if(d){const s=JSON.parse(d);soundOn=s.s!==false;musicOn=s.m!==false;vibrationOn=s.v!==false;}}catch(e){}}
 function saveTopScores(){try{localStorage.setItem('growio_top',JSON.stringify(topScores));}catch(e){}}
@@ -838,7 +864,7 @@ function killSnake(victim,killer,cause){
       spawnP(victim.segments[0].x,victim.segments[0].y,SKINS[victim.skin].c[0],20,120,3);
     }
     if(victim.isKing&&killer.isPlayer){
-      score+=500;coins+=80;sndKingSlain();postMsg({type:'HAPTIC',data:'heavy'});
+      score+=KING_SCORE_REWARD;coins+=KING_COIN_REWARD;sndKingSlain();postMsg({type:'HAPTIC',data:'heavy'});
       flashAlpha=0.3;flashColor='#ffd600';nextKingScore=score+2000;
     }
     if(victim.isBoss&&killer.isPlayer){
@@ -872,7 +898,10 @@ function killSnake(victim,killer,cause){
 }
 
 function revivePlayer(){
-  if(!player)return;
+  // Only a genuine, first post-death revive may run. Without the state/hasRevived
+  // guard a duplicate or late AD_REWARD_EARNED{continue} could yank a live run —
+  // or even the menu — back to 'playing' and grant a free reset.
+  if(!player||state!=='dead'||hasRevived)return;
   hasRevived=true;
   player.alive=true;player.length=Math.max(10,Math.floor(player.length*0.7));
   // Rebuild a body trailing behind the head along the current facing angle,
@@ -1403,7 +1432,7 @@ function drawHUD(){
     ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=20;
     ctx.font='900 26px Orbitron';ctx.fillText(L.kingArrived,W/2,m+60);ctx.shadowBlur=0;
     ctx.fillStyle='rgba(255,255,255,0.75)';ctx.font='700 13px Rajdhani';
-    ctx.fillText(isTR?'Eze bilirsen +500 ve +150 🪙':'Slay it for +500 and +150 🪙',W/2,m+80);
+    ctx.fillText(isTR?'Eze bilirsen +'+KING_SCORE_REWARD+' ve +'+KING_COIN_REWARD+' 🪙':'Slay it for +'+KING_SCORE_REWARD+' and +'+KING_COIN_REWARD+' 🪙',W/2,m+80);
     ctx.globalAlpha=1;ctx.textAlign='left';
   }
   if(bossToast>0){
