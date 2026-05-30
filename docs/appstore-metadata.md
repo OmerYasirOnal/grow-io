@@ -82,12 +82,12 @@ Grow your snake, dominate the arena! Start small, eat food to grow, and eliminat
 
 FEATURES
 • Smooth joystick controls for precise movement
-• Massive 3000×3000 battle arena with up to 12 players
+• Massive 3000×3000 battle arena with up to 12 rival snakes
 • 4 powerful power-ups: Speed Boost, Shield, Magnet, Ghost
-• 50+ unique skins to unlock
+• 20 unique skins to unlock
 • Minimap to track your enemies
-• Dynamic difficulty that scales with your size
-• Boss battles against the King Snake every 2000 points
+• Dynamic difficulty that scales with your score (Rookie → Apex)
+• King Snake events every 2000 points, plus tougher Boss battles every 5000
 • 5 visual themes that change as you grow
 • Neon dark aesthetic with glowing effects
 • Watch ads to revive and continue your run
@@ -133,8 +133,8 @@ snake,io,slither,grow,arena,worm,multiplayer,neon,battle,survival
 
 ## 6. Build / Version
 
-- **Version**: `1.1.1`
-- **Build**: (from EAS)
+- **Version**: `1.2.1`
+- **Build**: (from EAS — `appVersionSource: remote`, auto-incremented)
 - **Minimum iOS**: 13.0
 - **Device Support**: iPhone + iPad
 
@@ -170,7 +170,7 @@ But to be safe, provide:
   ```
   Grow.io is a single-player-friendly, offline-capable snake arena game.
   No login required. No in-app purchases. Monetization via Google AdMob
-  (banner + rewarded video for revive).
+  (interstitial between runs + rewarded video for revive / bonus coins).
 
   To test:
   1. Launch the app
