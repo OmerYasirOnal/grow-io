@@ -332,8 +332,9 @@ window.addEventListener('message',function(e){
         coinsReconciled=true;
         const next=reconcileLoadedCoins(coins,coinsHadLocal,rn,true);
         if(next!==coins){coins=next;try{localStorage.setItem('growio_coins',String(coins));}catch(e){}}
-        // Local was authoritative but native disagrees → heal native to local.
-        if(coinsHadLocal&&rn!==coins)postMsg({type:'SAVE_COINS',data:coins});
+        // Native disagrees with the reconciled balance → heal it (up after a
+        // cleared-cache top-up, or down from a stale-high value).
+        if(rn!==coins)postMsg({type:'SAVE_COINS',data:coins});
       }
       // Later native pushes are ignored: the game owns coins after boot.
     }
@@ -367,13 +368,19 @@ function loadStats(){try{const d=localStorage.getItem('growio_stats');if(d){cons
 function saveCoins(){try{localStorage.setItem('growio_coins',String(coins));}catch(e){}postMsg({type:'SAVE_COINS',data:coins});}
 // Coins reconciliation. localStorage is authoritative for THIS device — it
 // always reflects what the player actually did here. The native AsyncStorage
-// value is a backup, adopted only on the first load when local has no value
-// (fresh install / cleared WebView cache). This closes a refund vector: a
-// dropped SAVE_COINS during the cold-start bridge race used to let a later
-// stale-high native push "restore" spent coins via max-merge. Pure +
-// window-exposed so it can be asserted in isolation.
+// value is a backup used only on first load when local has no value (fresh
+// install / cleared WebView cache), and even then only as a FLOOR — it tops
+// up but never lowers. Two failure modes are both excluded:
+//   - Refund-RAISE: a stale-high native push restoring spent coins. Excluded
+//     because when local was authoritative (hadLocal) we keep local outright.
+//   - Refund-LOWER: COINS_LOADED can land a few frames after boot, so on a
+//     cleared cache the player may already have banked coins this session;
+//     Math.max keeps those earnings instead of overwriting them with a lower
+//     backup. (main's old max-merge could never lower coins; the first cut of
+//     this fix could — caught in review.)
+// Pure + window-exposed so it can be asserted in isolation.
 function reconcileLoadedCoins(localCoins,hadLocal,nativeCoins,firstLoad){
-  if(firstLoad&&!hadLocal)return Math.max(0,nativeCoins|0);
+  if(firstLoad&&!hadLocal)return Math.max(0,localCoins|0,nativeCoins|0);
   return localCoins;
 }
 let coinsHadLocal=false,coinsReconciled=false;
