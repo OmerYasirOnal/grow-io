@@ -54,7 +54,7 @@ const L={
   camera:isTR?'Kamera':'Camera',zoomNormal:isTR?'Normal':'Normal',
   zoomClose:isTR?'Yakın':'Close',zoomFar:isTR?'Uzak':'Far',
   mainMenu:isTR?'ANA MENÜ':'MAIN MENU',coins:isTR?'Para':'Coins',
-  buy:isTR?'SATIN AL':'BUY',notEnough:isTR?'Yetersiz para':'Not enough coins',
+  notEnough:isTR?'Yetersiz para':'Not enough coins',
   leaderboard:isTR?'SKOR TABLOSU':'LEADERBOARD',noScores:isTR?'Henüz skor yok':'No scores yet',
   skinUnlocked:isTR?'YENİ SKIN AÇILDI!':'NEW SKIN UNLOCKED!',
   watchForCoins:isTR?'REKLAM İZLE +100':'WATCH AD +100',
@@ -159,9 +159,6 @@ function resetTouchState(){
   skinScrollLastY=null;
   if(player)player.boosting=false;
 }
-// When tutorial is opened from a screen other than the initial spawn (e.g.
-// pause "How to play"), this remembers where to go back to once dismissed.
-let tutorialReturnState=null;
 // Main-menu Settings overlay: same Sound / Music / Vibration toggles as the
 // pause screen, but reachable without starting a game.
 let showSettings=false;
@@ -1050,7 +1047,7 @@ function updateZone(){
 
 // ═══ GAME INIT ═══
 function startGame(){
-  initAudio();score=0;killCombo=0;killComboTimer=0;hasRevived=false;
+  initAudio();score=0;killCombo=0;killComboTimer=0;hasRevived=false;currentRank=0;
   foods=[];powerups=[];particles=[];snakes=[];scorePopups=[];
   kingActive=false;nextKingScore=2000;
   bossActive=false;nextBossScore=5000;bossToast=0;
@@ -1822,7 +1819,7 @@ function drawMenu(){
   ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='600 12px Rajdhani';ctx.fillText(skin.name,W/2,py+50);
   // Version stamp (bottom)
   ctx.fillStyle='rgba(255,255,255,0.18)';ctx.font='600 10px Rajdhani';ctx.textAlign='center';
-  ctx.fillText('v1.1.9',W/2,H-sab-8);
+  ctx.fillText('v1.2.1',W/2,H-sab-8);
   ctx.textAlign='left';
 }
 
@@ -1997,7 +1994,7 @@ $.addEventListener('touchstart',function(e){
   const t=e.changedTouches[0];
   // Tutorial overlay can be shown over any state (initial spawn or pause-launched).
   // A single tap dismisses it and returns control to the underlying screen.
-  if(showTutorial){markTutorialSeen();tutorialReturnState=null;sndMenu();return;}
+  if(showTutorial){markTutorialSeen();sndMenu();return;}
   if(state==='menu'){handleMenuTap(t.clientX,t.clientY);return;}
   if(state==='dead'){handleDeathTap(t.clientX,t.clientY);return;}
   if(state==='paused'){handlePauseTap(t.clientX,t.clientY);return;}
@@ -2060,7 +2057,7 @@ $.addEventListener('touchend',function(e){
 // Mouse
 $.addEventListener('mousedown',function(e){
   initAudio();
-  if(showTutorial){markTutorialSeen();tutorialReturnState=null;sndMenu();return;}
+  if(showTutorial){markTutorialSeen();sndMenu();return;}
   if(state==='menu'){handleMenuTap(e.clientX,e.clientY);return;}
   if(state==='dead'){handleDeathTap(e.clientX,e.clientY);return;}
   if(state==='paused'){handlePauseTap(e.clientX,e.clientY);return;}
@@ -2076,7 +2073,7 @@ window.addEventListener('keydown',function(e){
   // Tutorial overlay swallows everything: any key dismisses it and the
   // event does NOT fall through to gameplay (otherwise ESC+tutorial open
   // would resume the game while the overlay was still drawn on top).
-  if(showTutorial){if(e.code==='Space'||e.code==='Enter'||e.code==='Escape'){markTutorialSeen();tutorialReturnState=null;sndMenu();}return;}
+  if(showTutorial){if(e.code==='Space'||e.code==='Enter'||e.code==='Escape'){markTutorialSeen();sndMenu();}return;}
   if(e.code==='Space'&&player){player.boosting=true;sndBoost();}
   if(e.code==='Escape'){if(state==='playing'){state='paused';if(player)player.boosting=false;joystick.active=false;sndMenu();}else if(state==='paused'){state='playing';if(player)player.invulnTimer=Math.max(player.invulnTimer,1.2);quitConfirmTimer=0;sndMenu();}}
 });
@@ -2146,7 +2143,7 @@ function handlePauseTap(x,y){
   }
   // How to play
   ry=oy+uh*0.50;
-  if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){showTutorial=true;tutorialReturnState='paused';return;}
+  if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){showTutorial=true;return;}
   // Main menu (open confirm)
   ry=oy+uh*0.64;
   if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){quitConfirmTimer=10;return;}
