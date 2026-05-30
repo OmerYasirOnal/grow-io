@@ -365,26 +365,34 @@ function loadSkins(){
 }
 function saveStats(){try{localStorage.setItem('growio_stats',JSON.stringify({tk:totalKills,tg:totalGames,cs:currentSkin,td:deathCount}));}catch(e){}postMsg({type:'SAVE_STATS',data:{totalKills:totalKills,totalGames:totalGames,totalDeaths:deathCount}});postMsg({type:'SAVE_SKIN_STATE',data:{current:currentSkin,unlocked:unlockedSkins.slice()}});}
 function loadStats(){try{const d=localStorage.getItem('growio_stats');if(d){const s=JSON.parse(d);totalKills=s.tk||0;totalGames=s.tg||0;currentSkin=s.cs||0;deathCount=s.td||0;}}catch(e){}}
-function saveCoins(){try{localStorage.setItem('growio_coins',String(coins));}catch(e){}postMsg({type:'SAVE_COINS',data:coins});}
+let coinsHadLocal=false,coinsReconciled=false;
+// Hold the native SAVE_COINS push until the first reconcile completes, so a
+// boot-time save (e.g. the daily bonus) can't overwrite the native backup
+// BEFORE reconcileLoadedCoins has read it. localStorage is written immediately
+// and is authoritative on the next boot, so nothing is lost if the app dies
+// in this brief window.
+function saveCoins(){try{localStorage.setItem('growio_coins',String(coins));}catch(e){}if(coinsReconciled)postMsg({type:'SAVE_COINS',data:coins});}
 // Coins reconciliation. localStorage is authoritative for THIS device — it
 // always reflects what the player actually did here. The native AsyncStorage
-// value is a backup used only on first load when local has no value (fresh
-// install / cleared WebView cache), and even then only as a FLOOR — it tops
-// up but never lowers. Two failure modes are both excluded:
-//   - Refund-RAISE: a stale-high native push restoring spent coins. Excluded
-//     because when local was authoritative (hadLocal) we keep local outright.
-//   - Refund-LOWER: COINS_LOADED can land a few frames after boot, so on a
-//     cleared cache the player may already have banked coins this session;
-//     Math.max keeps those earnings instead of overwriting them with a lower
-//     backup. (main's old max-merge could never lower coins; the first cut of
-//     this fix could — caught in review.)
+// value is a backup used only on the first load:
+//   - hadLocal (local holds a parseable value): keep local outright. Closes the
+//     refund-RAISE vector — a stale-high native push can never restore spent
+//     coins (main's old max-merge bug).
+//   - !hadLocal (fresh install / cleared cache / corrupt-local): RESTORE the
+//     native backup AND add whatever was banked this session on top. Local
+//     started at 0 this session and saveCoins defers its native push until
+//     after this reconcile, so native is the untouched pre-session backup and
+//     local is pure session earnings — disjoint, so adding can't double-count
+//     and no earnings (or daily bonus) are dropped beneath the floor.
 // Pure + window-exposed so it can be asserted in isolation.
 function reconcileLoadedCoins(localCoins,hadLocal,nativeCoins,firstLoad){
-  if(firstLoad&&!hadLocal)return Math.max(0,localCoins|0,nativeCoins|0);
+  if(firstLoad&&!hadLocal)return Math.max(0,nativeCoins|0)+Math.max(0,localCoins|0);
   return localCoins;
 }
-let coinsHadLocal=false,coinsReconciled=false;
-function loadCoins(){try{const raw=localStorage.getItem('growio_coins');coinsHadLocal=raw!=null;coins=parseInt(raw)||0;}catch(e){}postMsg({type:'LOAD_COINS'});}
+// Treat local as authoritative only when it parses to a finite number — a
+// corrupt/half-flushed value must fall through to the native-backup branch
+// instead of locking in 0 and healing the backup down to 0.
+function loadCoins(){try{const raw=localStorage.getItem('growio_coins');const n=parseInt(raw,10);coinsHadLocal=Number.isFinite(n);coins=Number.isFinite(n)?n:0;}catch(e){}postMsg({type:'LOAD_COINS'});}
 function saveSettings(){try{localStorage.setItem('growio_settings',JSON.stringify({s:soundOn,m:musicOn,v:vibrationOn}));}catch(e){}}
 function loadSettings(){try{const d=localStorage.getItem('growio_settings');if(d){const s=JSON.parse(d);soundOn=s.s!==false;musicOn=s.m!==false;vibrationOn=s.v!==false;}}catch(e){}}
 function saveTopScores(){try{localStorage.setItem('growio_top',JSON.stringify(topScores));}catch(e){}}
@@ -534,12 +542,13 @@ function spawnFood(x,y,val,color,force){
   let slot=-1;
   if(foods.length>=MAX_FOOD){
     if(!force)return;
-    // At cap, overwrite a random pellet in place (O(1)) rather than shift()
-    // (O(n)): a 300-segment Boss death force-spawns ~100 pellets in one frame,
-    // and repeated shift() on a 600-element array caused a hitch at the worst
-    // moment. Food has no order dependency, so this is visually identical —
-    // one random pellet is replaced, keeping the explosion visible+rewarding.
-    slot=randInt(0,foods.length-1);
+    // At cap, overwrite the next pellet via a rotating pointer (O(1)) rather
+    // than shift() (O(n)): a 300-segment Boss death force-spawns ~100 pellets
+    // in one frame, and repeated shift() on a 600-element array hitched at the
+    // worst moment. A rotating cursor (vs. a random slot) guarantees a full
+    // sweep before any slot is reused, so pellets from one burst can't clobber
+    // each other. Food has no order dependency, so this is visually identical.
+    slot=foodEvict=(foodEvict+1)%foods.length;
   }
   if(x==null){const a=rand(0,TAU),r=rand(0,WR-50);x=WCX+Math.cos(a)*r;y=WCY+Math.sin(a)*r;}
   val=val||1;
@@ -547,6 +556,7 @@ function spawnFood(x,y,val,color,force){
   const f={x,y,val,color:color||colors[randInt(0,colors.length-1)],r:3+val*1.5,pulse:rand(0,TAU)};
   if(slot>=0)foods[slot]=f;else foods.push(f);
 }
+let foodEvict=0; // rotating eviction cursor for force-spawn at MAX_FOOD cap
 function spawnInitialFood(){for(let i=0;i<400;i++)spawnFood();}
 // Pick a spawn point at least minD pixels from the player. Prevents bots
 // from popping into existence right on top of the head and instakilling a
