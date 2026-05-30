@@ -527,17 +527,21 @@ function drawParticles(){
 
 // ═══ FOOD ═══
 function spawnFood(x,y,val,color,force){
+  let slot=-1;
   if(foods.length>=MAX_FOOD){
     if(!force)return;
-    // Drop the oldest food to make room — kill-drops from a 300-segment Boss
-    // were silently lost when MAX_FOOD was already reached; force=true keeps
-    // the explosion visible and rewarding.
-    foods.shift();
+    // At cap, overwrite a random pellet in place (O(1)) rather than shift()
+    // (O(n)): a 300-segment Boss death force-spawns ~100 pellets in one frame,
+    // and repeated shift() on a 600-element array caused a hitch at the worst
+    // moment. Food has no order dependency, so this is visually identical —
+    // one random pellet is replaced, keeping the explosion visible+rewarding.
+    slot=randInt(0,foods.length-1);
   }
   if(x==null){const a=rand(0,TAU),r=rand(0,WR-50);x=WCX+Math.cos(a)*r;y=WCY+Math.sin(a)*r;}
   val=val||1;
   const colors=['#00e5ff','#76ff03','#ff4081','#ffab00','#7c4dff','#00bfa5','#ff6e40','#ea80fc'];
-  foods.push({x,y,val,color:color||colors[randInt(0,colors.length-1)],r:3+val*1.5,pulse:rand(0,TAU)});
+  const f={x,y,val,color:color||colors[randInt(0,colors.length-1)],r:3+val*1.5,pulse:rand(0,TAU)};
+  if(slot>=0)foods[slot]=f;else foods.push(f);
 }
 function spawnInitialFood(){for(let i=0;i<400;i++)spawnFood();}
 // Pick a spawn point at least minD pixels from the player. Prevents bots
@@ -1198,6 +1202,8 @@ function update(dt){
 }
 
 // ═══ RENDER ═══
+const liveBotsBuf=[];           // reused each frame for snake z-ordering
+const byLength=(a,b)=>a.length-b.length;
 function render(){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.fillStyle=zoneBg;ctx.fillRect(0,0,W,H);
@@ -1215,8 +1221,12 @@ function render(){
     ctx.save();ctx.translate(W/2+sx,H/2+sy);ctx.scale(zoom,zoom);ctx.translate(-camera.x,-camera.y);
     drawGrid();drawStars();drawBoundary();drawComboZones();drawFood();drawPowerups();
     // Z-sort snakes: smaller bots first, bigger bots above; player always on top.
-    const liveBots=snakes.filter(s=>s.alive&&!s.isPlayer).sort((a,b)=>a.length-b.length);
-    for(const s of liveBots)drawSnake(s);
+    // Reuse a module buffer (like hudLeaderboard) instead of allocating a fresh
+    // filtered+sorted array + comparator closure every frame.
+    liveBotsBuf.length=0;
+    for(let i=0;i<snakes.length;i++){const s=snakes[i];if(s.alive&&!s.isPlayer)liveBotsBuf.push(s);}
+    liveBotsBuf.sort(byLength);
+    for(const s of liveBotsBuf)drawSnake(s);
     if(player&&player.alive)drawSnake(player);
     drawParticles();drawScorePopups();ctx.restore();
     drawHUD();drawMinimap();
@@ -1304,7 +1314,7 @@ function drawFood(){
   const vy1=camera.y-H/2/camera.zoom-20,vy2=camera.y+H/2/camera.zoom+20;
   for(const f of foods){
     if(f.x<vx1||f.x>vx2||f.y<vy1||f.y>vy2)continue;
-    f.pulse+=0.05;const r=f.r+Math.sin(f.pulse)*1;
+    f.pulse+=3*gdt;const r=f.r+Math.sin(f.pulse)*1;
     ctx.fillStyle=f.color;
     ctx.beginPath();ctx.arc(f.x,f.y,r,0,TAU);ctx.fill();
   }
@@ -1314,7 +1324,7 @@ function drawPowerups(){
   const vy1=camera.y-H/2/camera.zoom-30,vy2=camera.y+H/2/camera.zoom+30;
   for(const pu of powerups){
     if(pu.x<vx1||pu.x>vx2||pu.y<vy1||pu.y>vy2)continue;
-    pu.pulse+=0.04;const r=12+Math.sin(pu.pulse)*3;
+    pu.pulse+=2.4*gdt;const r=12+Math.sin(pu.pulse)*3;
     ctx.save();ctx.translate(pu.x,pu.y);ctx.rotate(pu.pulse*0.5);
     ctx.fillStyle=PU_COLORS[pu.type];ctx.shadowColor=PU_COLORS[pu.type];ctx.shadowBlur=15;
     if(pu.type==='speed'){ctx.beginPath();for(let i=0;i<6;i++){const a=i*PI/3-PI/6;ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}ctx.closePath();ctx.fill();}
@@ -1881,7 +1891,7 @@ function drawDeathScreen(){
   }
   // Ad-failed inline message
   if(adFailedMsg>0){
-    adFailedMsg-=0.016;
+    adFailedMsg-=gdt;
     ctx.fillStyle='rgba(255,100,100,'+(Math.min(adFailedMsg,1))+')';
     ctx.font='600 13px Rajdhani';
     ctx.fillText(L.adNotAvailable,W/2,ry+bh+16);
@@ -1915,7 +1925,7 @@ function drawSkinSelect(){
   // Title — own row, dynamic
   const titleSize=Math.min(28,Math.floor(W*0.07));
   ctx.fillStyle='#fff';ctx.font='900 '+titleSize+'px Orbitron';ctx.fillText(L.skins,W/2,oy+86);
-  if(buyFailedMsg>0){buyFailedMsg-=0.016;ctx.fillStyle='rgba(255,100,100,'+Math.min(buyFailedMsg,1)+')';ctx.font='700 13px Rajdhani';ctx.fillText(L.notEnough,W/2,oy+108);}
+  if(buyFailedMsg>0){buyFailedMsg-=gdt;ctx.fillStyle='rgba(255,100,100,'+Math.min(buyFailedMsg,1)+')';ctx.font='700 13px Rajdhani';ctx.fillText(L.notEnough,W/2,oy+108);}
   const cols=5,cellW=W/cols,cellH=70,startY=oy+118-skinScroll;
   for(let i=0;i<SKINS.length;i++){
     const row=Math.floor(i/cols),col=i%cols;
