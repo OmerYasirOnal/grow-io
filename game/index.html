@@ -1431,7 +1431,7 @@ function drawBrandTitle(cx,cy,scale){
   const startX=cx-(mainW+subW)/2;
   ctx.textAlign='left';
   ctx.font='900 '+baseSize+'px Orbitron';
-  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=baseSize*0.5;
+  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=baseSize*(0.42+0.13*Math.sin(frameCount*0.05));
   ctx.fillText('GROW',startX,cy);ctx.shadowBlur=0;
   ctx.font='700 '+subSize+'px Orbitron';
   ctx.fillStyle='rgba(255,255,255,0.8)';
@@ -1788,16 +1788,46 @@ function ensureMenuBg(){
   menuBgC.width=Math.ceil(W*dpr);menuBgC.height=Math.ceil(H*dpr);
   const mc=menuBgC.getContext('2d');mc.setTransform(dpr,0,0,dpr,0,0);
   mc.fillStyle='#0a0a1a';mc.fillRect(0,0,W,H);
+  // Soft cyan aurora behind the title gives the flat panel some depth.
+  const gx=W/2,gy=H*0.26,gr=Math.max(W,H)*0.62;
+  const aur=mc.createRadialGradient(gx,gy,0,gx,gy,gr);
+  aur.addColorStop(0,'rgba(0,229,255,0.11)');
+  aur.addColorStop(0.45,'rgba(0,150,200,0.04)');
+  aur.addColorStop(1,'rgba(10,10,26,0)');
+  mc.fillStyle=aur;mc.fillRect(0,0,W,H);
   mc.strokeStyle='rgba(255,255,255,0.02)';mc.lineWidth=1;
   mc.beginPath();
   for(let x=0;x<W;x+=40){mc.moveTo(x,0);mc.lineTo(x,H);}
   for(let y=0;y<H;y+=40){mc.moveTo(0,y);mc.lineTo(W,y);}
   mc.stroke();
+  // Vignette: darken the edges to focus the eye on the centre column.
+  const vig=mc.createRadialGradient(W/2,H/2,Math.min(W,H)*0.32,W/2,H/2,Math.max(W,H)*0.78);
+  vig.addColorStop(0,'rgba(0,0,0,0)');
+  vig.addColorStop(1,'rgba(0,0,0,0.55)');
+  mc.fillStyle=vig;mc.fillRect(0,0,W,H);
   menuBgW=W;menuBgH=H;menuBgDpr=dpr;
+}
+// Sparse field of slow-rising glow motes — ambient life over the cached menu
+// background. ~22 dots, gdt-driven so the drift is frame-rate independent.
+let menuParticles=null;
+function drawMenuParticles(){
+  if(!menuParticles){
+    menuParticles=[];
+    for(let i=0;i<22;i++)menuParticles.push({x:rand(0,W),y:rand(0,H),r:rand(0.8,2.4),spd:rand(6,18),ph:rand(0,TAU)});
+  }
+  for(let i=0;i<menuParticles.length;i++){
+    const p=menuParticles[i];
+    p.y-=p.spd*gdt;p.ph+=gdt*0.8;
+    if(p.y<-4){p.y=H+4;p.x=rand(0,W);}
+    else if(p.x<0||p.x>W){p.x=rand(0,W);}
+    ctx.fillStyle='rgba(0,229,255,'+(0.10+0.10*Math.sin(p.ph)).toFixed(3)+')';
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,TAU);ctx.fill();
+  }
 }
 function drawMenu(){
   ensureMenuBg();
   ctx.drawImage(menuBgC,0,0,menuBgC.width,menuBgC.height,0,0,W,H);
+  drawMenuParticles();
   ctx.textAlign='center';
   const uh=H-sat-sab,oy=sat;
   drawBrandTitle(W/2,oy+uh*0.22);
@@ -1814,7 +1844,7 @@ function drawMenu(){
   ctx.beginPath();ctx.arc(35,sat+35,18,0,TAU);ctx.stroke();
   ctx.fillStyle='rgba(255,255,255,0.75)';ctx.font='700 20px Rajdhani';ctx.fillText('⚙',35,sat+43);
   const bw=220,bh=58,bx=W/2-bw/2,by=oy+uh*0.42;
-  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=15;rr(bx,by,bw,bh,28);ctx.fill();ctx.shadowBlur=0;
+  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=15+7*Math.sin(frameCount*0.06);rr(bx,by,bw,bh,28);ctx.fill();ctx.shadowBlur=0;
   ctx.fillStyle='#0a0a1a';ctx.font='900 24px Orbitron';ctx.fillText(L.play,W/2,by+38);
   const sy=oy+uh*0.54;
   ctx.fillStyle='#7c4dff';ctx.shadowColor='#7c4dff';ctx.shadowBlur=10;rr(bx+20,sy,bw-40,44,22);ctx.fill();ctx.shadowBlur=0;
