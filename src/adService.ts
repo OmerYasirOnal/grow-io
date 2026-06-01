@@ -125,14 +125,14 @@ export async function initAds(): Promise<void> {
   if (initialized) return;
   initialized = true;
 
-  console.log('[AdMob] init starting. useTest=', useTest, 'INTERSTITIAL_ID=', INTERSTITIAL_ID, 'REWARDED_ID=', REWARDED_ID);
+  if (__DEV__) console.log('[AdMob] init starting. useTest=', useTest, 'INTERSTITIAL_ID=', INTERSTITIAL_ID, 'REWARDED_ID=', REWARDED_ID);
 
   await requestATT();
 
   try {
     const adapterStatuses = await MobileAds().initialize();
     sdkReady = true;
-    console.log('[AdMob] SDK initialized. Adapter statuses:', JSON.stringify(adapterStatuses));
+    if (__DEV__) console.log('[AdMob] SDK initialized. Adapter statuses:', JSON.stringify(adapterStatuses));
     emitStatus();
   } catch (e: any) {
     console.warn('[AdMob] SDK init failed:', e?.message || e);
@@ -151,7 +151,7 @@ export async function initAds(): Promise<void> {
     interstitialLoading = false;
     interstitialRetryCount = 0;
     lastInterstitialError = null;
-    console.log('[AdMob] interstitial LOADED');
+    if (__DEV__) console.log('[AdMob] interstitial LOADED');
     emitStatus();
   });
   interstitial.addAdEventListener(AdEventType.CLOSED, () => {
@@ -175,7 +175,7 @@ export async function initAds(): Promise<void> {
     rewardedLoading = false;
     rewardedRetryCount = 0;
     lastRewardedError = null;
-    console.log('[AdMob] rewarded LOADED');
+    if (__DEV__) console.log('[AdMob] rewarded LOADED');
     emitStatus();
   });
   rewarded.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
