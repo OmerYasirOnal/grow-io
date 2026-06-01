@@ -17,6 +17,8 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
+# ASC API key is JSON-wrapped, so *.p8/*.key above don't catch it — ignore it explicitly.
+fastlane/api_key.json
 
 # Metro
 .metro-health-check*
