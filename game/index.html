@@ -1431,7 +1431,7 @@ function drawBrandTitle(cx,cy,scale){
   const startX=cx-(mainW+subW)/2;
   ctx.textAlign='left';
   ctx.font='900 '+baseSize+'px Orbitron';
-  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=baseSize*(0.42+0.13*Math.sin(frameCount*0.05));
+  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=baseSize*(0.42+0.13*Math.sin(menuPulseT*3));
   ctx.fillText('GROW',startX,cy);ctx.shadowBlur=0;
   ctx.font='700 '+subSize+'px Orbitron';
   ctx.fillStyle='rgba(255,255,255,0.8)';
@@ -1810,6 +1810,9 @@ function ensureMenuBg(){
 // Sparse field of slow-rising glow motes — ambient life over the cached menu
 // background. ~22 dots, gdt-driven so the drift is frame-rate independent.
 let menuParticles=null;
+// Menu pulse phase — accumulates real time (gdt, seconds) so the title/PLAY glow
+// pulses are frame-rate independent (keep the 60fps look on 120Hz ProMotion).
+let menuPulseT=0;
 function drawMenuParticles(){
   if(!menuParticles){
     menuParticles=[];
@@ -1828,6 +1831,7 @@ function drawMenu(){
   ensureMenuBg();
   ctx.drawImage(menuBgC,0,0,menuBgC.width,menuBgC.height,0,0,W,H);
   drawMenuParticles();
+  menuPulseT+=gdt;
   ctx.textAlign='center';
   const uh=H-sat-sab,oy=sat;
   drawBrandTitle(W/2,oy+uh*0.22);
@@ -1844,7 +1848,7 @@ function drawMenu(){
   ctx.beginPath();ctx.arc(35,sat+35,18,0,TAU);ctx.stroke();
   ctx.fillStyle='rgba(255,255,255,0.75)';ctx.font='700 20px Rajdhani';ctx.fillText('⚙',35,sat+43);
   const bw=220,bh=58,bx=W/2-bw/2,by=oy+uh*0.42;
-  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=15+7*Math.sin(frameCount*0.06);rr(bx,by,bw,bh,28);ctx.fill();ctx.shadowBlur=0;
+  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=15+7*Math.sin(menuPulseT*3.6);rr(bx,by,bw,bh,28);ctx.fill();ctx.shadowBlur=0;
   ctx.fillStyle='#0a0a1a';ctx.font='900 24px Orbitron';ctx.fillText(L.play,W/2,by+38);
   const sy=oy+uh*0.54;
   ctx.fillStyle='#7c4dff';ctx.shadowColor='#7c4dff';ctx.shadowBlur=10;rr(bx+20,sy,bw-40,44,22);ctx.fill();ctx.shadowBlur=0;
