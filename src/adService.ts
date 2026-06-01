@@ -12,8 +12,10 @@ const useTest = __DEV__ || FORCE_TEST_ADS;
 const INTERSTITIAL_ID = useTest ? TestIds.INTERSTITIAL : 'ca-app-pub-9920930529636149/5392741755';
 const REWARDED_ID = useTest ? TestIds.REWARDED : 'ca-app-pub-9920930529636149/5762833880';
 
-let interstitial: InstanceType<typeof InterstitialAd> | null = null;
-let rewarded: InstanceType<typeof RewardedAd> | null = null;
+// Use the factory's return type for the instance type: InterstitialAd/RewardedAd
+// have protected constructors, so `InstanceType<typeof X>` fails to type-check.
+let interstitial: ReturnType<typeof InterstitialAd.createForAdRequest> | null = null;
+let rewarded: ReturnType<typeof RewardedAd.createForAdRequest> | null = null;
 
 let interstitialLoaded = false;
 let rewardedLoaded = false;
@@ -22,6 +24,10 @@ let rewardedLoading = false;
 let lastInterstitialError: string | null = null;
 let lastRewardedError: string | null = null;
 let onRewardEarned: ((reward: string) => void) | null = null;
+// The reward type ('continue' | 'coins' | ...) requested for the in-flight
+// rewarded ad. Set in showRewarded, replayed to the callback on EARNED_REWARD,
+// so the two sides agree on which reward to grant (no hardcoded assumption).
+let pendingRewardType = 'continue';
 let lastInterstitialAt = 0;
 let lastRewardedShowAt = 0;
 const MIN_INTERSTITIAL_INTERVAL_MS = 60_000;
@@ -119,14 +125,14 @@ export async function initAds(): Promise<void> {
   if (initialized) return;
   initialized = true;
 
-  console.log('[AdMob] init starting. useTest=', useTest, 'INTERSTITIAL_ID=', INTERSTITIAL_ID, 'REWARDED_ID=', REWARDED_ID);
+  if (__DEV__) console.log('[AdMob] init starting. useTest=', useTest, 'INTERSTITIAL_ID=', INTERSTITIAL_ID, 'REWARDED_ID=', REWARDED_ID);
 
   await requestATT();
 
   try {
     const adapterStatuses = await MobileAds().initialize();
     sdkReady = true;
-    console.log('[AdMob] SDK initialized. Adapter statuses:', JSON.stringify(adapterStatuses));
+    if (__DEV__) console.log('[AdMob] SDK initialized. Adapter statuses:', JSON.stringify(adapterStatuses));
     emitStatus();
   } catch (e: any) {
     console.warn('[AdMob] SDK init failed:', e?.message || e);
@@ -145,7 +151,7 @@ export async function initAds(): Promise<void> {
     interstitialLoading = false;
     interstitialRetryCount = 0;
     lastInterstitialError = null;
-    console.log('[AdMob] interstitial LOADED');
+    if (__DEV__) console.log('[AdMob] interstitial LOADED');
     emitStatus();
   });
   interstitial.addAdEventListener(AdEventType.CLOSED, () => {
@@ -169,11 +175,11 @@ export async function initAds(): Promise<void> {
     rewardedLoading = false;
     rewardedRetryCount = 0;
     lastRewardedError = null;
-    console.log('[AdMob] rewarded LOADED');
+    if (__DEV__) console.log('[AdMob] rewarded LOADED');
     emitStatus();
   });
   rewarded.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
-    if (onRewardEarned) onRewardEarned('continue');
+    if (onRewardEarned) onRewardEarned(pendingRewardType);
     onRewardEarned = null;
   });
   rewarded.addAdEventListener(AdEventType.CLOSED, () => {
@@ -216,7 +222,7 @@ export function showInterstitial(): boolean {
   }
 }
 
-export function showRewarded(callback: (reward: string) => void): boolean {
+export function showRewarded(reward: string, callback: (reward: string) => void): boolean {
   if (!sdkReady || !rewarded) return false;
   const now = Date.now();
   if (now - lastRewardedShowAt < REWARDED_SHOW_DEDUPE_MS) return false;
@@ -225,6 +231,7 @@ export function showRewarded(callback: (reward: string) => void): boolean {
     return false;
   }
   try {
+    pendingRewardType = reward;
     onRewardEarned = callback;
     rewarded.show();
     lastRewardedShowAt = now;

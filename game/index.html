@@ -54,7 +54,7 @@ const L={
   camera:isTR?'Kamera':'Camera',zoomNormal:isTR?'Normal':'Normal',
   zoomClose:isTR?'Yakın':'Close',zoomFar:isTR?'Uzak':'Far',
   mainMenu:isTR?'ANA MENÜ':'MAIN MENU',coins:isTR?'Para':'Coins',
-  buy:isTR?'SATIN AL':'BUY',notEnough:isTR?'Yetersiz para':'Not enough coins',
+  notEnough:isTR?'Yetersiz para':'Not enough coins',
   leaderboard:isTR?'SKOR TABLOSU':'LEADERBOARD',noScores:isTR?'Henüz skor yok':'No scores yet',
   skinUnlocked:isTR?'YENİ SKIN AÇILDI!':'NEW SKIN UNLOCKED!',
   watchForCoins:isTR?'REKLAM İZLE +100':'WATCH AD +100',
@@ -159,9 +159,6 @@ function resetTouchState(){
   skinScrollLastY=null;
   if(player)player.boosting=false;
 }
-// When tutorial is opened from a screen other than the initial spawn (e.g.
-// pause "How to play"), this remembers where to go back to once dismissed.
-let tutorialReturnState=null;
 // Main-menu Settings overlay: same Sound / Music / Vibration toggles as the
 // pause screen, but reachable without starting a game.
 let showSettings=false;
@@ -194,6 +191,10 @@ let soundOn = true, musicOn = true, vibrationOn = true;
 let coins = 0, topScores = [];
 let shakeTimer = 0, shakeMag = 0;
 let kingActive = false, nextKingScore = 2000;
+// King-slay rewards. Single source of truth so the payout (killSnake) and the
+// arrival banner (drawHUD) can never drift apart again.
+const KING_SCORE_REWARD = 500;
+const KING_COIN_REWARD = 150;
 // Boss snake (D1): rarer, tougher than King, every 5k score points.
 let bossActive = false, nextBossScore = 5000, bossToast = 0;
 const BOSS_SCORE_REWARD = 1000;
@@ -325,7 +326,18 @@ window.addEventListener('message',function(e){
     }
     if(m.type==='AD_STATUS'&&m.data){adReady={interstitial:!!m.data.interstitial,rewarded:!!m.data.rewarded,rewardedLoading:!!m.data.rewardedLoading};}
     if(m.type==='HIGH_SCORE_LOADED'){highScore=Math.max(highScore,m.data||0);try{localStorage.setItem('growio_hs',String(highScore));}catch(e){}}
-    if(m.type==='COINS_LOADED'){const rn=m.data||0;if(rn>coins){coins=rn;try{localStorage.setItem('growio_coins',String(coins));}catch(e){}}}
+    if(m.type==='COINS_LOADED'){
+      const rn=Math.max(0,m.data|0);
+      if(!coinsReconciled){
+        coinsReconciled=true;
+        const next=reconcileLoadedCoins(coins,coinsHadLocal,rn,true);
+        if(next!==coins){coins=next;try{localStorage.setItem('growio_coins',String(coins));}catch(e){}}
+        // Native disagrees with the reconciled balance → heal it (up after a
+        // cleared-cache top-up, or down from a stale-high value).
+        if(rn!==coins)postMsg({type:'SAVE_COINS',data:coins});
+      }
+      // Later native pushes are ignored: the game owns coins after boot.
+    }
     if(m.type==='STATS_LOADED'&&m.data){
       const s=m.data;
       if(typeof s.totalKills==='number')totalKills=Math.max(totalKills,s.totalKills);
@@ -353,8 +365,34 @@ function loadSkins(){
 }
 function saveStats(){try{localStorage.setItem('growio_stats',JSON.stringify({tk:totalKills,tg:totalGames,cs:currentSkin,td:deathCount}));}catch(e){}postMsg({type:'SAVE_STATS',data:{totalKills:totalKills,totalGames:totalGames,totalDeaths:deathCount}});postMsg({type:'SAVE_SKIN_STATE',data:{current:currentSkin,unlocked:unlockedSkins.slice()}});}
 function loadStats(){try{const d=localStorage.getItem('growio_stats');if(d){const s=JSON.parse(d);totalKills=s.tk||0;totalGames=s.tg||0;currentSkin=s.cs||0;deathCount=s.td||0;}}catch(e){}}
-function saveCoins(){try{localStorage.setItem('growio_coins',String(coins));}catch(e){}postMsg({type:'SAVE_COINS',data:coins});}
-function loadCoins(){try{coins=parseInt(localStorage.getItem('growio_coins'))||0;}catch(e){}postMsg({type:'LOAD_COINS'});}
+let coinsHadLocal=false,coinsReconciled=false;
+// Hold the native SAVE_COINS push until the first reconcile completes, so a
+// boot-time save (e.g. the daily bonus) can't overwrite the native backup
+// BEFORE reconcileLoadedCoins has read it. localStorage is written immediately
+// and is authoritative on the next boot, so nothing is lost if the app dies
+// in this brief window.
+function saveCoins(){try{localStorage.setItem('growio_coins',String(coins));}catch(e){}if(coinsReconciled)postMsg({type:'SAVE_COINS',data:coins});}
+// Coins reconciliation. localStorage is authoritative for THIS device — it
+// always reflects what the player actually did here. The native AsyncStorage
+// value is a backup used only on the first load:
+//   - hadLocal (local holds a parseable value): keep local outright. Closes the
+//     refund-RAISE vector — a stale-high native push can never restore spent
+//     coins (main's old max-merge bug).
+//   - !hadLocal (fresh install / cleared cache / corrupt-local): RESTORE the
+//     native backup AND add whatever was banked this session on top. Local
+//     started at 0 this session and saveCoins defers its native push until
+//     after this reconcile, so native is the untouched pre-session backup and
+//     local is pure session earnings — disjoint, so adding can't double-count
+//     and no earnings (or daily bonus) are dropped beneath the floor.
+// Pure + window-exposed so it can be asserted in isolation.
+function reconcileLoadedCoins(localCoins,hadLocal,nativeCoins,firstLoad){
+  if(firstLoad&&!hadLocal)return Math.max(0,nativeCoins|0)+Math.max(0,localCoins|0);
+  return localCoins;
+}
+// Treat local as authoritative only when it parses to a finite number — a
+// corrupt/half-flushed value must fall through to the native-backup branch
+// instead of locking in 0 and healing the backup down to 0.
+function loadCoins(){try{const raw=localStorage.getItem('growio_coins');const n=parseInt(raw,10);coinsHadLocal=Number.isFinite(n);coins=Number.isFinite(n)?n:0;}catch(e){}postMsg({type:'LOAD_COINS'});}
 function saveSettings(){try{localStorage.setItem('growio_settings',JSON.stringify({s:soundOn,m:musicOn,v:vibrationOn}));}catch(e){}}
 function loadSettings(){try{const d=localStorage.getItem('growio_settings');if(d){const s=JSON.parse(d);soundOn=s.s!==false;musicOn=s.m!==false;vibrationOn=s.v!==false;}}catch(e){}}
 function saveTopScores(){try{localStorage.setItem('growio_top',JSON.stringify(topScores));}catch(e){}}
@@ -501,18 +539,24 @@ function drawParticles(){
 
 // ═══ FOOD ═══
 function spawnFood(x,y,val,color,force){
+  let slot=-1;
   if(foods.length>=MAX_FOOD){
     if(!force)return;
-    // Drop the oldest food to make room — kill-drops from a 300-segment Boss
-    // were silently lost when MAX_FOOD was already reached; force=true keeps
-    // the explosion visible and rewarding.
-    foods.shift();
+    // At cap, overwrite the next pellet via a rotating pointer (O(1)) rather
+    // than shift() (O(n)): a 300-segment Boss death force-spawns ~100 pellets
+    // in one frame, and repeated shift() on a 600-element array hitched at the
+    // worst moment. A rotating cursor (vs. a random slot) guarantees a full
+    // sweep before any slot is reused, so pellets from one burst can't clobber
+    // each other. Food has no order dependency, so this is visually identical.
+    slot=foodEvict=(foodEvict+1)%foods.length;
   }
   if(x==null){const a=rand(0,TAU),r=rand(0,WR-50);x=WCX+Math.cos(a)*r;y=WCY+Math.sin(a)*r;}
   val=val||1;
   const colors=['#00e5ff','#76ff03','#ff4081','#ffab00','#7c4dff','#00bfa5','#ff6e40','#ea80fc'];
-  foods.push({x,y,val,color:color||colors[randInt(0,colors.length-1)],r:3+val*1.5,pulse:rand(0,TAU)});
+  const f={x,y,val,color:color||colors[randInt(0,colors.length-1)],r:3+val*1.5,pulse:rand(0,TAU)};
+  if(slot>=0)foods[slot]=f;else foods.push(f);
 }
+let foodEvict=0; // rotating eviction cursor for force-spawn at MAX_FOOD cap
 function spawnInitialFood(){for(let i=0;i<400;i++)spawnFood();}
 // Pick a spawn point at least minD pixels from the player. Prevents bots
 // from popping into existence right on top of the head and instakilling a
@@ -838,7 +882,7 @@ function killSnake(victim,killer,cause){
       spawnP(victim.segments[0].x,victim.segments[0].y,SKINS[victim.skin].c[0],20,120,3);
     }
     if(victim.isKing&&killer.isPlayer){
-      score+=500;coins+=80;sndKingSlain();postMsg({type:'HAPTIC',data:'heavy'});
+      score+=KING_SCORE_REWARD;coins+=KING_COIN_REWARD;sndKingSlain();postMsg({type:'HAPTIC',data:'heavy'});
       flashAlpha=0.3;flashColor='#ffd600';nextKingScore=score+2000;
     }
     if(victim.isBoss&&killer.isPlayer){
@@ -872,7 +916,10 @@ function killSnake(victim,killer,cause){
 }
 
 function revivePlayer(){
-  if(!player)return;
+  // Only a genuine, first post-death revive may run. Without the state/hasRevived
+  // guard a duplicate or late AD_REWARD_EARNED{continue} could yank a live run —
+  // or even the menu — back to 'playing' and grant a free reset.
+  if(!player||state!=='dead'||hasRevived)return;
   hasRevived=true;
   player.alive=true;player.length=Math.max(10,Math.floor(player.length*0.7));
   // Rebuild a body trailing behind the head along the current facing angle,
@@ -1017,7 +1064,7 @@ function updateZone(){
 
 // ═══ GAME INIT ═══
 function startGame(){
-  initAudio();score=0;killCombo=0;killComboTimer=0;hasRevived=false;
+  initAudio();score=0;killCombo=0;killComboTimer=0;hasRevived=false;currentRank=0;
   foods=[];powerups=[];particles=[];snakes=[];scorePopups=[];
   kingActive=false;nextKingScore=2000;
   bossActive=false;nextBossScore=5000;bossToast=0;
@@ -1169,6 +1216,8 @@ function update(dt){
 }
 
 // ═══ RENDER ═══
+const liveBotsBuf=[];           // reused each frame for snake z-ordering
+const byLength=(a,b)=>a.length-b.length;
 function render(){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.fillStyle=zoneBg;ctx.fillRect(0,0,W,H);
@@ -1186,8 +1235,12 @@ function render(){
     ctx.save();ctx.translate(W/2+sx,H/2+sy);ctx.scale(zoom,zoom);ctx.translate(-camera.x,-camera.y);
     drawGrid();drawStars();drawBoundary();drawComboZones();drawFood();drawPowerups();
     // Z-sort snakes: smaller bots first, bigger bots above; player always on top.
-    const liveBots=snakes.filter(s=>s.alive&&!s.isPlayer).sort((a,b)=>a.length-b.length);
-    for(const s of liveBots)drawSnake(s);
+    // Reuse a module buffer (like hudLeaderboard) instead of allocating a fresh
+    // filtered+sorted array + comparator closure every frame.
+    liveBotsBuf.length=0;
+    for(let i=0;i<snakes.length;i++){const s=snakes[i];if(s.alive&&!s.isPlayer)liveBotsBuf.push(s);}
+    liveBotsBuf.sort(byLength);
+    for(const s of liveBotsBuf)drawSnake(s);
     if(player&&player.alive)drawSnake(player);
     drawParticles();drawScorePopups();ctx.restore();
     drawHUD();drawMinimap();
@@ -1275,7 +1328,7 @@ function drawFood(){
   const vy1=camera.y-H/2/camera.zoom-20,vy2=camera.y+H/2/camera.zoom+20;
   for(const f of foods){
     if(f.x<vx1||f.x>vx2||f.y<vy1||f.y>vy2)continue;
-    f.pulse+=0.05;const r=f.r+Math.sin(f.pulse)*1;
+    f.pulse+=3*gdt;const r=f.r+Math.sin(f.pulse)*1;
     ctx.fillStyle=f.color;
     ctx.beginPath();ctx.arc(f.x,f.y,r,0,TAU);ctx.fill();
   }
@@ -1285,7 +1338,7 @@ function drawPowerups(){
   const vy1=camera.y-H/2/camera.zoom-30,vy2=camera.y+H/2/camera.zoom+30;
   for(const pu of powerups){
     if(pu.x<vx1||pu.x>vx2||pu.y<vy1||pu.y>vy2)continue;
-    pu.pulse+=0.04;const r=12+Math.sin(pu.pulse)*3;
+    pu.pulse+=2.4*gdt;const r=12+Math.sin(pu.pulse)*3;
     ctx.save();ctx.translate(pu.x,pu.y);ctx.rotate(pu.pulse*0.5);
     ctx.fillStyle=PU_COLORS[pu.type];ctx.shadowColor=PU_COLORS[pu.type];ctx.shadowBlur=15;
     if(pu.type==='speed'){ctx.beginPath();for(let i=0;i<6;i++){const a=i*PI/3-PI/6;ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}ctx.closePath();ctx.fill();}
@@ -1378,7 +1431,7 @@ function drawBrandTitle(cx,cy,scale){
   const startX=cx-(mainW+subW)/2;
   ctx.textAlign='left';
   ctx.font='900 '+baseSize+'px Orbitron';
-  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=baseSize*0.5;
+  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=baseSize*(0.42+0.13*Math.sin(menuPulseT*3));
   ctx.fillText('GROW',startX,cy);ctx.shadowBlur=0;
   ctx.font='700 '+subSize+'px Orbitron';
   ctx.fillStyle='rgba(255,255,255,0.8)';
@@ -1403,7 +1456,7 @@ function drawHUD(){
     ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=20;
     ctx.font='900 26px Orbitron';ctx.fillText(L.kingArrived,W/2,m+60);ctx.shadowBlur=0;
     ctx.fillStyle='rgba(255,255,255,0.75)';ctx.font='700 13px Rajdhani';
-    ctx.fillText(isTR?'Eze bilirsen +500 ve +150 🪙':'Slay it for +500 and +150 🪙',W/2,m+80);
+    ctx.fillText(isTR?'Eze bilirsen +'+KING_SCORE_REWARD+' ve +'+KING_COIN_REWARD+' 🪙':'Slay it for +'+KING_SCORE_REWARD+' and +'+KING_COIN_REWARD+' 🪙',W/2,m+80);
     ctx.globalAlpha=1;ctx.textAlign='left';
   }
   if(bossToast>0){
@@ -1735,16 +1788,50 @@ function ensureMenuBg(){
   menuBgC.width=Math.ceil(W*dpr);menuBgC.height=Math.ceil(H*dpr);
   const mc=menuBgC.getContext('2d');mc.setTransform(dpr,0,0,dpr,0,0);
   mc.fillStyle='#0a0a1a';mc.fillRect(0,0,W,H);
+  // Soft cyan aurora behind the title gives the flat panel some depth.
+  const gx=W/2,gy=H*0.26,gr=Math.max(W,H)*0.62;
+  const aur=mc.createRadialGradient(gx,gy,0,gx,gy,gr);
+  aur.addColorStop(0,'rgba(0,229,255,0.11)');
+  aur.addColorStop(0.45,'rgba(0,150,200,0.04)');
+  aur.addColorStop(1,'rgba(10,10,26,0)');
+  mc.fillStyle=aur;mc.fillRect(0,0,W,H);
   mc.strokeStyle='rgba(255,255,255,0.02)';mc.lineWidth=1;
   mc.beginPath();
   for(let x=0;x<W;x+=40){mc.moveTo(x,0);mc.lineTo(x,H);}
   for(let y=0;y<H;y+=40){mc.moveTo(0,y);mc.lineTo(W,y);}
   mc.stroke();
+  // Vignette: darken the edges to focus the eye on the centre column.
+  const vig=mc.createRadialGradient(W/2,H/2,Math.min(W,H)*0.32,W/2,H/2,Math.max(W,H)*0.78);
+  vig.addColorStop(0,'rgba(0,0,0,0)');
+  vig.addColorStop(1,'rgba(0,0,0,0.55)');
+  mc.fillStyle=vig;mc.fillRect(0,0,W,H);
   menuBgW=W;menuBgH=H;menuBgDpr=dpr;
+}
+// Sparse field of slow-rising glow motes — ambient life over the cached menu
+// background. ~22 dots, gdt-driven so the drift is frame-rate independent.
+let menuParticles=null;
+// Menu pulse phase — accumulates real time (gdt, seconds) so the title/PLAY glow
+// pulses are frame-rate independent (keep the 60fps look on 120Hz ProMotion).
+let menuPulseT=0;
+function drawMenuParticles(){
+  if(!menuParticles){
+    menuParticles=[];
+    for(let i=0;i<22;i++)menuParticles.push({x:rand(0,W),y:rand(0,H),r:rand(0.8,2.4),spd:rand(6,18),ph:rand(0,TAU)});
+  }
+  for(let i=0;i<menuParticles.length;i++){
+    const p=menuParticles[i];
+    p.y-=p.spd*gdt;p.ph+=gdt*0.8;
+    if(p.y<-4){p.y=H+4;p.x=rand(0,W);}
+    else if(p.x<0||p.x>W){p.x=rand(0,W);}
+    ctx.fillStyle='rgba(0,229,255,'+(0.10+0.10*Math.sin(p.ph)).toFixed(3)+')';
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,TAU);ctx.fill();
+  }
 }
 function drawMenu(){
   ensureMenuBg();
   ctx.drawImage(menuBgC,0,0,menuBgC.width,menuBgC.height,0,0,W,H);
+  drawMenuParticles();
+  menuPulseT+=gdt;
   ctx.textAlign='center';
   const uh=H-sat-sab,oy=sat;
   drawBrandTitle(W/2,oy+uh*0.22);
@@ -1761,7 +1848,7 @@ function drawMenu(){
   ctx.beginPath();ctx.arc(35,sat+35,18,0,TAU);ctx.stroke();
   ctx.fillStyle='rgba(255,255,255,0.75)';ctx.font='700 20px Rajdhani';ctx.fillText('⚙',35,sat+43);
   const bw=220,bh=58,bx=W/2-bw/2,by=oy+uh*0.42;
-  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=15;rr(bx,by,bw,bh,28);ctx.fill();ctx.shadowBlur=0;
+  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=15+7*Math.sin(menuPulseT*3.6);rr(bx,by,bw,bh,28);ctx.fill();ctx.shadowBlur=0;
   ctx.fillStyle='#0a0a1a';ctx.font='900 24px Orbitron';ctx.fillText(L.play,W/2,by+38);
   const sy=oy+uh*0.54;
   ctx.fillStyle='#7c4dff';ctx.shadowColor='#7c4dff';ctx.shadowBlur=10;rr(bx+20,sy,bw-40,44,22);ctx.fill();ctx.shadowBlur=0;
@@ -1783,7 +1870,7 @@ function drawMenu(){
   ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='600 12px Rajdhani';ctx.fillText(skin.name,W/2,py+50);
   // Version stamp (bottom)
   ctx.fillStyle='rgba(255,255,255,0.18)';ctx.font='600 10px Rajdhani';ctx.textAlign='center';
-  ctx.fillText('v1.1.9',W/2,H-sab-8);
+  ctx.fillText('v1.2.1',W/2,H-sab-8);
   ctx.textAlign='left';
 }
 
@@ -1852,7 +1939,7 @@ function drawDeathScreen(){
   }
   // Ad-failed inline message
   if(adFailedMsg>0){
-    adFailedMsg-=0.016;
+    adFailedMsg-=gdt;
     ctx.fillStyle='rgba(255,100,100,'+(Math.min(adFailedMsg,1))+')';
     ctx.font='600 13px Rajdhani';
     ctx.fillText(L.adNotAvailable,W/2,ry+bh+16);
@@ -1886,7 +1973,7 @@ function drawSkinSelect(){
   // Title — own row, dynamic
   const titleSize=Math.min(28,Math.floor(W*0.07));
   ctx.fillStyle='#fff';ctx.font='900 '+titleSize+'px Orbitron';ctx.fillText(L.skins,W/2,oy+86);
-  if(buyFailedMsg>0){buyFailedMsg-=0.016;ctx.fillStyle='rgba(255,100,100,'+Math.min(buyFailedMsg,1)+')';ctx.font='700 13px Rajdhani';ctx.fillText(L.notEnough,W/2,oy+108);}
+  if(buyFailedMsg>0){buyFailedMsg-=gdt;ctx.fillStyle='rgba(255,100,100,'+Math.min(buyFailedMsg,1)+')';ctx.font='700 13px Rajdhani';ctx.fillText(L.notEnough,W/2,oy+108);}
   const cols=5,cellW=W/cols,cellH=70,startY=oy+118-skinScroll;
   for(let i=0;i<SKINS.length;i++){
     const row=Math.floor(i/cols),col=i%cols;
@@ -1958,7 +2045,7 @@ $.addEventListener('touchstart',function(e){
   const t=e.changedTouches[0];
   // Tutorial overlay can be shown over any state (initial spawn or pause-launched).
   // A single tap dismisses it and returns control to the underlying screen.
-  if(showTutorial){markTutorialSeen();tutorialReturnState=null;sndMenu();return;}
+  if(showTutorial){markTutorialSeen();sndMenu();return;}
   if(state==='menu'){handleMenuTap(t.clientX,t.clientY);return;}
   if(state==='dead'){handleDeathTap(t.clientX,t.clientY);return;}
   if(state==='paused'){handlePauseTap(t.clientX,t.clientY);return;}
@@ -2021,7 +2108,7 @@ $.addEventListener('touchend',function(e){
 // Mouse
 $.addEventListener('mousedown',function(e){
   initAudio();
-  if(showTutorial){markTutorialSeen();tutorialReturnState=null;sndMenu();return;}
+  if(showTutorial){markTutorialSeen();sndMenu();return;}
   if(state==='menu'){handleMenuTap(e.clientX,e.clientY);return;}
   if(state==='dead'){handleDeathTap(e.clientX,e.clientY);return;}
   if(state==='paused'){handlePauseTap(e.clientX,e.clientY);return;}
@@ -2037,7 +2124,7 @@ window.addEventListener('keydown',function(e){
   // Tutorial overlay swallows everything: any key dismisses it and the
   // event does NOT fall through to gameplay (otherwise ESC+tutorial open
   // would resume the game while the overlay was still drawn on top).
-  if(showTutorial){if(e.code==='Space'||e.code==='Enter'||e.code==='Escape'){markTutorialSeen();tutorialReturnState=null;sndMenu();}return;}
+  if(showTutorial){if(e.code==='Space'||e.code==='Enter'||e.code==='Escape'){markTutorialSeen();sndMenu();}return;}
   if(e.code==='Space'&&player){player.boosting=true;sndBoost();}
   if(e.code==='Escape'){if(state==='playing'){state='paused';if(player)player.boosting=false;joystick.active=false;sndMenu();}else if(state==='paused'){state='playing';if(player)player.invulnTimer=Math.max(player.invulnTimer,1.2);quitConfirmTimer=0;sndMenu();}}
 });
@@ -2107,7 +2194,7 @@ function handlePauseTap(x,y){
   }
   // How to play
   ry=oy+uh*0.50;
-  if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){showTutorial=true;tutorialReturnState='paused';return;}
+  if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){showTutorial=true;return;}
   // Main menu (open confirm)
   ry=oy+uh*0.64;
   if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){quitConfirmTimer=10;return;}

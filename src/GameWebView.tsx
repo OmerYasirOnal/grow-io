@@ -63,7 +63,7 @@ export default function GameWebView() {
         }
         case 'SHOW_REWARDED_AD': {
           const requestedReward = msg.data?.reward || 'continue';
-          const shown = showRewarded(() => sendToGame({ type: 'AD_REWARD_EARNED', data: { reward: requestedReward } }));
+          const shown = showRewarded(requestedReward, (reward) => sendToGame({ type: 'AD_REWARD_EARNED', data: { reward } }));
           if (!shown) sendToGame({ type: 'AD_FAILED', data: { reward: requestedReward } });
           break;
         }
