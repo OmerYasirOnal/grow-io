@@ -112,7 +112,31 @@ const L={
   trails:isTR?'İZLER':'TRAILS',
   trailEquipped:isTR?'TAKILI':'EQUIPPED',
   trailSelect:isTR?'SEÇ':'SELECT',
-  buyTrail:isTR?'Bu izi satın al?':'Buy this trail?'
+  buyTrail:isTR?'Bu izi satın al?':'Buy this trail?',
+  achievements:isTR?'BAŞARIMLAR':'ACHIEVEMENTS',
+  achUnlocked:isTR?'BAŞARIM AÇILDI!':'ACHIEVEMENT UNLOCKED!',
+  achProgress:isTR?'Açılan':'Unlocked',
+  achLocked:isTR?'KİLİTLİ':'LOCKED',
+  achFirstBlood:isTR?'İlk Kan':'First Blood',
+  achFirstBloodD:isTR?'İlk öldürmeni yap':'Get your first kill',
+  achCenturion:isTR?'Yüzbaşı':'Centurion',
+  achCenturionD:isTR?'Toplam 100 öldürme':'100 total kills',
+  achRegular:isTR?'Müdavim':'Regular',
+  achRegularD:isTR?'50 oyun oyna':'Play 50 games',
+  achApex:isTR?'Zirve':'Apex',
+  achApexD:isTR?'Bir koşuda #1 ol':'Hit rank #1 in a run',
+  achBossSlayer:isTR?'Boss Avcısı':'Boss Slayer',
+  achBossSlayerD:isTR?'Bir boss yen':'Defeat a boss',
+  achBossLord:isTR?'Boss Efendisi':'Boss Lord',
+  achBossLordD:isTR?'25 boss yen':'Defeat 25 bosses',
+  achDedicated:isTR?'Sadık':'Dedicated',
+  achDedicatedD:isTR?'7 günlük seri':'7-day login streak',
+  achVeteran:isTR?'Gazi':'Veteran',
+  achVeteranD:isTR?'Seviye 10\'a ulaş':'Reach level 10',
+  achRushMaster:isTR?'Hız Ustası':'Rush Master',
+  achRushMasterD:isTR?'Hızlı modda 5000 skor':'Score 5000 in Rush',
+  achHighRoller:isTR?'Rekortmen':'High Roller',
+  achHighRollerD:isTR?'Klasik modda 10000 skor':'Reach 10000 in Classic'
 };
 
 function resize(){
@@ -240,7 +264,7 @@ let gBlobs={};
 function resetTouchState(){
   for(const k in touches)delete touches[k];
   joystick.active=false;joystick.dx=0;joystick.dy=0;
-  skinScrollLastY=null;
+  skinScrollLastY=null;achScrollLastY=null;
   if(player)player.boosting=false;
 }
 // Main-menu Settings overlay: same Sound / Music / Vibration toggles as the
@@ -280,6 +304,16 @@ let runTimeLimit = 0;
 // Per-mode best scores: {classic: N, rush: N, …}. Persisted via saveBlob('bests',{}).
 let bestByMode = {};
 let lastLoginDate = '', loginStreak = 0;
+// ─── ACHIEVEMENTS (Wave 3.3) ─────────────────────────────────────────────────
+// Surface dead lifetime stats as unlockable badges. State persisted via
+// saveBlob('ach',{unlocked:[...ids], bossKills:n, apex:bool}) — additive, no
+// native message changes. achUnlocked is the source of truth that guards
+// against re-granting a toast/coin reward. bossKills is a NEW persisted lifetime
+// counter (incremented on every boss slay); achApex is a sticky lifetime flag
+// (true once the player has ever hit rank #1 in a run). runReachedApex is the
+// per-run mirror, set live in update() and folded into achApex at run-end.
+let achUnlocked = [], achBossKills = 0, achApex = false, runReachedApex = false;
+let achScroll = 0; // achievements list scroll offset (px)
 // ─── DAILY REWARD MODAL (Wave 2.3) ───────────────────────────────────────────
 // Escalating 7-day ladder: day index 0..6 cycles (day 7+ repeats at 6).
 const DAILY_REWARDS = [50, 80, 120, 180, 260, 380, 600];
@@ -519,6 +553,56 @@ function awardXp(runScore,runKills){
   plevel=levelForXp(xp);
   grantLevelRewards(prevLevel,plevel,false);
   saveBlob('prog',{xp:xp,lvl:plevel});
+}
+
+// ═══ ACHIEVEMENTS ═══
+// Each entry: {id, name(L-key), desc(L-key), check()→bool}. check() reads only
+// EXISTING counters/state, so achievements are pure derived data — nothing here
+// drives gameplay. Evaluated at run-end and on relevant events (boss slay). A
+// newly-true check whose id is not yet in achUnlocked fires ONCE: toast + small
+// coin reward, then the id is recorded so it can never re-grant.
+const ACH_COIN_REWARD = 100; // one-time payout per achievement unlocked
+const ACHIEVEMENTS = [
+  {id:'first_blood', name:'achFirstBlood', desc:'achFirstBloodD', check:function(){return totalKills>=1;}},
+  {id:'centurion',   name:'achCenturion',  desc:'achCenturionD',  check:function(){return totalKills>=100;}},
+  {id:'regular',     name:'achRegular',    desc:'achRegularD',    check:function(){return totalGames>=50;}},
+  {id:'apex',        name:'achApex',       desc:'achApexD',       check:function(){return achApex;}},
+  {id:'boss_slayer', name:'achBossSlayer', desc:'achBossSlayerD', check:function(){return achBossKills>=1;}},
+  {id:'boss_lord',   name:'achBossLord',   desc:'achBossLordD',   check:function(){return achBossKills>=25;}},
+  {id:'dedicated',   name:'achDedicated',  desc:'achDedicatedD',  check:function(){return loginStreak>=7;}},
+  {id:'veteran',     name:'achVeteran',    desc:'achVeteranD',    check:function(){return plevel>=10;}},
+  {id:'rush_master', name:'achRushMaster', desc:'achRushMasterD', check:function(){return (bestByMode['rush']||0)>=5000;}},
+  {id:'high_roller', name:'achHighRoller', desc:'achHighRollerD', check:function(){return Math.max(highScore,bestByMode['classic']||0)>=10000;}}
+];
+function achIsUnlocked(id){return achUnlocked.indexOf(id)>=0;}
+function persistAch(){saveBlob('ach',{unlocked:achUnlocked.slice(),bossKills:achBossKills,apex:achApex});}
+function loadAch(){
+  const a=loadBlob('ach',{unlocked:[],bossKills:0,apex:false});
+  achUnlocked=Array.isArray(a.unlocked)?a.unlocked.filter(function(x){return typeof x==='string';}):[];
+  achBossKills=(typeof a.bossKills==='number'&&a.bossKills>0)?a.bossKills|0:0;
+  achApex=a.apex===true;
+}
+// Evaluate every achievement; unlock + reward any newly-satisfied one. Returns
+// the count newly unlocked. Guarded by achUnlocked so nothing re-grants. Persist
+// once at the end (covers both the new unlocks and any bossKills/apex changes
+// the caller already mutated before calling).
+function evaluateAchievements(){
+  let newCount=0;
+  for(let i=0;i<ACHIEVEMENTS.length;i++){
+    const a=ACHIEVEMENTS[i];
+    if(achIsUnlocked(a.id))continue;
+    let ok=false;try{ok=!!a.check();}catch(e){ok=false;}
+    if(ok){
+      achUnlocked.push(a.id);
+      newCount++;
+      coins+=ACH_COIN_REWARD;
+      showToast('🏆 '+L.achUnlocked+' '+L[a.name]+' +'+ACH_COIN_REWARD+' 🪙','success');
+      sndPowerup();
+    }
+  }
+  if(newCount>0)saveCoins();
+  persistAch();
+  return newCount;
 }
 
 // ═══ SCORE TIERS (Bronze→Master) ═══
@@ -848,6 +932,8 @@ loadBlobs(); loadSkins(); loadStats(); loadCoins(); loadSettings(); loadTopScore
 (function(){const o=loadBlob('opts',{mode:'classic'});if(MODES.some(function(m){return m.id===o.mode;}))mode=o.mode;})();
 // Load per-mode best scores (flat object: {classic:N, rush:N, …}).
 (function(){const b=loadBlob('bests',{});bestByMode=b;})();
+// Load achievements (unlocked set + persisted boss-kill counter + apex flag).
+loadAch();
 // Load cosmetic trail selection + owned set (axis #2). 'none' (0) is always
 // owned; sanitise any persisted indices against the current TRAILS table.
 (function(){
@@ -1544,6 +1630,10 @@ function killSnake(victim,killer,cause){
       }
       // Shockwave: boss slay — hot white-gold, biggest ring.
       spawnShock(victim.segments[0].x,victim.segments[0].y,'#ffd600',true);
+      // Achievements: bump the lifetime boss-kill counter and evaluate now so
+      // Boss Slayer / Boss Lord toast the moment they're earned (persisted here
+      // too, so a counter increment survives even if the player quits the run).
+      achBossKills++;evaluateAchievements();
     }
   }
   if(victim.isKing){kingActive=false;if(!nextKingScore||nextKingScore<=score)nextKingScore=score+2000;}
@@ -1571,6 +1661,12 @@ function killSnake(victim,killer,cause){
     awardXp(score,player?player.killCount:0);
     // Evaluate daily missions for this run.
     evaluateMissions({score:score,kills:player?player.killCount:0,kingKills:runKingKills,playTime:playTime});
+    // Achievements: fold this run's apex flag in (live #1 during the run, or the
+    // final #1 rank addTopScore just stamped for classic), then evaluate the full
+    // set so any newly-earned badge toasts + pays out once. persistAch() inside
+    // captures the updated apex/bossKills alongside the unlocked set.
+    if(runReachedApex||currentRank===1)achApex=true;
+    evaluateAchievements();
     state='dead';
     resetTouchState();
     // Defensive: if a King was alive at the moment of death, clear the flag so
@@ -1764,7 +1860,7 @@ function startGame(modeId){
   const _modeCfg=MODES.find(function(m){return m.id===_modeId;})||MODES[0];
   // Update the global so HUD / other systems can read it.
   mode=_modeCfg.id;
-  initAudio();score=0;killCombo=0;killComboTimer=0;hasRevived=false;currentRank=0;runKingKills=0;runWaves=0;
+  initAudio();score=0;killCombo=0;killComboTimer=0;hasRevived=false;currentRank=0;runKingKills=0;runWaves=0;runReachedApex=false;
   foods=[];powerups=[];particles=[];snakes=[];scorePopups=[];
   kingActive=false;nextKingScore=2000;
   bossActive=false;nextBossScore=5000;bossToast=0;
@@ -1847,7 +1943,12 @@ function update(dt){
   if(runTimeLimit>0&&playTime>=runTimeLimit&&player&&player.alive){
     killSnake(player,null,'timeout');
   }
-  unlockCheckTimer-=dt;if(unlockCheckTimer<=0){unlockCheckTimer=1.5;checkUnlocks();checkBotStageTransition();}
+  unlockCheckTimer-=dt;if(unlockCheckTimer<=0){unlockCheckTimer=1.5;checkUnlocks();checkBotStageTransition();
+    // Live apex detection (classic only): the player has reached #1 if their
+    // running score already beats the current top classic record. Sticky for the
+    // run (folded into achApex at run-end). No allocation — reads topScores[0].
+    if(mode==='classic'&&!runReachedApex&&score>0&&score>=((topScores[0]&&topScores[0].s)||0)&&topScores.length>0)runReachedApex=true;
+  }
   // 1) AI decisions once per frame (full dt for stable timer accumulation)
   //    Entry-guard: skip whole call if bot's think timer hasn't elapsed —
   //    saves a function call per bot per frame (~720 calls/s saved at 12 bots * 60fps).
@@ -1993,6 +2094,7 @@ function render(){
   if(state==='skinselect')drawSkinSelect();
   if(state==='trailselect')drawTrailSelect();
   if(state==='leaderboard')drawLeaderboard();
+  if(state==='achievements')drawAchievements();
   if(state==='modeselect')drawModeSelect();
   // Tutorial overlay renders on top of menu / pause / playing only — never
   // over the death screen, where it would just confuse the player.
@@ -2819,6 +2921,12 @@ function drawLeaderboard(){
   ctx.fillStyle='rgba(0,229,255,0.12)';rr(12,oy+12,84,40,20);ctx.fill();
   ctx.fillStyle='#00e5ff';ctx.font='900 16px Rajdhani';ctx.textAlign='center';ctx.shadowColor='#00e5ff';ctx.shadowBlur=4;
   ctx.fillText(L.back,54,oy+38);ctx.shadowBlur=0;
+  // Achievements chip — top-right (entry point into the achievements view).
+  {const r=achChipRect();
+  ctx.fillStyle='rgba(255,214,0,0.14)';rr(r.x,r.y,r.w,r.h,20);ctx.fill();
+  ctx.strokeStyle='rgba(255,214,0,0.55)';ctx.lineWidth=1;rr(r.x,r.y,r.w,r.h,20);ctx.stroke();
+  ctx.fillStyle='#ffd600';ctx.font='900 14px Rajdhani';ctx.textAlign='center';ctx.shadowColor='#ffd600';ctx.shadowBlur=4;
+  ctx.fillText('🏆 '+achUnlocked.length+'/'+ACHIEVEMENTS.length,r.x+r.w/2,r.y+26);ctx.shadowBlur=0;}
   // Title — own row, centred, dynamic font size
   const titleSize=Math.min(32,Math.floor(W*0.078));
   ctx.fillStyle='#ffd600';ctx.font='900 '+titleSize+'px Orbitron';ctx.shadowColor='#ffd600';ctx.shadowBlur=15;
@@ -2858,6 +2966,62 @@ function drawLeaderboard(){
     }
   }
   ctx.textAlign='left';
+}
+
+// ═══ ACHIEVEMENTS VIEW ═══
+// Shared geometry for the leaderboard→achievements chip (drawn on the
+// leaderboard, hit-tested in handleLeaderboardTap). Top-right, mirrors back chip.
+function achChipRect(){const w=78;return{x:W-w-12,y:sat+12,w:w,h:40};}
+// Scrollable list of every achievement: earned rows show a ✓ badge + name;
+// locked rows are dimmed with the unlock-condition description. Pure render off
+// ACHIEVEMENTS + achUnlocked — no allocation in the row loop beyond the L lookups.
+function drawAchievements(){
+  ctx.fillStyle='#0a0a1a';ctx.fillRect(0,0,W,H);
+  const oy=sat;
+  // Back chip (mirrors drawLeaderboard / drawModeSelect)
+  ctx.fillStyle='rgba(0,229,255,0.12)';rr(12,oy+12,84,40,20);ctx.fill();
+  ctx.fillStyle='#00e5ff';ctx.font='900 16px Rajdhani';ctx.textAlign='center';ctx.shadowColor='#00e5ff';ctx.shadowBlur=4;
+  ctx.fillText(L.back,54,oy+38);ctx.shadowBlur=0;
+  // Title
+  const titleSize=Math.min(30,Math.floor(W*0.072));
+  ctx.fillStyle='#ffd600';ctx.font='900 '+titleSize+'px Orbitron';ctx.shadowColor='#ffd600';ctx.shadowBlur=15;
+  ctx.fillText(L.achievements,W/2,oy+82);ctx.shadowBlur=0;
+  // Unlocked count subtitle
+  ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='600 13px Rajdhani';
+  ctx.fillText(L.achProgress+': '+achUnlocked.length+'/'+ACHIEVEMENTS.length,W/2,oy+106);
+  // Clipped, scrollable list region.
+  const listTop=oy+124,listBot=H-sab-12,rh=64,rowW=Math.min(320,W-32),rowX=W/2-rowW/2;
+  const contentH=ACHIEVEMENTS.length*rh,viewH=listBot-listTop;
+  const maxScroll=Math.max(0,contentH-viewH);
+  if(achScroll<0)achScroll=0;if(achScroll>maxScroll)achScroll=maxScroll;
+  ctx.save();
+  ctx.beginPath();ctx.rect(0,listTop,W,viewH);ctx.clip();
+  for(let i=0;i<ACHIEVEMENTS.length;i++){
+    const a=ACHIEVEMENTS[i];
+    const ry=listTop+i*rh-achScroll;
+    if(ry+rh-8<listTop||ry>listBot)continue; // cull off-screen rows
+    const earned=achIsUnlocked(a.id);
+    // Card
+    ctx.fillStyle=earned?'rgba(255,214,0,0.10)':'rgba(255,255,255,0.04)';
+    rr(rowX,ry,rowW,rh-8,14);ctx.fill();
+    ctx.strokeStyle=earned?'rgba(255,214,0,0.5)':'rgba(255,255,255,0.14)';
+    ctx.lineWidth=earned?1.5:1;rr(rowX,ry,rowW,rh-8,14);ctx.stroke();
+    // Badge circle (left)
+    const br=18,bx=rowX+br+14,by=ry+(rh-8)/2;
+    ctx.fillStyle=earned?'#ffd600':'rgba(255,255,255,0.10)';
+    ctx.beginPath();ctx.arc(bx,by,br,0,TAU);ctx.fill();
+    ctx.fillStyle=earned?'#0a0a1a':'rgba(255,255,255,0.45)';
+    ctx.font='900 18px Orbitron';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(earned?'✓':'🔒',bx,by+1);ctx.textBaseline='alphabetic';
+    // Name + desc (right)
+    ctx.textAlign='left';
+    ctx.fillStyle=earned?'#ffd600':'rgba(255,255,255,0.75)';ctx.font='900 15px Orbitron';
+    ctx.fillText(L[a.name],bx+br+18,ry+(rh-8)*0.42);
+    ctx.fillStyle=earned?'rgba(255,255,255,0.6)':'rgba(255,255,255,0.45)';ctx.font='600 12px Rajdhani';
+    ctx.fillText(earned?('✓ '+L.achProgress):L[a.desc],bx+br+18,ry+(rh-8)*0.74);
+  }
+  ctx.restore();
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';
 }
 
 // ═══ MODE SELECT ═══
@@ -3408,6 +3572,7 @@ let touches={};
 // the touches map (used to be touches._lastY which made every iteration need
 // a `k !== '_lastY'` filter).
 let skinScrollLastY=null;
+let achScrollLastY=null;
 let lastTapEndAt=0,lastTapX=0,lastTapY=0;
 const DOUBLE_TAP_MS=320,DOUBLE_TAP_DIST=100;
 $.addEventListener('touchstart',function(e){
@@ -3420,6 +3585,7 @@ $.addEventListener('touchstart',function(e){
   if(state==='dead'){handleDeathTap(t.clientX,t.clientY);return;}
   if(state==='paused'){handlePauseTap(t.clientX,t.clientY);return;}
   if(state==='leaderboard'){handleLeaderboardTap(t.clientX,t.clientY);return;}
+  if(state==='achievements'){handleAchievementsTap(t.clientX,t.clientY);achScrollLastY=t.clientY;return;}
   if(state==='skinselect'){handleSkinTap(t.clientX,t.clientY);skinScrollLastY=t.clientY;return;}
   if(state==='trailselect'){handleTrailTap(t.clientX,t.clientY);return;}
   if(state==='modeselect'){handleModeselectTap(t.clientX,t.clientY);return;}
@@ -3442,6 +3608,7 @@ $.addEventListener('touchstart',function(e){
 $.addEventListener('touchmove',function(e){
   e.preventDefault();
   if(state==='skinselect'){const t=e.changedTouches[0];skinScroll-=t.clientY-(skinScrollLastY!=null?skinScrollLastY:t.clientY);skinScroll=Math.max(0,Math.min(skinScroll,Math.max(0,Math.ceil(SKINS.length/5)*70-H+sat+sab+128)));skinScrollLastY=t.clientY;return;}
+  if(state==='achievements'){const t=e.changedTouches[0];achScroll-=t.clientY-(achScrollLastY!=null?achScrollLastY:t.clientY);achScroll=Math.max(0,Math.min(achScroll,Math.max(0,ACHIEVEMENTS.length*64-(H-sat-sab-136))));achScrollLastY=t.clientY;return;}
   for(let i=0;i<e.changedTouches.length;i++){
     const t=e.changedTouches[i];
     const kind=touches[t.identifier];
@@ -3474,7 +3641,7 @@ $.addEventListener('touchend',function(e){
   }
   // (joystick anchor is updated in touchstart; on transfer, the stick keeps
   //  its previous direction until the surviving finger moves and re-anchors.)
-  skinScrollLastY=null;
+  skinScrollLastY=null;achScrollLastY=null;
 },{passive:false});
 
 // Mouse
@@ -3485,6 +3652,7 @@ $.addEventListener('mousedown',function(e){
   if(state==='dead'){handleDeathTap(e.clientX,e.clientY);return;}
   if(state==='paused'){handlePauseTap(e.clientX,e.clientY);return;}
   if(state==='leaderboard'){handleLeaderboardTap(e.clientX,e.clientY);return;}
+  if(state==='achievements'){handleAchievementsTap(e.clientX,e.clientY);return;}
   if(state==='skinselect'){handleSkinTap(e.clientX,e.clientY);return;}
   if(state==='trailselect'){handleTrailTap(e.clientX,e.clientY);return;}
   if(state==='modeselect'){handleModeselectTap(e.clientX,e.clientY);return;}
@@ -3589,7 +3757,13 @@ function handlePauseTap(x,y){
   if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){quitConfirmTimer=10;return;}
 }
 function handleLeaderboardTap(x,y){
-  if(x>=12&&x<=12+84&&y>=sat+12&&y<=sat+12+40){state='menu';resetTouchState();sndMenu();}
+  if(x>=12&&x<=12+84&&y>=sat+12&&y<=sat+12+40){state='menu';resetTouchState();sndMenu();return;}
+  // Achievements chip (top-right) → achievements view.
+  {const r=achChipRect();if(x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h){state='achievements';achScroll=0;resetTouchState();sndMenu();return;}}
+}
+function handleAchievementsTap(x,y){
+  // Back chip → leaderboard (the screen it was opened from).
+  if(x>=12&&x<=12+84&&y>=sat+12&&y<=sat+12+40){state='leaderboard';resetTouchState();sndMenu();return;}
 }
 function handleModeselectTap(x,y){
   // Back chip
