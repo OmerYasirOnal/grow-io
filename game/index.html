@@ -324,6 +324,36 @@ function stopMusic(){
   if(musicTimer){clearInterval(musicTimer);musicTimer=null;}
 }
 
+// ═══ PROGRESSION (XP / LEVEL) ═══
+// Cumulative XP to reach level L: XP_BASE*(L-1)*L/2
+// L2=120 L3=360 L4=720 L5=1200 L8=3360 L12=7920 L16=15120
+const XP_BASE=120;
+const XP_PER_SCORE=8;   // 1 XP per 8 score points
+const XP_PER_KILL=4;    // 4 XP per kill
+const MILESTONES={3:200,5:500,8:1000,12:2500,16:5000}; // level → coin reward
+let xp=0, plevel=1;
+function levelForXp(x){let l=1;while(x>=XP_BASE*l*(l+1)/2)l++;return l;}
+function xpForLevel(L){return XP_BASE*(L-1)*L/2;}   // cumulative XP needed to REACH level L
+function xpInLevel(x){return x-xpForLevel(plevel);}  // XP earned inside current level
+function awardXp(runScore,runKills){
+  const gain=Math.floor(runScore/XP_PER_SCORE)+runKills*XP_PER_KILL;
+  if(gain<=0)return;
+  const prevLevel=plevel;
+  xp+=gain;
+  plevel=levelForXp(xp);
+  // Fire milestone + level-up toast for every newly crossed level (handles multi-level jumps).
+  for(let l=prevLevel+1;l<=plevel;l++){
+    showToast((isTR?'SEVİYE '+l+'!':'LEVEL '+l+'!'),'success');
+    sndPowerup();
+    if(MILESTONES[l]!==undefined){
+      const reward=MILESTONES[l];
+      coins+=reward;saveCoins();
+      showToast((isTR?'MİLESTONE +'+reward+' 🪙':'MILESTONE +'+reward+' 🪙'),'success');
+    }
+  }
+  saveBlob('prog',{xp:xp,lvl:plevel});
+}
+
 // ═══ POSTMESSAGE BRIDGE ═══
 let adReady = {interstitial:false, rewarded:false, rewardedLoading:false};
 let hostBridgeSeen = false;
@@ -454,6 +484,8 @@ function skinPrice(sk){
 }
 loadHSLocal();
 loadBlobs(); loadSkins(); loadStats(); loadCoins(); loadSettings(); loadTopScores(); loadTutorialSeen(); loadLogin(); checkDailyBonus();
+// Load progression XP/level.
+(function(){const p=loadBlob('prog',{xp:0,lvl:1});xp=p.xp|0;plevel=levelForXp(xp);})();
 // Restore last-played mode (persisted via saveBlob('opts',{mode})).
 (function(){const o=loadBlob('opts',{mode:'classic'});if(MODES.some(function(m){return m.id===o.mode;}))mode=o.mode;})();
 // Defer bridge LOADs until the next frame so window.ReactNativeWebView is
@@ -931,6 +963,7 @@ function killSnake(victim,killer,cause){
     flashAlpha=0.4;flashColor='#ff1744';shakeTimer=0.3;shakeMag=8;
     killerName=killer?killer.name:(cause==='boundary'?'the boundary':'unknown');
     deathCount++;saveHS();saveStats();saveCoins();addTopScore(score);checkUnlocks();saveSkins();
+    awardXp(score,player?player.killCount:0);
     state='dead';
     resetTouchState();
     // Defensive: if a King was alive at the moment of death, clear the flag so
@@ -1926,6 +1959,14 @@ function drawMenu(){
   // Coin counter (top)
   ctx.fillStyle='#ffd600';ctx.font='900 22px Orbitron';ctx.shadowColor='#ffd600';ctx.shadowBlur=10;
   ctx.fillText('🪙 '+coins,W/2,oy+36);ctx.shadowBlur=0;
+  // XP / Level bar (below coin counter)
+  {const xbw=160,xbh=8,xbx=W/2-xbw/2,xby=oy+48;
+  const xpCur=xpInLevel(xp),xpSpan=xpForLevel(plevel+1)-xpForLevel(plevel);
+  const xpFrac=xpSpan>0?Math.min(1,xpCur/xpSpan):1;
+  ctx.fillStyle='rgba(255,255,255,0.12)';rr(xbx,xby,xbw,xbh,4);ctx.fill();
+  if(xpFrac>0){ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=6;rr(xbx,xby,Math.max(8,xbw*xpFrac),xbh,4);ctx.fill();ctx.shadowBlur=0;}
+  ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='600 11px Rajdhani';ctx.textAlign='center';
+  ctx.fillText('LV '+plevel,W/2,xby+xbh+13);ctx.textAlign='center';}
   // Help button (top-right)
   ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=2;
   ctx.beginPath();ctx.arc(W-35,sat+35,18,0,TAU);ctx.stroke();
