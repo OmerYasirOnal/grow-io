@@ -104,7 +104,11 @@ const L={
   rushMode:isTR?'HIZLI MOD':'RUSH MODE',
   classicMode:isTR?'KLASİK MOD':'CLASSIC MODE',
   tier:isTR?'Kademe':'Tier',
-  nextTier:isTR?'Sonraki':'Next'
+  nextTier:isTR?'Sonraki':'Next',
+  trails:isTR?'İZLER':'TRAILS',
+  trailEquipped:isTR?'TAKILI':'EQUIPPED',
+  trailSelect:isTR?'SEÇ':'SELECT',
+  buyTrail:isTR?'Bu izi satın al?':'Buy this trail?'
 };
 
 function resize(){
@@ -134,6 +138,7 @@ const WS = 3000, WCX = 1500, WCY = 1500, WR = 1500;
 const SEG_DIST = 8, TURN_SPEED = 3.5, BASE_SPEED = 150;
 const MAX_FOOD = 600, MAX_BOTS = 12, MAX_PARTICLES = 300, MAX_POWERUPS = 8;
 const SHK_MAX = 24; // shockwave pool size — 24 slots: at most 1–2 simultaneous kills per frame
+const TRAIL_MAX = 90; // cosmetic-trail particle pool — pre-allocated, ring-buffer, never grows
 const CELL_SIZE = 200, GRID_W = Math.ceil(WS/CELL_SIZE);
 const JOY_RADIUS = 55, JOY_DEAD = 5;
 const PI = Math.PI, TAU = PI*2;
@@ -179,6 +184,23 @@ function skinRail(sk){
   return sk.u[0]==='s'?'earn':'coins';
 }
 
+// ═══ TRAILS (cosmetic axis #2 — coins-only) ═══
+// A SECOND cosmetic dimension, fully independent of skin. Each entry is a
+// distinct cheap particle/render style emitted at the snake's trail site.
+// 'none' is free + owned from boot (current behavior). The rest are a pure
+// coin SINK (no score/earn rail). Prices are TUNABLE balance knobs.
+//   col   : base tint used by render (some styles override per-particle).
+//   rich  : true → heaviest additive style, suppressed under reducedMotion.
+//   rate  : spawn cadence in seconds between particles (smaller = denser).
+const TRAILS=[
+  {id:'none',    name:'None',         price:0,    col:'#ffffff', rich:false, rate:0},
+  {id:'sparkle', name:'Sparkle',      price:600,  col:'#fff7c2', rich:false, rate:0.05},
+  {id:'embers',  name:'Embers',       price:900,  col:'#ff7a18', rich:false, rate:0.045},
+  {id:'neon',    name:'Neon Streak',  price:1200, col:'#18e0ff', rich:true,  rate:0.03},
+  {id:'bubbles', name:'Bubbles',      price:1500, col:'#9fe6ff', rich:false, rate:0.07},
+  {id:'rainbow', name:'Rainbow Dust', price:2500, col:'#ff0040', rich:true,  rate:0.03}
+];
+
 // ═══ ZONES ═══
 const ZONES = [
   {min:0,bg:'#0a0a1a',accent:'#00e5ff'},
@@ -223,6 +245,16 @@ let player = null, snakes = [], foods = [], powerups = [], particles = [];
 const shockwaves = [];
 (function(){for(let i=0;i<SHK_MAX;i++)shockwaves.push({active:false,x:0,y:0,t:0,dur:0,maxR:0,r:0,g:0,b:0,big:false});}());
 let shkHead = 0; // ring-buffer write cursor
+// Cosmetic trail (axis #2): selected trail index + owned set. 'none' (0) is
+// free + owned from boot. Persisted via saveBlob('cos',{trail,owned}).
+let currentTrail = 0, unlockedTrails = [0];
+// Pre-allocated cosmetic-trail particle pool — ring-buffer, never grows. Kept
+// separate from the gameplay `particles` array so trails never starve the
+// kill/eat burst budget (MAX_PARTICLES). Each slot is overwritten in place.
+const trailParts = [];
+(function(){for(let i=0;i<TRAIL_MAX;i++)trailParts.push({active:false,x:0,y:0,vx:0,vy:0,life:0,ml:1,size:2,r:255,g:255,b:255,style:0,rot:0});}());
+let trailHead = 0;        // ring-buffer write cursor
+let trailSpawnAcc = 0;    // cadence accumulator (seconds) for the selected trail
 let spatialGrid = {};
 let camera = {x:WCX, y:WCY, zoom:1};
 let joystick = {active:false, cx:0, cy:0, dx:0, dy:0, angle:0};
@@ -260,6 +292,7 @@ let hitPauseTimer = 0;
 let deathCamTimer = 0;
 const DEATH_CAM_S = 0.55;
 let pendingSkinBuy = -1;
+let pendingTrailBuy = -1; // index into TRAILS awaiting buy-confirm, -1 = none
 let scorePopups = [];
 let soundOn = true, musicOn = true, vibrationOn = true;
 // Reduced-motion: when true, gate the heaviest additive VFX (boost glow/speed-lines,
@@ -683,6 +716,8 @@ function loadSkins(){
   for(let i=0;i<5;i++)if(!unlockedSkins.includes(i))unlockedSkins.push(i);
   if(currentSkin<0||currentSkin>=SKINS.length)currentSkin=0;
 }
+// Persist cosmetic-trail state (axis #2) through the v1.3 blob store.
+function saveTrails(){saveBlob('cos',{trail:currentTrail,owned:unlockedTrails.slice()});}
 function saveStats(){try{localStorage.setItem('growio_stats',JSON.stringify({tk:totalKills,tg:totalGames,cs:currentSkin,td:deathCount}));}catch(e){}if(statsReconciled)postMsg({type:'SAVE_STATS',data:{totalKills:totalKills,totalGames:totalGames,totalDeaths:deathCount,blob:gBlobs}});postMsg({type:'SAVE_SKIN_STATE',data:{current:currentSkin,unlocked:unlockedSkins.slice()}});}
 function loadStats(){try{const d=localStorage.getItem('growio_stats');if(d){const s=JSON.parse(d);totalKills=s.tk||0;totalGames=s.tg||0;currentSkin=s.cs||0;deathCount=s.td||0;}}catch(e){}}
 let coinsHadLocal=false,coinsReconciled=false;
@@ -793,6 +828,16 @@ loadBlobs(); loadSkins(); loadStats(); loadCoins(); loadSettings(); loadTopScore
 (function(){const o=loadBlob('opts',{mode:'classic'});if(MODES.some(function(m){return m.id===o.mode;}))mode=o.mode;})();
 // Load per-mode best scores (flat object: {classic:N, rush:N, …}).
 (function(){const b=loadBlob('bests',{});bestByMode=b;})();
+// Load cosmetic trail selection + owned set (axis #2). 'none' (0) is always
+// owned; sanitise any persisted indices against the current TRAILS table.
+(function(){
+  const c=loadBlob('cos',{trail:0,owned:[0]});
+  const owned=Array.isArray(c.owned)?c.owned.filter(function(i){return typeof i==='number'&&i>=0&&i<TRAILS.length;}):[0];
+  if(owned.indexOf(0)<0)owned.push(0);
+  unlockedTrails=owned;
+  const t=c.trail|0;
+  currentTrail=(t>=0&&t<TRAILS.length&&owned.indexOf(t)>=0)?t:0;
+})();
 // Defer bridge LOADs until the next frame so window.ReactNativeWebView is
 // guaranteed to be ready, then retry once at +500ms if hostBridgeSeen is still
 // false (covers slow native injection on cold launch).
@@ -994,6 +1039,110 @@ function drawShocks(){
     }
   }
   ctx.restore(); // globalCompositeOperation reset to 'source-over'
+}
+
+// ═══ COSMETIC TRAILS (axis #2) ═══
+// Pooled, ring-buffered particle trail emitted from the player snake's body.
+// spawnTrailParticle() overwrites the oldest slot (O(1), NO alloc). The richer
+// additive styles ('neon','rainbow') are suppressed under reducedMotion at the
+// spawn site, and their additive draw pass is strictly save/restore-bounded.
+// style codes (cached on the slot so the draw loop needs no TRAILS lookup):
+//   0 sparkle  1 embers  2 neon  3 bubbles  4 rainbow
+function _trailSlot(){const s=trailParts[trailHead];trailHead=(trailHead+1)%TRAIL_MAX;s.active=true;s.life=1;return s;}
+function spawnTrailParticle(x,y){
+  if(currentTrail<=0)return;                 // 'none' = no trail
+  const td=TRAILS[currentTrail];if(!td)return;
+  if(td.rich&&reducedMotion)return;          // gate heaviest styles for reduced-motion
+  const id=td.id;
+  if(id==='sparkle'){
+    const s=_trailSlot();s.x=x+rand(-3,3);s.y=y+rand(-3,3);s.vx=rand(-12,12);s.vy=rand(-12,12);s.ml=rand(0.35,0.6);s.size=rand(1.2,2.4);
+    const rgb=_parseHex(td.col);s.r=rgb.r;s.g=rgb.g;s.b=rgb.b;s.style=0;
+  }else if(id==='embers'){
+    const s=_trailSlot();s.x=x+rand(-2,2);s.y=y+rand(-2,2);s.vx=rand(-8,8);s.vy=rand(-26,-6);s.ml=rand(0.4,0.75);s.size=rand(1.4,2.8);
+    s.r=255;s.g=randInt(90,180);s.b=randInt(0,40);s.style=1;
+  }else if(id==='neon'){
+    const s=_trailSlot();s.x=x;s.y=y;s.vx=rand(-6,6);s.vy=rand(-6,6);s.ml=rand(0.25,0.45);s.size=rand(2.2,3.6);
+    const rgb=_parseHex(td.col);s.r=rgb.r;s.g=rgb.g;s.b=rgb.b;s.style=2;
+  }else if(id==='bubbles'){
+    const s=_trailSlot();s.x=x+rand(-4,4);s.y=y+rand(-4,4);s.vx=rand(-10,10);s.vy=rand(-22,-4);s.ml=rand(0.5,0.95);s.size=rand(2.2,4.5);
+    const rgb=_parseHex(td.col);s.r=rgb.r;s.g=rgb.g;s.b=rgb.b;s.style=3;
+  }else if(id==='rainbow'){
+    const s=_trailSlot();s.x=x+rand(-3,3);s.y=y+rand(-3,3);s.vx=rand(-14,14);s.vy=rand(-14,14);s.ml=rand(0.3,0.55);s.size=rand(1.8,3.2);
+    const hue=(frameCount*6)%360;const rc=_hslToRgb(hue,0.85,0.6);s.r=rc.r;s.g=rc.g;s.b=rc.b;s.style=4;
+  }
+}
+// Emit from the player's body while playing, throttled to the trail's cadence.
+// Spawns at a near-head segment so the trail reads as flowing off the snake.
+function emitPlayerTrail(dt){
+  if(currentTrail<=0||!player||!player.alive||state!=='playing')return;
+  const td=TRAILS[currentTrail];if(!td||td.rate<=0)return;
+  trailSpawnAcc+=dt;
+  // Cap catch-up to 3 spawns/frame so a long dt (tab resume) can't burst-alloc.
+  let guard=0;
+  while(trailSpawnAcc>=td.rate&&guard<3){
+    trailSpawnAcc-=td.rate;guard++;
+    const segs=player.segments;
+    const seg=segs[Math.min(2,segs.length-1)]||segs[0];
+    spawnTrailParticle(seg.x,seg.y);
+  }
+  if(trailSpawnAcc>td.rate*4)trailSpawnAcc=0; // clamp accumulator drift
+}
+function updateTrailParts(dt){
+  for(let i=0;i<TRAIL_MAX;i++){
+    const p=trailParts[i];
+    if(!p.active)continue;
+    p.x+=p.vx*dt;p.y+=p.vy*dt;
+    p.vx*=0.93;p.vy*=0.93;
+    // embers/bubbles drift upward (buoyant); others settle with light gravity.
+    if(p.style===1||p.style===3)p.vy-=18*dt;else p.vy+=20*dt;
+    p.life-=dt/p.ml;
+    if(p.life<=0)p.active=false;
+  }
+}
+// Non-additive styles (sparkle/embers/bubbles). Drawn inside the world
+// transform, BEFORE the additive pass. No save/restore needed (source-over).
+function drawTrailPartsBase(){
+  for(let i=0;i<TRAIL_MAX;i++){
+    const p=trailParts[i];
+    if(!p.active||p.style===2||p.style===4)continue;
+    const lf=p.life<0?0:p.life;
+    if(p.style===3){ // bubbles: translucent ring
+      ctx.globalAlpha=lf*0.5;ctx.strokeStyle='rgba('+p.r+','+p.g+','+p.b+',1)';ctx.lineWidth=1;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.size*(0.6+lf*0.6),0,TAU);ctx.stroke();
+    }else{ // sparkle / embers: filled dot
+      ctx.globalAlpha=lf;ctx.fillStyle='rgb('+p.r+','+p.g+','+p.b+')';
+      ctx.beginPath();ctx.arc(p.x,p.y,p.size*(0.4+lf*0.8),0,TAU);ctx.fill();
+    }
+  }
+  ctx.globalAlpha=1;
+}
+// Additive styles (neon/rainbow). Strictly save/restore-bounded 'lighter' pass,
+// and gated behind !reducedMotion (spawn already suppresses them, this is a
+// belt-and-braces guard so a mid-run toggle stops drawing leftover particles).
+function drawTrailPartsAdditive(){
+  if(reducedMotion)return;
+  let any=false;
+  for(let i=0;i<TRAIL_MAX;i++){const p=trailParts[i];if(p.active&&(p.style===2||p.style===4)){any=true;break;}}
+  if(!any)return;
+  ctx.save();
+  ctx.globalCompositeOperation='lighter';
+  for(let i=0;i<TRAIL_MAX;i++){
+    const p=trailParts[i];
+    if(!p.active||(p.style!==2&&p.style!==4))continue;
+    const lf=p.life<0?0:p.life;
+    ctx.globalAlpha=lf*0.85;
+    ctx.fillStyle='rgb('+p.r+','+p.g+','+p.b+')';
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size*(0.5+lf*0.9),0,TAU);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  ctx.restore(); // composite reset to 'source-over'
+}
+// HSL→RGB (0..255) for the rainbow trail. h in degrees, s/l in 0..1.
+function _hslToRgb(h,s,l){
+  h=((h%360)+360)%360/360;
+  const q=l<0.5?l*(1+s):l+s-l*s,pp=2*l-q;
+  function hue(t){if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return pp+(q-pp)*6*t;if(t<1/2)return q;if(t<2/3)return pp+(q-pp)*(2/3-t)*6;return pp;}
+  return{r:Math.round(hue(h+1/3)*255),g:Math.round(hue(h)*255),b:Math.round(hue(h-1/3)*255)};
 }
 
 // ═══ FOOD ═══
@@ -1679,6 +1828,7 @@ function update(dt){
   }
   gdt=dt;
   updateParticles(dt);updateScorePopups(dt);updateShocks(dt);
+  emitPlayerTrail(dt);updateTrailParts(dt);
   foodSpawnTimer-=dt;if(foodSpawnTimer<=0){foodSpawnTimer=0.2;spawnFood();}
   puSpawnTimer-=dt;if(puSpawnTimer<=0){puSpawnTimer=5;spawnPowerup();}
   // Combo zones drift to a fresh pair every COMBO_ZONE_INTERVAL seconds.
@@ -1756,11 +1906,16 @@ function render(){
     // Z-sort snakes: smaller bots first, bigger bots above; player always on top.
     // Reuse a module buffer (like hudLeaderboard) instead of allocating a fresh
     // filtered+sorted array + comparator closure every frame.
+    // Cosmetic trail (base / non-additive styles) sits UNDER the snakes so the
+    // body rides on top of its own trail.
+    drawTrailPartsBase();
     liveBotsBuf.length=0;
     for(let i=0;i<snakes.length;i++){const s=snakes[i];if(s.alive&&!s.isPlayer)liveBotsBuf.push(s);}
     liveBotsBuf.sort(byLength);
     for(const s of liveBotsBuf)drawSnake(s);
     if(player&&player.alive)drawSnake(player);
+    // Additive trail (neon/rainbow) in the effects layer alongside particles/shocks.
+    drawTrailPartsAdditive();
     drawParticles();drawScorePopups();drawShocks();ctx.restore();
     drawHUD();drawMinimap();
     if(joystick.active&&state==='playing')drawJoystick();
@@ -1770,6 +1925,7 @@ function render(){
   if(state==='dead')drawDeathScreen();
   if(state==='paused')drawPauseScreen();
   if(state==='skinselect')drawSkinSelect();
+  if(state==='trailselect')drawTrailSelect();
   if(state==='leaderboard')drawLeaderboard();
   if(state==='modeselect')drawModeSelect();
   // Tutorial overlay renders on top of menu / pause / playing only — never
@@ -2898,6 +3054,10 @@ function drawDeathScreen(){
 }
 
 // ═══ SKIN SELECT ═══
+// Shared geometry for the SKINS↔TRAILS tab pill (drawn on the skinselect
+// header, also reachable on trailselect as a SKINS tab). One source of truth so
+// the draw and both input switchboards can never drift.
+function cosmTabRect(){const w=110,h=30;return{x:W-w-12,y:sat+58,w:w,h:h};}
 function drawSkinSelect(){
   ctx.fillStyle='#0a0a1a';ctx.fillRect(0,0,W,H);
   const oy=sat;
@@ -2913,6 +3073,10 @@ function drawSkinSelect(){
   // Title — own row, dynamic
   const titleSize=Math.min(28,Math.floor(W*0.07));
   ctx.fillStyle='#fff';ctx.font='900 '+titleSize+'px Orbitron';ctx.fillText(L.skins,W/2,oy+86);
+  // TRAILS tab — switches to the cosmetic-trail screen (geometry via cosmTabRect).
+  {const r=cosmTabRect();ctx.fillStyle='rgba(124,77,255,0.14)';rr(r.x,r.y,r.w,r.h,r.h/2);ctx.fill();
+   ctx.strokeStyle='rgba(124,77,255,0.6)';ctx.lineWidth=1.4;rr(r.x,r.y,r.w,r.h,r.h/2);ctx.stroke();
+   ctx.fillStyle='#b39dff';ctx.font='900 13px Rajdhani';ctx.textAlign='center';ctx.fillText(L.trails+' →',r.x+r.w/2,r.y+r.h*0.66);}
   if(buyFailedMsg>0){buyFailedMsg-=gdt;ctx.fillStyle='rgba(255,100,100,'+Math.min(buyFailedMsg,1)+')';ctx.font='700 13px Rajdhani';ctx.fillText(L.notEnough,W/2,oy+108);}
   const cols=5,cellW=W/cols,cellH=70,startY=oy+118-skinScroll;
   for(let i=0;i<SKINS.length;i++){
@@ -2981,6 +3145,123 @@ function drawSkinSelect(){
   ctx.textAlign='left';
 }
 
+// ═══ TRAIL SELECT (cosmetic axis #2) ═══
+// One source of truth for each trail row's hit-rect (draw + tap share it).
+function trailRowRect(i){
+  const oy=sat,rowH=Math.min(64,Math.floor((H-sat-sab-150)/TRAILS.length));
+  const rw=Math.min(320,W-32),rx=W/2-rw/2,ry=oy+136+i*(rowH+8);
+  return{x:rx,y:ry,w:rw,h:rowH};
+}
+// Static preview dots representing a trail style (no pooled state — pure paint).
+function drawTrailPreview(td,cx,cy){
+  const id=td.id;
+  if(id==='none'){ctx.fillStyle='rgba(255,255,255,0.25)';ctx.font='600 11px Rajdhani';ctx.textAlign='center';ctx.fillText('—',cx,cy+3);return;}
+  for(let j=0;j<6;j++){
+    const px=cx-18+j*7,t=j/6;let c;
+    if(id==='rainbow'){const rc=_hslToRgb((j*55+frameCount*4)%360,0.85,0.6);c='rgb('+rc.r+','+rc.g+','+rc.b+')';}
+    else if(id==='embers'){c='rgb(255,'+(90+j*14)+',0)';}
+    else c=td.col;
+    ctx.fillStyle=c;ctx.globalAlpha=0.4+t*0.6;
+    ctx.beginPath();ctx.arc(px,cy+Math.sin(frameCount*0.1+j)*2,3.4-t*1.6,0,TAU);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+function drawTrailSelect(){
+  ctx.fillStyle='#0a0a1a';ctx.fillRect(0,0,W,H);
+  const oy=sat;
+  // Back chip
+  ctx.fillStyle='rgba(0,229,255,0.12)';rr(12,oy+12,84,40,20);ctx.fill();
+  ctx.fillStyle='#00e5ff';ctx.font='900 16px Rajdhani';ctx.textAlign='center';ctx.shadowColor='#00e5ff';ctx.shadowBlur=4;
+  ctx.fillText(L.back,54,oy+38);ctx.shadowBlur=0;
+  // Coin pill
+  const coinTxt='🪙 '+coins;ctx.font='900 16px Orbitron';
+  const cw=Math.max(80,ctx.measureText(coinTxt).width+24);
+  ctx.fillStyle='rgba(255,214,0,0.12)';rr(W-cw-12,oy+12,cw,40,20);ctx.fill();
+  ctx.fillStyle='#ffd600';ctx.font='900 16px Orbitron';ctx.textAlign='center';ctx.fillText(coinTxt,W-cw/2-12,oy+38);
+  // Title
+  const titleSize=Math.min(28,Math.floor(W*0.07));
+  ctx.fillStyle='#fff';ctx.font='900 '+titleSize+'px Orbitron';ctx.fillText(L.trails,W/2,oy+86);
+  // SKINS tab → back to the skin screen (shared cosmTabRect geometry).
+  {const r=cosmTabRect();ctx.fillStyle='rgba(124,77,255,0.14)';rr(r.x,r.y,r.w,r.h,r.h/2);ctx.fill();
+   ctx.strokeStyle='rgba(124,77,255,0.6)';ctx.lineWidth=1.4;rr(r.x,r.y,r.w,r.h,r.h/2);ctx.stroke();
+   ctx.fillStyle='#b39dff';ctx.font='900 13px Rajdhani';ctx.textAlign='center';ctx.fillText('← '+L.skins,r.x+r.w/2,r.y+r.h*0.66);}
+  if(buyFailedMsg>0){buyFailedMsg-=gdt;ctx.fillStyle='rgba(255,100,100,'+Math.min(buyFailedMsg,1)+')';ctx.font='700 13px Rajdhani';ctx.fillText(L.notEnough,W/2,oy+108);}
+  // Rows
+  for(let i=0;i<TRAILS.length;i++){
+    const td=TRAILS[i],r=trailRowRect(i);
+    const owned=unlockedTrails.indexOf(i)>=0,equipped=i===currentTrail;
+    ctx.fillStyle=equipped?'rgba(124,77,255,0.18)':'rgba(255,255,255,0.05)';
+    rr(r.x,r.y,r.w,r.h,10);ctx.fill();
+    ctx.strokeStyle=equipped?'#b39dff':(owned?'rgba(255,255,255,0.18)':'rgba(255,255,255,0.10)');
+    ctx.lineWidth=equipped?2:1.2;rr(r.x,r.y,r.w,r.h,10);ctx.stroke();
+    // Preview swatch (left)
+    drawTrailPreview(td,r.x+44,r.y+r.h/2);
+    // Name (center-left)
+    ctx.textAlign='left';ctx.fillStyle=owned?'#fff':'rgba(255,255,255,0.55)';ctx.font='700 15px Rajdhani';
+    ctx.fillText(td.name,r.x+86,r.y+r.h/2+5);
+    // Right side: EQUIPPED / price / SELECT
+    ctx.textAlign='right';
+    if(equipped){ctx.fillStyle='#b39dff';ctx.font='900 12px Rajdhani';ctx.fillText('✓ '+L.trailEquipped,r.x+r.w-16,r.y+r.h/2+4);}
+    else if(owned){ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='700 13px Rajdhani';ctx.fillText(L.trailSelect,r.x+r.w-16,r.y+r.h/2+4);}
+    else{ctx.fillStyle=coins>=td.price?'#ffd600':'rgba(255,214,0,0.35)';ctx.font='900 14px Orbitron';ctx.fillText('🪙'+td.price,r.x+r.w-16,r.y+r.h/2+4);}
+    ctx.textAlign='left';
+  }
+  // Buy confirm modal (mirrors skinselect)
+  if(pendingTrailBuy>=0){
+    const idx=pendingTrailBuy,td=TRAILS[idx],p=td.price;
+    ctx.fillStyle='rgba(0,0,0,0.92)';ctx.fillRect(0,0,W,H);
+    const mw=Math.min(320,W-40),mh=Math.min(240,H-sat-sab-40);
+    const mx=W/2-mw/2,my=Math.max(sat+20,(H-mh)/2);
+    ctx.fillStyle='#10102a';rr(mx,my,mw,mh,16);ctx.fill();
+    ctx.strokeStyle='#7c4dff';ctx.lineWidth=2;rr(mx,my,mw,mh,16);ctx.stroke();
+    ctx.textAlign='center';
+    drawTrailPreview(td,W/2,my+44);
+    ctx.fillStyle='#fff';ctx.font='900 22px Orbitron';ctx.fillText(td.name,W/2,my+86);
+    ctx.fillStyle='#ffd600';ctx.font='900 26px Orbitron';ctx.shadowColor='#ffd600';ctx.shadowBlur=10;
+    ctx.fillText('🪙 '+p,W/2,my+126);ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='600 13px Rajdhani';ctx.fillText(L.buyTrail,W/2,my+150);
+    const cbw=120,cbh=48,cyB=my+mh-cbh-20;
+    ctx.fillStyle='#00e676';rr(mx+20,cyB,cbw,cbh,24);ctx.fill();
+    ctx.fillStyle='#0a0a1a';ctx.font='900 16px Orbitron';ctx.fillText(isTR?'AL':'BUY',mx+20+cbw/2,cyB+30);
+    ctx.fillStyle='rgba(255,255,255,0.15)';ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=2;rr(mx+mw-cbw-20,cyB,cbw,cbh,24);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#fff';ctx.fillText(isTR?'İPTAL':'CANCEL',mx+mw-cbw-20+cbw/2,cyB+30);
+    ctx.textAlign='left';
+  }
+  ctx.textAlign='left';
+}
+function handleTrailTap(x,y){
+  // Buy-confirm modal swallows taps (Yes left / No right).
+  if(pendingTrailBuy>=0){
+    const mw=Math.min(320,W-40),mh=Math.min(240,H-sat-sab-40);
+    const mx=W/2-mw/2,my=Math.max(sat+20,(H-mh)/2);
+    const cbw=120,cbh=48,cyB=my+mh-cbh-20;
+    if(x>mx+20&&x<mx+20+cbw&&y>cyB&&y<cyB+cbh){
+      const idx=pendingTrailBuy,td=TRAILS[idx];
+      if(td&&td.price>0&&unlockedTrails.indexOf(idx)<0&&coins>=td.price){
+        coins-=td.price;unlockedTrails.push(idx);currentTrail=idx;saveCoins();saveTrails();sndPowerup();showToast(td.name+' ✓','success');
+      }else{buyFailedMsg=2;showToast(L.notEnough,'error');sndDeath();}
+      pendingTrailBuy=-1;return;
+    }
+    pendingTrailBuy=-1;sndMenu();return;
+  }
+  // Back chip
+  if(x>=12&&x<=12+84&&y>=sat+12&&y<=sat+12+40){state='menu';resetTouchState();sndMenu();return;}
+  // SKINS tab → back to the skin screen.
+  {const r=cosmTabRect();if(x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h){state='skinselect';skinScroll=0;sndMenu();return;}}
+  // Rows
+  for(let i=0;i<TRAILS.length;i++){
+    const r=trailRowRect(i);
+    if(x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h){
+      const td=TRAILS[i];
+      if(unlockedTrails.indexOf(i)>=0){currentTrail=i;trailSpawnAcc=0;saveTrails();sndMenu();return;}
+      // Locked → coins-only buy: guard affordance, open confirm.
+      if(td.price<=0)return;
+      if(coins<td.price){buyFailedMsg=2;sndDeath();showToast(L.notEnough,'error');return;}
+      pendingTrailBuy=i;sndMenu();return;
+    }
+  }
+}
+
 // ═══ INPUT ═══
 // touches: { [identifier:number]: 'joy' | 'joyboost' } — ONLY numeric identifiers,
 // never any other keys. Keep that invariant so iteration doesn't need a guard.
@@ -3002,6 +3283,7 @@ $.addEventListener('touchstart',function(e){
   if(state==='paused'){handlePauseTap(t.clientX,t.clientY);return;}
   if(state==='leaderboard'){handleLeaderboardTap(t.clientX,t.clientY);return;}
   if(state==='skinselect'){handleSkinTap(t.clientX,t.clientY);skinScrollLastY=t.clientY;return;}
+  if(state==='trailselect'){handleTrailTap(t.clientX,t.clientY);return;}
   if(state==='modeselect'){handleModeselectTap(t.clientX,t.clientY);return;}
   if(state==='playing'){
     // Pause button (bottom-left) — only remaining HUD button
@@ -3066,6 +3348,7 @@ $.addEventListener('mousedown',function(e){
   if(state==='paused'){handlePauseTap(e.clientX,e.clientY);return;}
   if(state==='leaderboard'){handleLeaderboardTap(e.clientX,e.clientY);return;}
   if(state==='skinselect'){handleSkinTap(e.clientX,e.clientY);return;}
+  if(state==='trailselect'){handleTrailTap(e.clientX,e.clientY);return;}
   if(state==='modeselect'){handleModeselectTap(e.clientX,e.clientY);return;}
   if(state==='playing'&&dist({x:e.clientX,y:e.clientY},{x:50,y:H-sab-60})<42){state='paused';if(player)player.boosting=false;sndMenu();return;}
   if(e.button===2&&player){player.boosting=true;sndBoost();}
@@ -3234,6 +3517,8 @@ function handleSkinTap(x,y){
   }
   // Back chip
   if(x>=12&&x<=12+84&&y>=sat+12&&y<=sat+12+40){state='menu';resetTouchState();sndMenu();return;}
+  // TRAILS tab → switch to the cosmetic-trail screen.
+  {const r=cosmTabRect();if(x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h){state='trailselect';sndMenu();return;}}
   if(y<sat+118)return;
   const cols=5,cellW=W/cols,cellH=70,startY=sat+118-skinScroll;
   const col=Math.floor(x/cellW),row=Math.floor((y-startY)/cellH);
