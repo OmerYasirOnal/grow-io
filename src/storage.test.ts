@@ -66,6 +66,27 @@ describe('stats', () => {
   });
 });
 
+describe('stats blob (v1.3 namespaced save mirror)', () => {
+  it('round-trips an arbitrary blob alongside the counters', async () => {
+    await saveStats({ totalKills: 3, totalGames: 2, totalDeaths: 1, blob: { prog: { xp: 1200, lvl: 4 } } });
+    const s = await loadStats();
+    expect(s.totalKills).toBe(3);
+    expect(s.blob).toEqual({ prog: { xp: 1200, lvl: 4 } });
+  });
+  it('defaults blob to undefined when absent (old v1.2 save)', async () => {
+    await AsyncStorage.setItem('grow-io_stats', JSON.stringify({ totalKills: 5, totalGames: 5, totalDeaths: 5 }));
+    const s = await loadStats();
+    expect(s.totalKills).toBe(5);
+    expect(s.blob).toBeUndefined();
+  });
+  it('survives a corrupt blob without throwing (returns no blob)', async () => {
+    await AsyncStorage.setItem('grow-io_stats', '{"totalKills":1,"totalGames":1,"totalDeaths":1,"blob":not-json}');
+    const s = await loadStats();
+    expect(s.totalKills).toBe(0); // whole-record corrupt → safe defaults
+    expect(s.blob).toBeUndefined();
+  });
+});
+
 describe('skin state', () => {
   it('defaults to Classic unlocked', async () => {
     expect(await loadSkinState()).toEqual({ current: 0, unlocked: [0] });

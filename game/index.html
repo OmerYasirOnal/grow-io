@@ -150,6 +150,7 @@ const BOT_NAMES = ['Viper','Neon','Pixel','Blaze','Zenith','Shadow','Echo','Puls
 
 // ═══ STATE ═══
 let state = 'menu';
+let gBlobs={};
 // Drop any stale touch/joystick state so a finger held during a state change
 // (e.g. tapping a menu button) doesn't leak into the next screen and steer
 // the snake by accident.
@@ -343,6 +344,8 @@ window.addEventListener('message',function(e){
       if(typeof s.totalKills==='number')totalKills=Math.max(totalKills,s.totalKills);
       if(typeof s.totalGames==='number')totalGames=Math.max(totalGames,s.totalGames);
       if(typeof s.totalDeaths==='number')deathCount=Math.max(deathCount,s.totalDeaths);
+      // Adopt native blob namespaces only where local lacks them (first-load floor — never overwrite).
+      if(m.data.blob&&typeof m.data.blob==='object'){for(const ns in m.data.blob){if(!(ns in gBlobs))gBlobs[ns]=m.data.blob[ns];}}
     }
     if(m.type==='SKIN_STATE_LOADED'&&m.data){
       const s=m.data;
@@ -353,6 +356,14 @@ window.addEventListener('message',function(e){
 });
 
 // ═══ PERSISTENCE ═══
+// ─── V1.3 SAVE BLOBS (namespaced, versioned, additive) ───
+// One authoritative localStorage key holds every v1.3 namespace; the native
+// mirror rides inside the STATS payload (blob field) as a first-load floor only.
+const V13_KEY='growio_v13', V13_VER=1;
+function loadBlobs(){try{const d=localStorage.getItem(V13_KEY);if(d){const o=JSON.parse(d);if(o&&typeof o==='object')gBlobs=o;}}catch(e){}if(typeof gBlobs!=='object'||!gBlobs)gBlobs={};gBlobs.v=V13_VER;}
+function persistBlobs(){try{localStorage.setItem(V13_KEY,JSON.stringify(gBlobs));}catch(e){}saveStats();}
+function loadBlob(ns,defaults){const cur=(gBlobs&&typeof gBlobs[ns]==='object')?gBlobs[ns]:null;const out={};for(const k in defaults)out[k]=(cur&&k in cur)?cur[k]:defaults[k];return out;}
+function saveBlob(ns,obj){gBlobs[ns]=obj;persistBlobs();}
 function saveHS(){if(score>highScore){highScore=score;try{localStorage.setItem('growio_hs',String(highScore));}catch(e){}postMsg({type:'SAVE_HIGH_SCORE',data:highScore});}}
 function loadHSLocal(){try{const v=parseInt(localStorage.getItem('growio_hs'));if(!isNaN(v)&&v>highScore)highScore=v;}catch(e){}}
 function saveSkins(){try{localStorage.setItem('growio_skins',JSON.stringify(unlockedSkins));}catch(e){}postMsg({type:'SAVE_SKIN_STATE',data:{current:currentSkin,unlocked:unlockedSkins.slice()}});}
@@ -363,7 +374,7 @@ function loadSkins(){
   for(let i=0;i<5;i++)if(!unlockedSkins.includes(i))unlockedSkins.push(i);
   if(currentSkin<0||currentSkin>=SKINS.length)currentSkin=0;
 }
-function saveStats(){try{localStorage.setItem('growio_stats',JSON.stringify({tk:totalKills,tg:totalGames,cs:currentSkin,td:deathCount}));}catch(e){}postMsg({type:'SAVE_STATS',data:{totalKills:totalKills,totalGames:totalGames,totalDeaths:deathCount}});postMsg({type:'SAVE_SKIN_STATE',data:{current:currentSkin,unlocked:unlockedSkins.slice()}});}
+function saveStats(){try{localStorage.setItem('growio_stats',JSON.stringify({tk:totalKills,tg:totalGames,cs:currentSkin,td:deathCount}));}catch(e){}postMsg({type:'SAVE_STATS',data:{totalKills:totalKills,totalGames:totalGames,totalDeaths:deathCount,blob:gBlobs}});postMsg({type:'SAVE_SKIN_STATE',data:{current:currentSkin,unlocked:unlockedSkins.slice()}});}
 function loadStats(){try{const d=localStorage.getItem('growio_stats');if(d){const s=JSON.parse(d);totalKills=s.tk||0;totalGames=s.tg||0;currentSkin=s.cs||0;deathCount=s.td||0;}}catch(e){}}
 let coinsHadLocal=false,coinsReconciled=false;
 // Hold the native SAVE_COINS push until the first reconcile completes, so a
@@ -424,7 +435,7 @@ function skinPrice(sk){
   return 1000;
 }
 loadHSLocal();
-loadSkins(); loadStats(); loadCoins(); loadSettings(); loadTopScores(); loadTutorialSeen(); loadLogin(); checkDailyBonus();
+loadBlobs(); loadSkins(); loadStats(); loadCoins(); loadSettings(); loadTopScores(); loadTutorialSeen(); loadLogin(); checkDailyBonus();
 // Defer bridge LOADs until the next frame so window.ReactNativeWebView is
 // guaranteed to be ready, then retry once at +500ms if hostBridgeSeen is still
 // false (covers slow native injection on cold launch).

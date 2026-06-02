@@ -23,18 +23,20 @@ export async function saveCoins(coins: number): Promise<void> {
   try { await AsyncStorage.setItem(COINS_KEY, coins.toString()); } catch {}
 }
 
-export interface Stats { totalKills: number; totalGames: number; totalDeaths: number; }
+export interface Stats { totalKills: number; totalGames: number; totalDeaths: number; blob?: Record<string, unknown>; }
 
 export async function loadStats(): Promise<Stats> {
   try {
     const raw = await AsyncStorage.getItem(STATS_KEY);
     if (!raw) return { totalKills: 0, totalGames: 0, totalDeaths: 0 };
     const parsed = JSON.parse(raw);
-    return {
+    const out: Stats = {
       totalKills: typeof parsed.totalKills === 'number' ? parsed.totalKills : 0,
       totalGames: typeof parsed.totalGames === 'number' ? parsed.totalGames : 0,
       totalDeaths: typeof parsed.totalDeaths === 'number' ? parsed.totalDeaths : 0,
     };
+    if (parsed.blob && typeof parsed.blob === 'object' && !Array.isArray(parsed.blob)) out.blob = parsed.blob;
+    return out;
   } catch {
     return { totalKills: 0, totalGames: 0, totalDeaths: 0 };
   }
