@@ -110,6 +110,7 @@ resize();
 const WS = 3000, WCX = 1500, WCY = 1500, WR = 1500;
 const SEG_DIST = 8, TURN_SPEED = 3.5, BASE_SPEED = 150;
 const MAX_FOOD = 600, MAX_BOTS = 12, MAX_PARTICLES = 300, MAX_POWERUPS = 8;
+const SHK_MAX = 24; // shockwave pool size — 24 slots: at most 1–2 simultaneous kills per frame
 const CELL_SIZE = 200, GRID_W = Math.ceil(WS/CELL_SIZE);
 const JOY_RADIUS = 55, JOY_DEAD = 5;
 const PI = Math.PI, TAU = PI*2;
@@ -195,6 +196,10 @@ function resetTouchState(){
 let showSettings=false;
 let score = 0, highScore = 0, deathCount = 0, totalKills = 0, totalGames = 0;
 let player = null, snakes = [], foods = [], powerups = [], particles = [];
+// Pre-allocated shockwave pool — never grows after init.
+const shockwaves = [];
+(function(){for(let i=0;i<SHK_MAX;i++)shockwaves.push({active:false,x:0,y:0,t:0,dur:0,maxR:0,r:0,g:0,b:0,big:false});}());
+let shkHead = 0; // ring-buffer write cursor
 let spatialGrid = {};
 let camera = {x:WCX, y:WCY, zoom:1};
 let joystick = {active:false, cx:0, cy:0, dx:0, dy:0, angle:0};
@@ -630,6 +635,68 @@ function drawParticles(){
   ctx.globalAlpha=1;
 }
 
+// ═══ SHOCKWAVES (kill/death burst) ═══
+// Pool is pre-allocated at boot; spawnShock() overwrites the oldest slot —
+// never allocates. updateShocks/drawShocks contain NO new/filter/map calls.
+function _parseHex(c){
+  // Returns {r,g,b} 0-255 from a CSS hex color. Falls back to white.
+  let h=(c||'#ffffff').replace('#','');
+  if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  return{r:parseInt(h.slice(0,2),16)||255,g:parseInt(h.slice(2,4),16)||255,b:parseInt(h.slice(4,6),16)||255};
+}
+function spawnShock(x,y,color,big){
+  // Grab next pool slot (ring-buffer: overwrites oldest, O(1), no alloc).
+  const slot=shockwaves[shkHead];
+  shkHead=(shkHead+1)%SHK_MAX;
+  const rgb=_parseHex(color);
+  slot.active=true;slot.x=x;slot.y=y;slot.t=0;
+  slot.dur=big?0.55:0.38;
+  slot.maxR=big?220:120;
+  slot.r=rgb.r;slot.g=rgb.g;slot.b=rgb.b;
+  slot.big=!!big;
+}
+function updateShocks(dt){
+  for(let i=0;i<SHK_MAX;i++){
+    const s=shockwaves[i];
+    if(!s.active)continue;
+    s.t+=dt;
+    if(s.t>=s.dur)s.active=false;
+  }
+}
+function drawShocks(){
+  // Additive composite is strictly bounded between save/restore.
+  ctx.save();
+  ctx.globalCompositeOperation='lighter';
+  for(let i=0;i<SHK_MAX;i++){
+    const s=shockwaves[i];
+    if(!s.active)continue;
+    const p=s.t/s.dur;               // 0→1 progress
+    // Smooth ease-out for radius; fade alpha out sharply in last quarter
+    const ep=1-(1-p)*(1-p);          // ease-out quad
+    const radius=ep*s.maxR;
+    const alpha=Math.max(0,(1-p)*(1-p)*0.7); // squared fade, peak 0.7 → 0
+    if(alpha<0.005)continue;
+    const lw=Math.max(1,(1-p)*(s.big?7:4));
+    // Expanding ring stroke
+    ctx.beginPath();
+    ctx.arc(s.x,s.y,radius,0,TAU);
+    ctx.strokeStyle='rgba('+s.r+','+s.g+','+s.b+','+alpha+')';
+    ctx.lineWidth=lw;
+    ctx.stroke();
+    // Soft radial glow — single gradient fill circle, very transparent
+    if(p<0.55){
+      const glowR=radius*(s.big?1.5:1.4);
+      const glowA=alpha*0.35;
+      const grd=ctx.createRadialGradient(s.x,s.y,radius*0.35,s.x,s.y,glowR);
+      grd.addColorStop(0,'rgba('+s.r+','+s.g+','+s.b+','+glowA+')');
+      grd.addColorStop(1,'rgba('+s.r+','+s.g+','+s.b+',0)');
+      ctx.beginPath();ctx.arc(s.x,s.y,glowR,0,TAU);
+      ctx.fillStyle=grd;ctx.fill();
+    }
+  }
+  ctx.restore(); // globalCompositeOperation reset to 'source-over'
+}
+
 // ═══ FOOD ═══
 function spawnFood(x,y,val,color,force){
   let slot=-1;
@@ -973,6 +1040,8 @@ function killSnake(victim,killer,cause){
       addScorePopup(victim.segments[0].x,victim.segments[0].y,popupTxt,popupCol);
       if(victim.length>killer.length){const bonus=Math.min((victim.length-killer.length)*2,500);score+=bonus;coins+=Math.ceil(bonus/6);flashAlpha=0.25;flashColor='#ff1744';addScorePopup(victim.segments[0].x,victim.segments[0].y-25,'+'+bonus+' BIG','#ffd600');}
       spawnP(victim.segments[0].x,victim.segments[0].y,SKINS[victim.skin].c[0],20,120,3);
+      // Shockwave: player kills a bot — use the victim's primary skin color, normal size.
+      spawnShock(victim.segments[0].x,victim.segments[0].y,SKINS[victim.skin].c[0],false);
     }
     if(victim.isKing&&killer.isPlayer){
       score+=KING_SCORE_REWARD;coins+=KING_COIN_REWARD;sndKingSlain();postMsg({type:'HAPTIC',data:'heavy'});
@@ -984,6 +1053,8 @@ function killSnake(victim,killer,cause){
       flashAlpha=0.5;flashColor='#ffd600';shakeTimer=0.35;shakeMag=8;
       addScorePopup(victim.segments[0].x,victim.segments[0].y-30,'+'+BOSS_SCORE_REWARD+' BOSS','#ffd600');
       showToast(isTR?'BOSS YENİLDİ! +'+BOSS_COIN_REWARD+' 🪙':'BOSS DEFEATED! +'+BOSS_COIN_REWARD+' 🪙','success');
+      // Shockwave: boss slay — hot white-gold, biggest ring.
+      spawnShock(victim.segments[0].x,victim.segments[0].y,'#ffd600',true);
     }
   }
   if(victim.isKing){kingActive=false;if(!nextKingScore||nextKingScore<=score)nextKingScore=score+2000;}
@@ -991,6 +1062,8 @@ function killSnake(victim,killer,cause){
   if(victim.isPlayer){
     sndDeath();postMsg({type:'HAPTIC',data:'heavy'});
     flashAlpha=0.4;flashColor='#ff1744';shakeTimer=0.3;shakeMag=8;
+    // Shockwave: player death — large red-orange burst centered on the player's head.
+    spawnShock(victim.segments[0].x,victim.segments[0].y,'#ff1744',true);
     killerName=killer?killer.name:(cause==='boundary'?'the boundary':'unknown');
     deathCount++;saveHS();saveStats();saveCoins();addTopScore(score);checkUnlocks();saveSkins();
     awardXp(score,player?player.killCount:0);
@@ -1266,7 +1339,7 @@ function update(dt){
     checkCollisions();
   }
   gdt=dt;
-  updateParticles(dt);updateScorePopups(dt);
+  updateParticles(dt);updateScorePopups(dt);updateShocks(dt);
   foodSpawnTimer-=dt;if(foodSpawnTimer<=0){foodSpawnTimer=0.2;spawnFood();}
   puSpawnTimer-=dt;if(puSpawnTimer<=0){puSpawnTimer=5;spawnPowerup();}
   // Combo zones drift to a fresh pair every COMBO_ZONE_INTERVAL seconds.
@@ -1344,7 +1417,7 @@ function render(){
     liveBotsBuf.sort(byLength);
     for(const s of liveBotsBuf)drawSnake(s);
     if(player&&player.alive)drawSnake(player);
-    drawParticles();drawScorePopups();ctx.restore();
+    drawParticles();drawScorePopups();drawShocks();ctx.restore();
     drawHUD();drawMinimap();
     if(joystick.active&&state==='playing')drawJoystick();
     if(state==='playing'){drawBoostFuel();drawPauseBtn();}
