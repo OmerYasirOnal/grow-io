@@ -143,6 +143,18 @@ const SKINS = [
 // Stable index for Boss skin (decoupled from layout reordering).
 const BOSS_SKIN_IDX = SKINS.findIndex(s => s.name === 'Blood');
 
+// ═══ SKIN RAIL ═══
+// Classifies each skin into exactly one unlock path:
+//   'free'  — always unlocked (u==='free')
+//   'earn'  — score-threshold achievement (u[0]==='s'); auto-unlocks in
+//             checkUnlocks when score >= threshold; NOT buyable with coins.
+//   'coins' — kill/length/games threshold used only as flavour lore; the
+//             ONLY way to get these is to spend coins in the shop.
+function skinRail(sk){
+  if(sk.u==='free')return 'free';
+  return sk.u[0]==='s'?'earn':'coins';
+}
+
 // ═══ ZONES ═══
 const ZONES = [
   {min:0,bg:'#0a0a1a',accent:'#00e5ff'},
@@ -473,14 +485,32 @@ function addTopScore(s){if(s<=0){currentRank=0;return;}const entry={s,d:Date.now
 // Tougher prices: every category roughly doubled vs. v1.1.x. The plan asks
 // for a steeper economy curve so Rainbow at s30000 → 6000 coin and the
 // other tiers scale with it.
+// ─── skinPrice ───────────────────────────────────────────────────────────────
+// Returns the coin COST to purchase a skin, or 0 if the skin cannot be bought.
+//
+// Rail breakdown:
+//   free  → 0  (already owned from boot)
+//   earn  → 0  (unlocked by score threshold; never purchasable)
+//   coins → tiered curve below  ← TUNABLE BALANCE KNOB
+//
+// Coins-only (k/l/g) price curve — targets a ~2-4 week earn arc:
+//   k20  → 400   k50  →  900   k100 → 1800   k150 → 2500
+//   l100 → 500   l250 → 1200   l500 → 2200
+//   g100 → 6500
+// Formula per type (v = numeric threshold, used only as a rough scale signal):
+//   k : base 400 + (v-20)*14   (capped at 2500)
+//   l : base 500 + (v-100)*3.4 (capped at 2200)
+//   g : flat 6500 (Matrix is the prestige endgame coin sink)
 function skinPrice(sk){
-  const u=sk.u;if(u==='free')return 0;
-  const t=u[0],v=parseInt(u.slice(1));
-  if(t==='s')return Math.max(100,Math.floor(v/5));   // s1000 → 200,  s30000 → 6000
-  if(t==='k')return Math.max(200,v*40);              // k20  → 800,  k150  → 6000
-  if(t==='l')return Math.max(200,v*6);               // l100 → 600,  l500  → 3000
-  if(t==='g')return Math.max(200,v*20);              // g100 → 2000
-  return 1000;
+  const rail=skinRail(sk);
+  if(rail==='free'||rail==='earn')return 0;          // not purchasable
+  const t=sk.u[0],v=parseInt(sk.u.slice(1));
+  // ── TUNABLE numbers below ──────────────────────────────────────────────────
+  if(t==='k')return Math.min(2500,Math.round(400+(v-20)*14));  // 400 – 2500
+  if(t==='l')return Math.min(2200,Math.round(500+(v-100)*3.4));// 500 – 2200
+  if(t==='g')return 6500;                                       // prestige sink
+  // ── end tunable ────────────────────────────────────────────────────────────
+  return 1000; // fallback (should never be reached with current SKINS table)
 }
 loadHSLocal();
 loadBlobs(); loadSkins(); loadStats(); loadCoins(); loadSettings(); loadTopScores(); loadTutorialSeen(); loadLogin(); checkDailyBonus();
@@ -1101,18 +1131,21 @@ function updateBot(bot,dt){
 }
 
 // ═══ SKIN UNLOCKS ═══
+// Only 'free' and 'earn' (score-tier, u[0]==='s') skins auto-unlock here.
+// 'coins' skins (k/l/g) are NEVER granted for free — they require a shop purchase.
 function checkUnlocks(){
   const prev=unlockedSkins.length;let lastName='';
   for(let i=0;i<SKINS.length;i++){
     if(unlockedSkins.includes(i))continue;
-    const u=SKINS[i].u;if(u==='free'){unlockedSkins.push(i);lastName=SKINS[i].name;continue;}
-    const t=u[0],v=parseInt(u.slice(1));
-    let ok=false;
-    if(t==='s'&&score>=v)ok=true;
-    if(t==='k'&&totalKills>=v)ok=true;
-    if(t==='l'&&player&&player.length>=v)ok=true;
-    if(t==='g'&&totalGames>=v)ok=true;
-    if(ok){unlockedSkins.push(i);lastName=SKINS[i].name;}
+    const sk=SKINS[i];
+    const rail=skinRail(sk);
+    if(rail==='free'){unlockedSkins.push(i);lastName=sk.name;continue;}
+    if(rail==='earn'){
+      // Auto-unlock when score threshold is met
+      const v=parseInt(sk.u.slice(1));
+      if(score>=v){unlockedSkins.push(i);lastName=sk.name;}
+    }
+    // rail==='coins': do nothing — only purchasable via the shop
   }
   if(unlockedSkins.length>prev){saveSkins();if(lastName){unlockToast=3;unlockToastName=lastName;sndPowerup();}}
 }
@@ -2119,13 +2152,24 @@ function drawSkinSelect(){
       for(let j=0;j<5;j++){const t=j/5;let c;if(skin.p==='rainbow')c=hsl((j*60+frameCount*2)%360,80,60);else c=lerpColor(skin.c[1],skin.c[0],t);ctx.fillStyle=c;ctx.beginPath();ctx.arc(cx-10+j*5,cy-5,5-t*2,0,TAU);ctx.fill();}
       ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='600 10px Rajdhani';ctx.fillText(skin.name,cx,cy+18);
     }else{
+      // Locked skin — branch on rail: 'earn' shows goal only, 'coins' shows price + buy cue
       ctx.fillStyle='rgba(255,255,255,0.1)';ctx.beginPath();ctx.arc(cx,cy-5,12,0,TAU);ctx.fill();
       ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='bold 12px Rajdhani';ctx.fillText('?',cx,cy);
-      const u=SKINS[i].u,t=u[0],v=parseInt(u.slice(1));let hint='';
-      if(t==='s')hint=L.scoreReq+' '+v;if(t==='k')hint=v+' '+L.killsReq;if(t==='l')hint=L.lengthReq+' '+v;if(t==='g')hint=v+' '+L.gamesReq;
-      ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='600 8px Rajdhani';ctx.fillText(hint,cx,cy+14);
-      const p=skinPrice(SKINS[i]);
-      ctx.fillStyle=coins>=p?'#ffd600':'rgba(255,214,0,0.3)';ctx.font='bold 9px Rajdhani';ctx.fillText('🪙'+p,cx,cy+24);
+      const skL=SKINS[i],uL=skL.u,tL=uL[0],vL=parseInt(uL.slice(1));
+      const railL=skinRail(skL);
+      if(railL==='earn'){
+        // Score-threshold: show GOAL text, no buy affordance
+        const hint=L.scoreReq+' '+vL;
+        ctx.fillStyle='rgba(100,220,255,0.55)';ctx.font='600 8px Rajdhani';ctx.fillText(hint,cx,cy+14);
+        ctx.fillStyle='rgba(100,220,255,0.35)';ctx.font='600 7px Rajdhani';ctx.fillText('▲ EARN',cx,cy+24);
+      }else{
+        // Coins-only: show price + Buy cue
+        const p=skinPrice(skL);
+        ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='600 8px Rajdhani';
+        const hintC=tL==='k'?vL+' '+L.killsReq:(tL==='l'?L.lengthReq+' '+vL:vL+' '+L.gamesReq);
+        ctx.fillText(hintC,cx,cy+14);
+        ctx.fillStyle=coins>=p?'#ffd600':'rgba(255,214,0,0.3)';ctx.font='bold 9px Rajdhani';ctx.fillText('🪙'+p,cx,cy+24);
+      }
     }
   }
   // Buy confirm modal
@@ -2382,8 +2426,10 @@ function handleSkinTap(x,y){
     // Yes (left)
     if(x>mx+20&&x<mx+20+cbw&&y>cy&&y<cy+cbh){
       const idx=pendingSkinBuy,p=skinPrice(SKINS[idx]);
-      if(p>0&&coins>=p){coins-=p;unlockedSkins.push(idx);currentSkin=idx;saveCoins();saveSkins();saveStats();sndPowerup();showToast(SKINS[idx].name+' ✓','success');}
-      else{buyFailedMsg=2;showToast(L.notEnough,'error');sndDeath();}
+      // Double-guard: only coins-rail skins can be purchased (earn-rail p===0)
+      if(skinRail(SKINS[idx])==='coins'&&p>0&&coins>=p){
+        coins-=p;unlockedSkins.push(idx);currentSkin=idx;saveCoins();saveSkins();saveStats();sndPowerup();showToast(SKINS[idx].name+' ✓','success');
+      }else{buyFailedMsg=2;showToast(L.notEnough,'error');sndDeath();}
       pendingSkinBuy=-1;return;
     }
     // No (right) — also acts as cancel for tap-outside
@@ -2397,8 +2443,11 @@ function handleSkinTap(x,y){
   const idx=row*cols+col;
   if(idx<0||idx>=SKINS.length)return;
   if(unlockedSkins.includes(idx)){currentSkin=idx;saveStats();sndMenu();return;}
+  // Earn-only skins (score-tier) are NOT purchasable — tapping does nothing
+  if(skinRail(SKINS[idx])==='earn'){return;}
+  // Coins-only skins: guard affordance then open buy confirm modal
   const p=skinPrice(SKINS[idx]);
-  if(p<=0){return;}
+  if(p<=0){return;} // safety: should never be 0 for a coins skin
   if(coins<p){buyFailedMsg=2;sndDeath();showToast(L.notEnough,'error');return;}
   // Open buy confirm modal
   pendingSkinBuy=idx;sndMenu();
