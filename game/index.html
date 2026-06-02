@@ -1971,6 +1971,13 @@ function startGame(modeId){
   foods=[];powerups=[];particles=[];snakes=[];scorePopups=[];
   kingActive=false;nextKingScore=2000;
   bossActive=false;nextBossScore=5000;bossToast=0;
+  // Rush is a short (~90s) sprint that typically scores ~800-1500, so the
+  // default King/Boss gates (2000/5000) almost never fire. Pull the first
+  // King/Boss thresholds in for Rush only so the mode actually shows its
+  // headline spectacle. Re-arm after a kill still uses the per-mode offset
+  // logic in killSnake(). Boss-Rush manages its own boss cadence — leave it
+  // (and Classic, which keeps 2000/5000) untouched.
+  if(mode==='rush'){nextKingScore=900;nextBossScore=2500;}
   spawnComboZones(true); // silent on first spawn — no "moved" toast at game start
   spawnInitialFood();
   // Player starts with extra length so they have a real "boost reserve" up front.
