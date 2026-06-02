@@ -245,6 +245,7 @@ let dailyAvailable = false;   // true = bonus ready, not yet claimed
 let dailyClaimIdx = 0;        // index into DAILY_REWARDS for today's claim
 let dailyPendingStreak = 0;   // the streak value that will be committed on CLAIM
 let showDailyModal = false;   // overlay flag (mirrors showSettings pattern)
+let showMissionsPanel = false; // overlay flag — daily-missions panel (mirrors showDailyModal pattern)
 let dailyStreakSaveOffered = false; // streak-save can only fire once per break
 let dailyStreakPreBreak = 0;  // streak value before a miss, for ad restore
 let quitConfirmTimer = 0, kingToast = 0, coinsAtStart = 0;
@@ -497,6 +498,9 @@ const MISSION_POOL=[
 ];
 let missions=[];       // [{type,target,label,done}] — 3 active for today
 let missionDay='';     // todayKey() when missions were last rolled
+// Menu missions-summary-chip geometry (shared by drawMenu + handleMenuTap).
+// FY is a fraction of usable height; chip sits where the old 3-row strip began.
+const MISSIONS_CHIP_FY=0.335, MISSIONS_CHIP_H=30;
 function _rollMissions(){
   const key=todayKey();
   const rng=_missionPrng(_missionSeed(key));
@@ -1734,7 +1738,7 @@ function render(){
     if(joystick.active&&state==='playing')drawJoystick();
     if(state==='playing'){drawBoostFuel();drawPauseBtn();}
   }
-  if(state==='menu'){drawMenu();if(!showTutorial&&!showSettings&&!showDailyModal&&dailyToast>0)drawDailyToast();if(showSettings)drawSettingsOverlay();if(!showTutorial&&showDailyModal)drawDailyModal();}
+  if(state==='menu'){drawMenu();if(!showTutorial&&!showSettings&&!showDailyModal&&!showMissionsPanel&&dailyToast>0)drawDailyToast();if(showSettings)drawSettingsOverlay();if(!showTutorial&&showDailyModal)drawDailyModal();if(!showTutorial&&!showDailyModal&&showMissionsPanel)drawMissionsPanel();}
   if(state==='dead')drawDeathScreen();
   if(state==='paused')drawPauseScreen();
   if(state==='skinselect')drawSkinSelect();
@@ -2372,6 +2376,78 @@ function handleDailyModalTap(x,y){
   if(x<mx||x>mx+mw||y<my||y>my+mh){showDailyModal=false;sndMenu();}
 }
 
+// ─── DAILY MISSIONS PANEL ─────────────────────────────────────────────────────
+// Openable overlay listing today's 3 deterministic missions + the all-3 bonus.
+// Pure presentation: missions[] and their run-end evaluation are unchanged.
+// Geometry mirrored by handleMissionsPanelTap.
+function drawMissionsPanel(){
+  ctx.fillStyle='rgba(0,0,0,0.82)';ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';
+  const uh=H-sat-sab,oy=sat;
+  const mw=Math.min(330,W-28),mh=Math.min(420,uh*0.86);
+  const mx=W/2-mw/2,my=oy+(uh-mh)/2;
+  // Card
+  ctx.fillStyle='#0e0e22';rr(mx,my,mw,mh,20);ctx.fill();
+  ctx.strokeStyle='#00e5ff';ctx.lineWidth=2;ctx.shadowColor='#00e5ff';ctx.shadowBlur=16;
+  rr(mx,my,mw,mh,20);ctx.stroke();ctx.shadowBlur=0;
+  // Title
+  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=12;
+  ctx.font='900 18px Orbitron';
+  ctx.fillText(isTR?'GÜNLÜK GÖREVLER':'DAILY MISSIONS',W/2,my+34);ctx.shadowBlur=0;
+  const doneN=missions.reduce(function(a,m){return a+(m.done?1:0);},0);
+  ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='600 12px Rajdhani';
+  ctx.fillText((isTR?'İlerleme: ':'Progress: ')+doneN+'/3',W/2,my+54);
+  // Mission rows
+  const rowsY=my+70,rowH=Math.min(64,Math.floor((mh-70-120)/3)),rowGap=8;
+  const rowW=mw-32,rowX=mx+16;
+  for(let i=0;i<missions.length;i++){
+    const mv=missions[i];
+    const ry=rowsY+i*(rowH+rowGap);
+    ctx.fillStyle=mv.done?'rgba(0,230,118,0.12)':'rgba(255,255,255,0.05)';
+    rr(rowX,ry,rowW,rowH,12);ctx.fill();
+    ctx.strokeStyle=mv.done?'rgba(0,230,118,0.5)':'rgba(255,255,255,0.14)';
+    ctx.lineWidth=1.5;rr(rowX,ry,rowW,rowH,12);ctx.stroke();
+    // Status dot
+    const dotX=rowX+24,dotY=ry+rowH/2;
+    ctx.fillStyle=mv.done?'#00e676':'rgba(255,255,255,0.12)';
+    ctx.beginPath();ctx.arc(dotX,dotY,13,0,TAU);ctx.fill();
+    ctx.fillStyle=mv.done?'#0a0a1a':'rgba(255,255,255,0.5)';
+    ctx.font='900 14px Orbitron';ctx.textBaseline='middle';
+    ctx.fillText(mv.done?'✓':(i+1),dotX,dotY+1);ctx.textBaseline='alphabetic';
+    // Label + reward
+    ctx.textAlign='left';
+    ctx.fillStyle=mv.done?'#00e676':'rgba(255,255,255,0.85)';
+    ctx.font='700 14px Rajdhani';
+    ctx.fillText(mv.label,rowX+46,ry+rowH*0.42);
+    ctx.fillStyle='rgba(255,214,0,0.7)';ctx.font='600 11px Rajdhani';
+    ctx.fillText('+150 🪙 · +80 XP',rowX+46,ry+rowH*0.74);
+    ctx.textAlign='center';
+  }
+  // All-3 bonus line
+  const allDoneM=doneN===3;
+  const bonusY=rowsY+3*(rowH+rowGap)+6;
+  ctx.fillStyle=allDoneM?'#ffd600':'rgba(255,214,0,0.45)';
+  ctx.font='700 12px Rajdhani';
+  ctx.fillText((allDoneM?'★ ':'')+(isTR?'Tüm görevler: +300 🪙':'All missions: +300 🪙'),W/2,bonusY);
+  // Close / Back chip
+  const closeBw=mw-32,closeBh=38,closeY=my+mh-closeBh-16;
+  ctx.fillStyle='rgba(255,255,255,0.07)';rr(mx+16,closeY,closeBw,closeBh,19);ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=1;rr(mx+16,closeY,closeBw,closeBh,19);ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='700 14px Rajdhani';
+  ctx.fillText(L.back,W/2,closeY+closeBh*0.64);
+  ctx.textAlign='left';
+}
+function handleMissionsPanelTap(x,y){
+  const uh=H-sat-sab,oy=sat;
+  const mw=Math.min(330,W-28),mh=Math.min(420,uh*0.86);
+  const mx=W/2-mw/2,my=oy+(uh-mh)/2;
+  const closeBw=mw-32,closeBh=38,closeY=my+mh-closeBh-16;
+  // Close chip
+  if(x>mx+16&&x<mx+16+closeBw&&y>closeY&&y<closeY+closeBh){showMissionsPanel=false;sndMenu();return;}
+  // Tap outside panel also closes
+  if(x<mx||x>mx+mw||y<my||y>my+mh){showMissionsPanel=false;sndMenu();}
+}
+
 // ═══ TUTORIAL ═══
 function drawTutorial(){
   // Backdrop with subtle vignette
@@ -2614,22 +2690,25 @@ function drawMenu(){
   ctx.beginPath();ctx.arc(dbx,dby,14,0,TAU);ctx.stroke();ctx.shadowBlur=0;
   ctx.fillStyle=dbColor;ctx.font='700 11px Rajdhani';
   ctx.fillText('🎁',dbx,dby+4);}
-  // Daily Missions panel — compact 3-row strip above the PLAY button.
+  // Daily Missions summary chip — single compact tappable row that opens the
+  // missions panel. Geometry mirrored by handleMenuTap (MISSIONS_CHIP).
   if(missions&&missions.length===3){
-    const mpw=220,mpx=W/2-mpw/2,mpBase=oy+uh*0.335,mpRowH=17,mpGap=1;
-    ctx.fillStyle='rgba(255,255,255,0.25)';ctx.font='700 10px Rajdhani';ctx.textAlign='center';
-    ctx.fillText((isTR?'GÜNLÜK GÖREVLER':'DAILY MISSIONS'),W/2,mpBase);
-    for(let mi=0;mi<3;mi++){
-      const mv=missions[mi];
-      const mry=mpBase+4+mi*(mpRowH+mpGap);
-      ctx.fillStyle=mv.done?'rgba(0,230,118,0.15)':'rgba(255,255,255,0.06)';
-      rr(mpx,mry,mpw,mpRowH,4);ctx.fill();
-      ctx.strokeStyle=mv.done?'rgba(0,230,118,0.50)':'rgba(255,255,255,0.12)';
-      ctx.lineWidth=1;rr(mpx,mry,mpw,mpRowH,4);ctx.stroke();
-      ctx.fillStyle=mv.done?'#00e676':'rgba(255,255,255,0.68)';
-      ctx.font='600 11px Rajdhani';ctx.textAlign='left';
-      ctx.fillText((mv.done?'✓ ':'')+mv.label,mpx+6,mry+12);
-    }
+    const doneN=missions.reduce(function(a,m){return a+(m.done?1:0);},0);
+    const allDoneM=doneN===3;
+    const mcw=220,mch=MISSIONS_CHIP_H,mcx=W/2-mcw/2,mcy=oy+uh*MISSIONS_CHIP_FY;
+    ctx.fillStyle=allDoneM?'rgba(0,230,118,0.14)':'rgba(255,255,255,0.05)';
+    rr(mcx,mcy,mcw,mch,9);ctx.fill();
+    ctx.strokeStyle=allDoneM?'rgba(0,230,118,0.55)':'rgba(255,255,255,0.18)';
+    ctx.lineWidth=1.5;rr(mcx,mcy,mcw,mch,9);ctx.stroke();
+    // Label (left)
+    ctx.fillStyle=allDoneM?'#00e676':'rgba(255,255,255,0.75)';
+    ctx.font='700 13px Rajdhani';ctx.textAlign='left';
+    ctx.fillText('🎯 '+(isTR?'Günlük Görevler':'Daily Missions'),mcx+12,mcy+mch*0.62);
+    // Progress (right)
+    ctx.textAlign='right';
+    ctx.fillStyle=allDoneM?'#00e676':'rgba(255,255,255,0.5)';
+    ctx.font='700 13px Rajdhani';
+    ctx.fillText(allDoneM?(doneN+'/3 ✓'):(doneN+'/3'),mcx+mcw-12,mcy+mch*0.62);
     ctx.textAlign='center';
   }
   const bw=220,bh=58,bx=W/2-bw/2,by=oy+uh*0.42;
@@ -2971,6 +3050,8 @@ window.addEventListener('keyup',function(e){if(e.code==='Space'&&player)player.b
 function handleMenuTap(x,y){
   // Daily reward modal swallows taps when open.
   if(showDailyModal){handleDailyModalTap(x,y);return;}
+  // Missions panel swallows taps when open.
+  if(showMissionsPanel){handleMissionsPanelTap(x,y);return;}
   // Settings overlay swallows taps when open.
   if(showSettings){
     const uh=H-sat-sab,oy=sat;
@@ -2997,6 +3078,11 @@ function handleMenuTap(x,y){
   if(x>W-60&&x<W-10&&y>sat+10&&y<sat+60){showTutorial=true;sndMenu();return;}
   // Daily reward badge (below help, top-right) — re-opens modal
   if(x>W-56&&x<W-12&&y>sat+48&&y<sat+88){showDailyModal=true;sndMenu();return;}
+  // Daily missions summary chip — opens the missions panel (geometry mirrors drawMenu).
+  if(missions&&missions.length===3){
+    const uhM=H-sat-sab,oyM=sat,mcw=220,mcx=W/2-mcw/2,mcy=oyM+uhM*MISSIONS_CHIP_FY;
+    if(x>mcx&&x<mcx+mcw&&y>mcy&&y<mcy+MISSIONS_CHIP_H){showMissionsPanel=true;sndMenu();return;}
+  }
   sndMenu();const uh=H-sat-sab,oy=sat,bw=220,bh=58,bx=W/2-bw/2,by=oy+uh*0.42;
   if(x>bx&&x<bx+bw&&y>by&&y<by+bh){startGame(mode);return;}
   const sy=oy+uh*0.54;if(x>bx+20&&x<bx+bw-20&&y>sy&&y<sy+44){state='skinselect';skinScroll=0;return;}
