@@ -322,32 +322,78 @@ function sndKingSlain(){for(let i=0;i<6;i++)tone(440+i*110,'sine',0.12,0.05,i*0.
 function sndZone(){for(let i=0;i<5;i++)tone(330+i*80,'sine',0.15,0.04,i*0.06);}
 function sndMenu(){tone(440,'sine',0.15,0.04);postMsg({type:'HAPTIC',data:'light'});}
 
-// ═══ AMBIENT MUSIC (simple synthesized loop) ═══
+// ═══ AMBIENT MUSIC (calm generative pad engine — Wave 2.0) ═══
+// ── Tunable parameters ──────────────────────────────────────────────────
+const PAD_CHORD_INTERVAL_MIN = 4500;  // ms: minimum gap between chords
+const PAD_CHORD_INTERVAL_RANGE= 2500;  // ms: random range added on top (organic feel)
+const PAD_ATTACK    = 1.0;            // s: gain fade-in per pad note
+const PAD_HOLD      = 2.5;            // s: sustain at peak before release begins
+const PAD_RELEASE   = 2.8;            // s: gain fade-out
+const PAD_PEAK_GAIN = 0.022;          // peak gain per chord voice (2-3 voices → total ~0.05)
+const PAD_FILTER_HZ = 650;            // lowpass cutoff (keeps it muffled/warm, not bright)
+const PAD_DETUNE_HZ = 3;              // chorus detuning ±Hz for the doubled oscillators
+const TWINKLE_PROB  = 0.33;           // probability of a sparse high twinkle per chord (0=off)
+const TWINKLE_GAIN  = 0.009;          // gain for twinkle accent (very quiet)
+// ── Chord progression: root + fifth + octave (Cm-pentatonic-ish, low register) ──
+// Each entry is [root_Hz, fifth_Hz, third_Hz] — all in the 100-260 Hz range (warm/deep)
+const PAD_CHORDS = [
+  [110.00, 164.81, 130.81],   // A2 – E3 – C#3  (A minor feel, low)
+  [ 87.31, 130.81, 110.00],   // F2 – C3 – A2   (F major feel)
+  [130.81, 196.00, 164.81],   // C3 – G3 – E3   (C major, warm)
+  [ 98.00, 146.83, 123.47],   // G2 – D3 – B2   (G major, grounded)
+];
+// ────────────────────────────────────────────────────────────────────────
 let musicTimer=null,musicStep=0;
-const MUSIC_NOTES=[174.61,196.00,220.00,261.63,196.00,233.08,261.63,329.63];
+function _padNote(freq,now){
+  // Two slightly detuned oscillators → gentle chorus warmth
+  try{
+    const total=PAD_ATTACK+PAD_HOLD+PAD_RELEASE;
+    [freq-PAD_DETUNE_HZ,freq+PAD_DETUNE_HZ].forEach(function(f){
+      const o=ac.createOscillator(),g=ac.createGain(),lp=ac.createBiquadFilter();
+      o.type='sine';
+      o.frequency.setValueAtTime(f,now);
+      lp.type='lowpass';lp.frequency.setValueAtTime(PAD_FILTER_HZ,now);
+      g.gain.setValueAtTime(0,now);
+      g.gain.linearRampToValueAtTime(PAD_PEAK_GAIN/2,now+PAD_ATTACK);  // /2 because two oscs
+      g.gain.setValueAtTime(PAD_PEAK_GAIN/2,now+PAD_ATTACK+PAD_HOLD);
+      g.gain.linearRampToValueAtTime(0.0001,now+PAD_ATTACK+PAD_HOLD+PAD_RELEASE);
+      o.connect(lp);lp.connect(g);g.connect(ac.destination);
+      o.start(now);o.stop(now+total+0.1);
+    });
+  }catch(e){}
+}
 function musicTick(){
   if(!musicOn||!ac)return;
-  const note=MUSIC_NOTES[musicStep%MUSIC_NOTES.length];
   try{
     const now=ac.currentTime;
-    const o=ac.createOscillator(),g=ac.createGain(),f=ac.createBiquadFilter();
-    o.type='triangle';o.frequency.setValueAtTime(note,now);
-    f.type='lowpass';f.frequency.setValueAtTime(900,now);
-    g.gain.setValueAtTime(0,now);
-    g.gain.linearRampToValueAtTime(0.025,now+0.05);
-    g.gain.linearRampToValueAtTime(0,now+0.7);
-    o.connect(f);f.connect(g);g.connect(ac.destination);
-    o.start(now);o.stop(now+0.75);
+    const chord=PAD_CHORDS[musicStep%PAD_CHORDS.length];
+    chord.forEach(function(f){_padNote(f,now);});
+    // Optional sparse twinkle — single quiet high sine
+    if(Math.random()<TWINKLE_PROB){
+      const hi=chord[0]*4+(Math.random()-0.5)*30;  // ~4 octaves up from root, tiny wobble
+      try{
+        const to=ac.createOscillator(),tg=ac.createGain(),tl=ac.createBiquadFilter();
+        to.type='sine';to.frequency.setValueAtTime(hi,now);
+        tl.type='lowpass';tl.frequency.setValueAtTime(900,now);
+        tg.gain.setValueAtTime(0,now);
+        tg.gain.linearRampToValueAtTime(TWINKLE_GAIN,now+0.6);
+        tg.gain.linearRampToValueAtTime(0.0001,now+2.5);
+        to.connect(tl);tl.connect(tg);tg.connect(ac.destination);
+        to.start(now);to.stop(now+2.7);
+      }catch(e){}
+    }
   }catch(e){}
   musicStep++;
+  // Re-arm with organic, varied delay so chords never feel mechanical
+  const delay=PAD_CHORD_INTERVAL_MIN+Math.random()*PAD_CHORD_INTERVAL_RANGE;
+  musicTimer=setTimeout(musicTick,delay);
 }
 function startMusic(){
   if(musicTimer||!musicOn)return;
-  musicTick();
-  musicTimer=setInterval(musicTick,750);
+  musicTick();  // play first chord immediately; musicTick re-arms itself via setTimeout
 }
 function stopMusic(){
-  if(musicTimer){clearInterval(musicTimer);musicTimer=null;}
+  if(musicTimer){clearTimeout(musicTimer);musicTimer=null;}
 }
 
 // ═══ PROGRESSION (XP / LEVEL) ═══
