@@ -110,6 +110,7 @@ const L={
   tier:isTR?'Kademe':'Tier',
   nextTier:isTR?'Sonraki':'Next',
   trails:isTR?'İZLER':'TRAILS',
+  cosmetics:isTR?'GÖRÜNÜM':'COSMETICS',
   trailEquipped:isTR?'TAKILI':'EQUIPPED',
   trailSelect:isTR?'SEÇ':'SELECT',
   buyTrail:isTR?'Bu izi satın al?':'Buy this trail?',
@@ -222,13 +223,15 @@ function skinRail(sk){
 //   rich  : true → heaviest additive style, suppressed under reducedMotion.
 //   rate  : spawn cadence in seconds between particles (smaller = denser).
 const TRAILS=[
-  {id:'none',    name:'None',         price:0,    col:'#ffffff', rich:false, rate:0},
-  {id:'sparkle', name:'Sparkle',      price:600,  col:'#fff7c2', rich:false, rate:0.05},
-  {id:'embers',  name:'Embers',       price:900,  col:'#ff7a18', rich:false, rate:0.045},
-  {id:'neon',    name:'Neon Streak',  price:1200, col:'#18e0ff', rich:true,  rate:0.03},
-  {id:'bubbles', name:'Bubbles',      price:1500, col:'#9fe6ff', rich:false, rate:0.07},
-  {id:'rainbow', name:'Rainbow Dust', price:2500, col:'#ff0040', rich:true,  rate:0.03}
+  {id:'none',    name:'None',         nameTR:'Yok',          price:0,    col:'#ffffff', rich:false, rate:0},
+  {id:'sparkle', name:'Sparkle',      nameTR:'Parıltı',      price:600,  col:'#fff7c2', rich:false, rate:0.05},
+  {id:'embers',  name:'Embers',       nameTR:'Korlar',       price:900,  col:'#ff7a18', rich:false, rate:0.045},
+  {id:'neon',    name:'Neon Streak',  nameTR:'Neon Çizgi',   price:1200, col:'#18e0ff', rich:true,  rate:0.03},
+  {id:'bubbles', name:'Bubbles',      nameTR:'Baloncuklar',  price:1500, col:'#9fe6ff', rich:false, rate:0.07},
+  {id:'rainbow', name:'Rainbow Dust', nameTR:'Gökkuşağı Tozu',price:2500,col:'#ff0040', rich:true,  rate:0.03}
 ];
+// Localized trail name (mirrors tierName()). Falls back to the English name.
+function trailName(td){return td?(isTR&&td.nameTR?td.nameTR:td.name):'';}
 
 // ═══ ZONES ═══
 const ZONES = [
@@ -622,6 +625,10 @@ const TIERS=[
 function tierForScore(s){let t=TIERS[0];for(let i=0;i<TIERS.length;i++){if(s>=TIERS[i].min)t=TIERS[i];else break;}return t;}
 function nextTier(s){for(let i=0;i<TIERS.length;i++){if(s<TIERS[i].min)return TIERS[i];}return null;}
 function tierName(t){return isTR?t.nameTR:t.name;}
+// Format a per-mode best value for display. Boss Rush bests are a raw wave
+// count (runWaves), not a points score, so suffix them with the localized wave
+// unit to disambiguate from points bests at every readout site.
+function formatModeBest(modeId,v){return modeId==='bossrush'?(v+' '+L.wave):(''+v);}
 
 // ═══ DAILY MISSIONS ═══
 // Deterministic seeded PRNG (mulberry32 variant).
@@ -1186,7 +1193,11 @@ function _parseHex(c){
   // Returns {r,g,b} 0-255 from a CSS hex color. Falls back to white.
   let h=(c||'#ffffff').replace('#','');
   if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
-  return{r:parseInt(h.slice(0,2),16)||255,g:parseInt(h.slice(2,4),16)||255,b:parseInt(h.slice(4,6),16)||255};
+  // Parse each channel; fall back to 255 ONLY on NaN (a true parse failure).
+  // A legitimate 00 byte must NOT be coerced to 255 — half the SKINS palette
+  // (e.g. default #00e5ff) has a 00 channel and was rendering pinkish-white.
+  const ri=parseInt(h.slice(0,2),16),gi=parseInt(h.slice(2,4),16),bi=parseInt(h.slice(4,6),16);
+  return{r:isNaN(ri)?255:ri,g:isNaN(gi)?255:gi,b:isNaN(bi)?255:bi};
 }
 function spawnShock(x,y,color,big){
   // reducedMotion: suppress shockwave rings entirely (cosmetic only — no gameplay state here).
@@ -3035,7 +3046,7 @@ function drawLeaderboard(){
   ctx.fillText(L.classicMode,W/2,oy+111);
   // Per-mode bests row (shown for all defined modes)
   {const mbY=oy+132;ctx.fillStyle='rgba(255,255,255,0.35)';ctx.font='600 11px Rajdhani';
-  const parts=[];for(let i=0;i<MODES.length;i++){const mid=MODES[i].id;const b=bestByMode[mid]||0;parts.push((L[mid]||mid)+': '+(b>0?b:'-'));}
+  const parts=[];for(let i=0;i<MODES.length;i++){const mid=MODES[i].id;const b=bestByMode[mid]||0;parts.push((L[mid]||mid)+': '+(b>0?formatModeBest(mid,b):'-'));}
   ctx.fillText(parts.join('   ·   '),W/2,mbY);}
   // Stats line
   ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='600 13px Rajdhani';
@@ -3230,7 +3241,7 @@ function drawMenu(){
   // Show best for the currently selected mode. Classic falls back to highScore
   // so existing leaderboard integration is unchanged. Other modes use bestByMode.
   {const menuBest=mode==='classic'?highScore:(bestByMode[mode]||0);
-  if(menuBest>0){ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='600 18px Rajdhani';ctx.fillText(L.best+': '+menuBest,W/2,oy+uh*0.32);}}
+  if(menuBest>0){ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='600 18px Rajdhani';ctx.fillText(L.best+': '+formatModeBest(mode,menuBest),W/2,oy+uh*0.32);}}
   // Coin counter (top)
   ctx.fillStyle='#ffd600';ctx.font='900 22px Orbitron';ctx.shadowColor='#ffd600';ctx.shadowBlur=10;
   ctx.fillText('🪙 '+coins,W/2,oy+36);ctx.shadowBlur=0;
@@ -3296,7 +3307,8 @@ function drawMenu(){
   ctx.fillStyle='#0a0a1a';ctx.font='900 24px Orbitron';ctx.fillText(L.play,W/2,by+38);
   const sy=oy+uh*0.54;
   ctx.fillStyle='#7c4dff';ctx.shadowColor='#7c4dff';ctx.shadowBlur=10;rr(bx+20,sy,bw-40,44,22);ctx.fill();ctx.shadowBlur=0;
-  ctx.fillStyle='#fff';ctx.font='700 18px Orbitron';ctx.fillText(L.skins,W/2,sy+29);
+  // Labeled COSMETICS (not SKINS) so players know this entry point also holds trails.
+  ctx.fillStyle='#fff';ctx.font='700 18px Orbitron';ctx.fillText(L.cosmetics,W/2,sy+29);
   // Leaderboard button
   const ly=oy+uh*0.63;
   ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=10;rr(bx+20,ly,bw-40,42,21);ctx.fill();ctx.shadowBlur=0;
@@ -3388,7 +3400,7 @@ function drawDeathScreen(){
     ctx.fillText('TOP '+currentRank,W/2,oy+uh*0.51);ctx.shadowBlur=0;
   }else if(currentModeBest>0){
     ctx.fillStyle='rgba(255,255,255,0.45)';ctx.font='600 13px Rajdhani';
-    ctx.fillText(L.modeBest+': '+currentModeBest,W/2,oy+uh*0.51);
+    ctx.fillText(L.modeBest+': '+formatModeBest(mode,currentModeBest),W/2,oy+uh*0.51);
   }
   // Tier line — current named tier (derived from CLASSIC best highScore) plus,
   // if not yet Master, the "Next: {tier} at {min}" nudge. Read-only, no persist.
@@ -3611,7 +3623,7 @@ function drawTrailSelect(){
     }
     // Name (center-left)
     ctx.textAlign='left';ctx.fillStyle=owned?'#fff':'rgba(255,255,255,0.55)';ctx.font='700 15px Rajdhani';
-    ctx.fillText(td.name,r.x+86,r.y+r.h/2+5);
+    ctx.fillText(trailName(td),r.x+86,r.y+r.h/2+5);
     // Right side: EQUIPPED / price / SELECT
     ctx.textAlign='right';
     if(equipped){ctx.fillStyle='#b39dff';ctx.font='900 12px Rajdhani';ctx.fillText('✓ '+L.trailEquipped,r.x+r.w-16,r.y+r.h/2+4);}
@@ -3629,7 +3641,7 @@ function drawTrailSelect(){
     ctx.strokeStyle='#7c4dff';ctx.lineWidth=2;rr(mx,my,mw,mh,16);ctx.stroke();
     ctx.textAlign='center';
     drawTrailPreview(td,W/2,my+44);
-    ctx.fillStyle='#fff';ctx.font='900 22px Orbitron';ctx.fillText(td.name,W/2,my+86);
+    ctx.fillStyle='#fff';ctx.font='900 22px Orbitron';ctx.fillText(trailName(td),W/2,my+86);
     ctx.fillStyle='#ffd600';ctx.font='900 26px Orbitron';ctx.shadowColor='#ffd600';ctx.shadowBlur=10;
     ctx.fillText('🪙 '+p,W/2,my+126);ctx.shadowBlur=0;
     ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='600 13px Rajdhani';ctx.fillText(L.buyTrail,W/2,my+150);
@@ -3651,7 +3663,7 @@ function handleTrailTap(x,y){
     if(x>mx+20&&x<mx+20+cbw&&y>cyB&&y<cyB+cbh){
       const idx=pendingTrailBuy,td=TRAILS[idx],tp=featuredTrailPrice(idx); // discounted if featured — same number shown in modal
       if(td&&tp>0&&unlockedTrails.indexOf(idx)<0&&coins>=tp){
-        coins-=tp;unlockedTrails.push(idx);currentTrail=idx;saveCoins();saveTrails();sndPowerup();showToast(td.name+' ✓','success');
+        coins-=tp;unlockedTrails.push(idx);currentTrail=idx;saveCoins();saveTrails();sndPowerup();showToast(trailName(td)+' ✓','success');
       }else{buyFailedMsg=2;showToast(L.notEnough,'error');sndDeath();}
       pendingTrailBuy=-1;return;
     }
@@ -3930,8 +3942,10 @@ function handleSkinTap(x,y){
     // Yes (left)
     if(x>mx+20&&x<mx+20+cbw&&y>cy&&y<cy+cbh){
       const idx=pendingSkinBuy,p=featuredSkinPrice(idx); // discounted if featured — same number shown in modal
-      // Double-guard: only coins-rail skins can be purchased (earn-rail p===0)
-      if(skinRail(SKINS[idx])==='coins'&&p>0&&coins>=p){
+      // Double-guard: only coins-rail skins can be purchased (earn-rail p===0).
+      // Also re-check ownership (mirrors the trail buy-confirm) so a stale/double
+      // confirm can never re-charge for an already-unlocked skin.
+      if(skinRail(SKINS[idx])==='coins'&&p>0&&!unlockedSkins.includes(idx)&&coins>=p){
         coins-=p;unlockedSkins.push(idx);currentSkin=idx;saveCoins();saveSkins();saveStats();sndPowerup();showToast(SKINS[idx].name+' ✓','success');
       }else{buyFailedMsg=2;showToast(L.notEnough,'error');sndDeath();}
       pendingSkinBuy=-1;return;
