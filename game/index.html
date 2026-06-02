@@ -57,8 +57,11 @@ const L={
   notEnough:isTR?'Yetersiz para':'Not enough coins',
   leaderboard:isTR?'SKOR TABLOSU':'LEADERBOARD',noScores:isTR?'Henüz skor yok':'No scores yet',
   skinUnlocked:isTR?'YENİ SKIN AÇILDI!':'NEW SKIN UNLOCKED!',
-  watchForCoins:isTR?'REKLAM İZLE +100':'WATCH AD +100',
-  coinsEarned:isTR?'+100 PARA':'+100 COINS',
+  watchForCoins:isTR?'REKLAM İZLE · 🪙':'WATCH AD · 🪙',
+  coinsEarned:isTR?'PARA KAZANILDI':'COINS EARNED',
+  doubleCoins:isTR?'▶ KATLAYABİLİRSİN':'▶ DOUBLE',
+  nextSkinHint:isTR?'Sonraki skin: ':'Next skin: ',
+  toGo:isTR?' daha':'  to go',
   time:isTR?'Süre':'Time',
   howToPlay:isTR?'NASIL OYNANIR':'HOW TO PLAY',
   tut1:isTR?'Sürükle: yön ver':'Drag to steer',
@@ -218,6 +221,7 @@ let skinScroll = 0, killerName = '';
 let frameCount = 0, foodSpawnTimer = 0, puSpawnTimer = 0;
 let flashAlpha = 0, flashColor = '#fff';
 let adFailedMsg = 0, buyFailedMsg = 0, hasRevived = false;
+let lastRunEarned = 0, doubleClaimed = false;
 let unlockToast = 0, unlockToastName = '';
 let unlockCheckTimer = 0;
 let currentRank = 0, playTime = 0, showTutorial = false;
@@ -539,7 +543,8 @@ window.addEventListener('message',function(e){
     const m=typeof e.data==='string'?JSON.parse(e.data):e.data;
     if(m.type==='AD_REWARD_EARNED'&&m.data){
       if(m.data.reward==='continue')revivePlayer();
-      else if(m.data.reward==='coins'){coins+=100;saveCoins();showToast(L.coinsEarned,'success');sndPowerup();}
+      else if(m.data.reward==='coins'){const amt=75+Math.floor(Math.random()*226);coins+=amt;saveCoins();showToast('+'+amt+' 🪙','success');sndPowerup();}
+      else if(m.data.reward==='double'){if(!doubleClaimed&&lastRunEarned>0){coins+=lastRunEarned;doubleClaimed=true;saveCoins();showToast('+'+lastRunEarned+' 🪙','success');sndPowerup();}}
     }
     if(m.type==='AD_FAILED'){
       const reward=m.data&&m.data.reward;
@@ -1218,6 +1223,7 @@ function killSnake(victim,killer,cause){
   if(victim.isKing){kingActive=false;if(!nextKingScore||nextKingScore<=score)nextKingScore=score+2000;}
   if(victim.isBoss){bossActive=false;if(!nextBossScore||nextBossScore<=score)nextBossScore=score+5000;}
   if(victim.isPlayer){
+    lastRunEarned=Math.max(0,coins-coinsAtStart);doubleClaimed=false;
     sndDeath();postMsg({type:'HAPTIC',data:'heavy'});
     flashAlpha=0.4;flashColor='#ff1744';shakeTimer=0.3;shakeMag=8;
     // Shockwave: player death — large red-orange burst centered on the player's head.
@@ -2326,6 +2332,9 @@ function drawMenu(){
   ctx.strokeStyle='#00e676';ctx.lineWidth=2;ctx.shadowColor='#00e676';ctx.shadowBlur=adOk?8:0;rr(bx+20,ay,bw-40,42,21);ctx.stroke();ctx.shadowBlur=0;
   ctx.fillStyle='#00e676';ctx.font='700 14px Orbitron';ctx.fillText(L.watchForCoins,W/2,ay+27);
   ctx.globalAlpha=1;
+  // Next-skin hint: cheapest locked coins-rail skin
+  {let cheapPrice=Infinity;for(let si=0;si<SKINS.length;si++){const sk=SKINS[si];if(skinRail(sk)==='coins'&&!unlockedSkins.includes(si)){const p=skinPrice(sk);if(p<cheapPrice)cheapPrice=p;}}
+  if(cheapPrice!==Infinity&&coins<cheapPrice){const need=cheapPrice-coins;ctx.fillStyle='rgba(255,214,0,0.65)';ctx.font='600 11px Rajdhani';ctx.fillText(L.nextSkinHint+need+' 🪙'+L.toGo,W/2,ay+44);}}
   // Preview
   const py=oy+uh*0.92;const skin=SKINS[currentSkin];
   for(let i=0;i<15;i++){const a=(i/15)*TAU+frameCount*0.02;const px=W/2+Math.cos(a)*30,ppy=py+Math.sin(a)*30;const t=i/15;ctx.fillStyle=lerpColor(skin.c[1],skin.c[0],t);ctx.beginPath();ctx.arc(px,ppy,5-t*2,0,TAU);ctx.fill();}
@@ -2428,12 +2437,22 @@ function drawDeathScreen(){
     ctx.font='600 13px Rajdhani';
     ctx.fillText(L.adNotAvailable,W/2,ry+bh+16);
   }
+  // ─── Double your coins button ─────────────────────────────────────────────
+  const showDouble=lastRunEarned>0&&!doubleClaimed;
+  if(showDouble){
+    const dby=oy+uh*(canRevive?0.675:0.595);
+    const dbOk=adReady.rewarded;
+    ctx.globalAlpha=dbOk?1:0.4;
+    ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=dbOk?10:0;rr(W/2-bw/2,dby,bw,44,22);ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle='#0a0a1a';ctx.font='900 14px Orbitron';ctx.fillText(L.doubleCoins+' +'+lastRunEarned+' 🪙',W/2,dby+28);
+    ctx.globalAlpha=1;
+  }
   // Play Again
-  const ry2=oy+uh*(canRevive?0.71:0.62);
+  const ry2=oy+uh*(canRevive?(showDouble?0.775:0.71):(showDouble?0.685:0.62));
   ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=10;rr(W/2-bw/2,ry2,bw,bh,25);ctx.fill();ctx.shadowBlur=0;
   ctx.fillStyle='#0a0a1a';ctx.font='900 17px Orbitron';ctx.fillText('▶ '+L.playAgain,W/2,ry2+32);
   // Main Menu
-  const ry3=oy+uh*(canRevive?0.84:0.75);
+  const ry3=oy+uh*(canRevive?(showDouble?0.895:0.84):(showDouble?0.81:0.75));
   ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=2;rr(W/2-bw/2,ry3,bw,44,22);ctx.stroke();
   ctx.fillStyle='rgba(255,255,255,0.85)';ctx.font='700 15px Rajdhani';
   ctx.fillText('⌂ '+L.mainMenu,W/2,ry3+28);
@@ -2728,11 +2747,20 @@ function handleDeathTap(x,y){
     if(adReady.rewarded){postMsg({type:'SHOW_REWARDED_AD',data:{reward:'continue'}});return;}
     showToast(L.adNotAvailable,'error');postMsg({type:'CHECK_AD_READY'});return;
   }
+  // Double your coins (rewarded, once per death)
+  const showDouble=lastRunEarned>0&&!doubleClaimed;
+  if(showDouble){
+    const dby=oy+uh*(canRevive?0.675:0.595);
+    if(x>W/2-bw/2&&x<W/2+bw/2&&y>dby&&y<dby+44){
+      if(!adReady.rewarded){showToast(L.adNotAvailable,'error');postMsg({type:'CHECK_AD_READY'});return;}
+      postMsg({type:'SHOW_REWARDED_AD',data:{reward:'double'}});return;
+    }
+  }
   // Play Again
-  const ry2=oy+uh*(canRevive?0.71:0.62);
+  const ry2=oy+uh*(canRevive?(showDouble?0.775:0.71):(showDouble?0.685:0.62));
   if(x>W/2-bw/2&&x<W/2+bw/2&&y>ry2&&y<ry2+bh){startGame();return;}
   // Main Menu
-  const ry3=oy+uh*(canRevive?0.84:0.75);
+  const ry3=oy+uh*(canRevive?(showDouble?0.895:0.84):(showDouble?0.81:0.75));
   if(x>W/2-bw/2&&x<W/2+bw/2&&y>ry3&&y<ry3+44){state='menu';saveHS();saveStats();saveCoins();resetTouchState();return;}
 }
 function handleSkinTap(x,y){
