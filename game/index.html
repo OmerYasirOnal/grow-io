@@ -78,6 +78,12 @@ const L={
   missionSurvive:isTR?'{t}s hayatta kal':'Survive {t}s',
   missionBonus:isTR?'TÜM GÖREVLER TAMAMLANDI! +300 🪙':'ALL MISSIONS DONE! +300 🪙',
   protected:isTR?'KORUMALI':'PROTECTED',
+  claim:isTR?'TALEP ET':'CLAIM',
+  streakSave:isTR?'SERANDE DEVAM ET':'KEEP STREAK',
+  streakSaveDesc:isTR?'Serinizi koru — reklam izle':'Watch an ad to keep your streak',
+  streakSaved:isTR?'Seri korundu!':'Streak saved!',
+  dailyReward:isTR?'GÜNLÜK ÖDÜL':'DAILY REWARD',
+  day:isTR?'Gün':'Day',
   today:isTR?'bugün':'today',
   yesterday:isTR?'dün':'yesterday',
   daysAgo:isTR?'gün önce':'days ago',
@@ -232,6 +238,15 @@ let runTimeLimit = 0;
 let bestByMode = {};
 let lastLoginDate = '', loginStreak = 0;
 let dailyToast = 0, dailyAmount = 0, dailyStreakVal = 0;
+// ─── DAILY REWARD MODAL (Wave 2.3) ───────────────────────────────────────────
+// Escalating 7-day ladder: day index 0..6 cycles (day 7+ repeats at 6).
+const DAILY_REWARDS = [50, 80, 120, 180, 260, 380, 600];
+let dailyAvailable = false;   // true = bonus ready, not yet claimed
+let dailyClaimIdx = 0;        // index into DAILY_REWARDS for today's claim
+let dailyPendingStreak = 0;   // the streak value that will be committed on CLAIM
+let showDailyModal = false;   // overlay flag (mirrors showSettings pattern)
+let dailyStreakSaveOffered = false; // streak-save can only fire once per break
+let dailyStreakPreBreak = 0;  // streak value before a miss, for ad restore
 let quitConfirmTimer = 0, kingToast = 0, coinsAtStart = 0;
 // Hit-pause: short global freeze the moment the player kills or is killed,
 // gives every collision a beat of weight (D3 in the polish plan).
@@ -545,6 +560,16 @@ window.addEventListener('message',function(e){
       if(m.data.reward==='continue')revivePlayer();
       else if(m.data.reward==='coins'){const amt=75+Math.floor(Math.random()*226);coins+=amt;saveCoins();showToast('+'+amt+' 🪙','success');sndPowerup();}
       else if(m.data.reward==='double'){if(!doubleClaimed&&lastRunEarned>0){coins+=lastRunEarned;doubleClaimed=true;saveCoins();showToast('+'+lastRunEarned+' 🪙','success');sndPowerup();}}
+      else if(m.data.reward==='streak'){
+        // Streak-save via rewarded ad — restore pre-break streak, recompute claim index.
+        if(dailyStreakSaveOffered&&dailyStreakPreBreak>1){
+          // Restore streak: the pending streak is now consecutive from the saved value.
+          dailyPendingStreak=dailyStreakPreBreak+1;
+          dailyClaimIdx=Math.min(6,Math.max(0,dailyPendingStreak-1));
+          saveLogin();showToast(L.streakSaved,'success');sndPowerup();
+          dailyStreakSaveOffered=false; // once only
+        }
+      }
     }
     if(m.type==='AD_FAILED'){
       const reward=m.data&&m.data.reward;
@@ -639,12 +664,29 @@ function todayKey(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+
 function loadLogin(){try{const d=localStorage.getItem('growio_login');if(d){const s=JSON.parse(d);lastLoginDate=s.d||'';loginStreak=s.s||0;}}catch(e){}}
 function saveLogin(){try{localStorage.setItem('growio_login',JSON.stringify({d:lastLoginDate,s:loginStreak}));}catch(e){}}
 function checkDailyBonus(){
-  const today=todayKey();if(today===lastLoginDate)return;
+  const today=todayKey();
+  // Guard: already claimed today via the blob (reopening app mid-day must not re-open modal).
+  const dailyBlob=loadBlob('daily',{claimedDay:''});
+  if(today===lastLoginDate&&dailyBlob.claimedDay===today){dailyAvailable=false;return;}
+  if(today===lastLoginDate&&dailyAvailable)return; // already set pending
   if(!lastLoginDate){lastLoginDate=today;saveLogin();return;}
-  const y=new Date();y.setDate(y.getDate()-1);const yKey=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();
-  loginStreak=(lastLoginDate===yKey)?loginStreak+1:1;lastLoginDate=today;saveLogin();
-  const bonus=Math.min(25+loginStreak*5,250);coins+=bonus;saveCoins();
-  dailyToast=5;dailyAmount=bonus;dailyStreakVal=loginStreak;
+  // Determine yesterday's key to check for consecutive-day streak.
+  const yDate=new Date();yDate.setDate(yDate.getDate()-1);
+  const yKey=yDate.getFullYear()+'-'+(yDate.getMonth()+1)+'-'+yDate.getDate();
+  const consecutive=(lastLoginDate===yKey);
+  if(!consecutive&&loginStreak>1&&!dailyStreakSaveOffered){
+    // Missed a day — offer streak-save before resetting.
+    dailyStreakPreBreak=loginStreak;
+    dailyStreakSaveOffered=true;
+  }
+  // Compute new streak (will be applied on CLAIM, not here).
+  dailyPendingStreak=consecutive?loginStreak+1:1;
+  // Day-index into ladder: 0-based, cycle at 6.
+  dailyClaimIdx=Math.min(6,Math.max(0,dailyPendingStreak-1));
+  dailyAvailable=true;
+  lastLoginDate=today;
+  saveLogin();
+  showDailyModal=true; // auto-open on first menu entry
 }
 function markTutorialSeen(){try{localStorage.setItem('growio_tutorial','1');}catch(e){}showTutorial=false;}
 function addTopScore(s){if(s<=0){currentRank=0;return;}const entry={s,d:Date.now()};topScores.push(entry);topScores.sort((a,b)=>b.s-a.s);topScores=topScores.slice(0,10);saveTopScores();currentRank=topScores.indexOf(entry)+1;}
@@ -1602,7 +1644,7 @@ function render(){
     if(joystick.active&&state==='playing')drawJoystick();
     if(state==='playing'){drawBoostFuel();drawPauseBtn();}
   }
-  if(state==='menu'){drawMenu();if(!showTutorial&&!showSettings&&dailyToast>0)drawDailyToast();if(showSettings)drawSettingsOverlay();}
+  if(state==='menu'){drawMenu();if(!showTutorial&&!showSettings&&!showDailyModal&&dailyToast>0)drawDailyToast();if(showSettings)drawSettingsOverlay();if(!showTutorial&&showDailyModal)drawDailyModal();}
   if(state==='dead')drawDeathScreen();
   if(state==='paused')drawPauseScreen();
   if(state==='skinselect')drawSkinSelect();
@@ -2059,6 +2101,127 @@ function drawDailyToast(){
   ctx.globalAlpha=1;ctx.textAlign='left';
 }
 
+// ─── DAILY REWARD MODAL (Wave 2.3) ───────────────────────────────────────────
+function drawDailyModal(){
+  // Full-screen dim backdrop
+  ctx.fillStyle='rgba(0,0,0,0.82)';ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';
+  const uh=H-sat-sab,oy=sat;
+  const mw=Math.min(320,W-28),mh=Math.min(440,uh*0.88);
+  const mx=W/2-mw/2,my=oy+(uh-mh)/2;
+  // Modal card
+  ctx.fillStyle='#0e0e22';rr(mx,my,mw,mh,20);ctx.fill();
+  ctx.strokeStyle='#ffd600';ctx.lineWidth=2;ctx.shadowColor='#ffd600';ctx.shadowBlur=16;
+  rr(mx,my,mw,mh,20);ctx.stroke();ctx.shadowBlur=0;
+  // Title
+  ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=12;
+  ctx.font='900 18px Orbitron';ctx.fillText(L.dailyReward,W/2,my+34);ctx.shadowBlur=0;
+  // Streak line
+  ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='600 13px Rajdhani';
+  ctx.fillText(L.streak+': '+loginStreak,W/2,my+54);
+  // 7-day strip
+  const stripY=my+68,stripH=mh-68-130; // leave room for buttons at bottom
+  const cellW=Math.floor((mw-20)/7),cellH=Math.min(74,Math.floor(stripH*0.9));
+  const stripX=mx+10+(mw-20-cellW*7)/2;
+  for(let d=0;d<7;d++){
+    const cx=stripX+d*cellW,cy=stripY;
+    const isPast=(d<dailyClaimIdx);
+    const isToday=(d===dailyClaimIdx&&dailyAvailable);
+    const isFuture=(d>dailyClaimIdx)||(d===dailyClaimIdx&&!dailyAvailable);
+    const isClaimed=(d===dailyClaimIdx&&!dailyAvailable&&d>=0);
+    // Cell background
+    if(isToday){ctx.fillStyle='rgba(255,214,0,0.18)';}
+    else if(isPast||isClaimed){ctx.fillStyle='rgba(0,230,118,0.10)';}
+    else{ctx.fillStyle='rgba(255,255,255,0.04)';}
+    rr(cx+2,cy,cellW-4,cellH,8);ctx.fill();
+    ctx.strokeStyle=isToday?'#ffd600':(isPast||isClaimed?'rgba(0,230,118,0.5)':'rgba(255,255,255,0.12)');
+    ctx.lineWidth=isToday?2:1;rr(cx+2,cy,cellW-4,cellH,8);ctx.stroke();
+    // Day label
+    ctx.fillStyle=isToday?'#ffd600':(isPast||isClaimed?'rgba(0,230,118,0.8)':'rgba(255,255,255,0.4)');
+    ctx.font='600 10px Rajdhani';ctx.fillText(L.day+' '+(d+1),cx+cellW/2,cy+14);
+    // Coins or checkmark
+    if(isPast||isClaimed){
+      ctx.fillStyle='#00e676';ctx.font='900 18px Orbitron';ctx.fillText('✓',cx+cellW/2,cy+40);
+    }else if(isFuture){
+      ctx.fillStyle='rgba(255,255,255,0.25)';ctx.font='700 10px Orbitron';ctx.fillText('🔒',cx+cellW/2,cy+40);
+    }else{
+      ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=6;
+      ctx.font='700 13px Orbitron';ctx.fillText('+'+DAILY_REWARDS[d],cx+cellW/2,cy+38);ctx.shadowBlur=0;
+    }
+    // Today indicator
+    if(isToday){ctx.fillStyle='#ffd600';ctx.font='600 8px Rajdhani';ctx.fillText('▲',cx+cellW/2,cy+cellH-2);}
+  }
+  // Streak-save button (only shown if a break was detected and not yet saved)
+  let btnY=stripY+cellH+16;
+  if(dailyStreakSaveOffered&&dailyStreakPreBreak>1){
+    const sbw=mw-32,sbh=44;
+    const adOk=adReady.rewarded;
+    ctx.globalAlpha=adOk?1:0.5;
+    ctx.strokeStyle='#ff9100';ctx.lineWidth=2;ctx.shadowColor='#ff9100';ctx.shadowBlur=adOk?8:0;
+    rr(mx+16,btnY,sbw,sbh,22);ctx.stroke();ctx.shadowBlur=0;
+    ctx.fillStyle='#ff9100';ctx.font='700 12px Orbitron';
+    ctx.fillText('📺 '+L.streakSave+' ('+dailyStreakPreBreak+'→'+dailyStreakPreBreak+')',W/2,btnY+sbh*0.62);
+    ctx.globalAlpha=1;
+    btnY+=sbh+10;
+  }
+  // CLAIM button
+  if(dailyAvailable){
+    const cbw=mw-32,cbh=52;
+    ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=14;
+    rr(mx+16,btnY,cbw,cbh,26);ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle='#0a0a1a';ctx.font='900 20px Orbitron';
+    ctx.fillText(L.claim+' +'+DAILY_REWARDS[dailyClaimIdx]+' 🪙',W/2,btnY+cbh*0.64);
+    btnY+=cbh+10;
+  }
+  // Close / Back chip
+  const closeBw=mw-32;const closeBh=38;
+  ctx.fillStyle='rgba(255,255,255,0.07)';rr(mx+16,btnY,closeBw,closeBh,19);ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=1;rr(mx+16,btnY,closeBw,closeBh,19);ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='700 14px Rajdhani';
+  ctx.fillText(L.back,W/2,btnY+closeBh*0.64);
+  ctx.textAlign='left';
+}
+function handleDailyModalTap(x,y){
+  const uh=H-sat-sab,oy=sat;
+  const mw=Math.min(320,W-28),mh=Math.min(440,uh*0.88);
+  const mx=W/2-mw/2,my=oy+(uh-mh)/2;
+  const stripY=my+68;
+  const cellW=Math.floor((mw-20)/7),cellH=Math.min(74,Math.floor((mh-68-130)*0.9));
+  let btnY=stripY+cellH+16;
+  if(dailyStreakSaveOffered&&dailyStreakPreBreak>1){
+    const sbw=mw-32,sbh=44;
+    if(x>mx+16&&x<mx+16+sbw&&y>btnY&&y<btnY+sbh){
+      if(!adReady.rewarded){showToast(L.adNotAvailable,'error');postMsg({type:'CHECK_AD_READY'});return;}
+      postMsg({type:'SHOW_REWARDED_AD',data:{reward:'streak'}});
+      return;
+    }
+    btnY+=sbh+10;
+  }
+  if(dailyAvailable){
+    const cbw=mw-32,cbh=52;
+    if(x>mx+16&&x<mx+16+cbw&&y>btnY&&y<btnY+cbh){
+      // Grant reward — commit the pending streak value (may be >7 for long runs)
+      loginStreak=dailyPendingStreak;
+      saveLogin();
+      coins+=DAILY_REWARDS[dailyClaimIdx];saveCoins();
+      saveBlob('daily',{claimedDay:todayKey()});
+      sndPowerup();
+      showToast('+'+DAILY_REWARDS[dailyClaimIdx]+' 🪙 · '+L.streak+': '+loginStreak,'success');
+      dailyAvailable=false;
+      showDailyModal=false;
+      return;
+    }
+    btnY+=cbh+10;
+  }
+  // Close button
+  const closeBh=38;
+  if(x>mx+16&&x<W/2+mw/2-16&&y>btnY&&y<btnY+closeBh){
+    showDailyModal=false;sndMenu();return;
+  }
+  // Tap outside modal also closes
+  if(x<mx||x>mx+mw||y<my||y>my+mh){showDailyModal=false;sndMenu();}
+}
+
 // ═══ TUTORIAL ═══
 function drawTutorial(){
   // Backdrop with subtle vignette
@@ -2292,6 +2455,15 @@ function drawMenu(){
   ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=2;
   ctx.beginPath();ctx.arc(35,sat+35,18,0,TAU);ctx.stroke();
   ctx.fillStyle='rgba(255,255,255,0.75)';ctx.font='700 20px Rajdhani';ctx.fillText('⚙',35,sat+43);
+  // Daily reward badge (top-right, below help button) — glows if unclaimed
+  {const dby=sat+66,dbx=W-35;
+  const dbPulse=0.55+0.35*Math.sin(menuPulseT*4);
+  const dbColor=dailyAvailable?'#ffd600':'rgba(255,214,0,0.35)';
+  ctx.strokeStyle=dbColor;ctx.lineWidth=dailyAvailable?2:1;
+  if(dailyAvailable){ctx.shadowColor='#ffd600';ctx.shadowBlur=10*dbPulse;}
+  ctx.beginPath();ctx.arc(dbx,dby,14,0,TAU);ctx.stroke();ctx.shadowBlur=0;
+  ctx.fillStyle=dbColor;ctx.font='700 11px Rajdhani';
+  ctx.fillText('🎁',dbx,dby+4);}
   // Daily Missions panel — compact 3-row strip above the PLAY button.
   if(missions&&missions.length===3){
     const mpw=220,mpx=W/2-mpw/2,mpBase=oy+uh*0.335,mpRowH=17,mpGap=1;
@@ -2647,6 +2819,8 @@ window.addEventListener('keydown',function(e){
 window.addEventListener('keyup',function(e){if(e.code==='Space'&&player)player.boosting=false;});
 
 function handleMenuTap(x,y){
+  // Daily reward modal swallows taps when open.
+  if(showDailyModal){handleDailyModalTap(x,y);return;}
   // Settings overlay swallows taps when open.
   if(showSettings){
     const uh=H-sat-sab,oy=sat;
@@ -2671,6 +2845,8 @@ function handleMenuTap(x,y){
   if(x<60&&x>10&&y>sat+10&&y<sat+60){showSettings=true;sndMenu();return;}
   // Help button (top-right corner)
   if(x>W-60&&x<W-10&&y>sat+10&&y<sat+60){showTutorial=true;sndMenu();return;}
+  // Daily reward badge (below help, top-right) — re-opens modal
+  if(x>W-56&&x<W-12&&y>sat+48&&y<sat+88){showDailyModal=true;sndMenu();return;}
   sndMenu();const uh=H-sat-sab,oy=sat,bw=220,bh=58,bx=W/2-bw/2,by=oy+uh*0.42;
   if(x>bx&&x<bx+bw&&y>by&&y<by+bh){startGame(mode);return;}
   const sy=oy+uh*0.54;if(x>bx+20&&x<bx+bw-20&&y>sy&&y<sy+44){state='skinselect';skinScroll=0;return;}
