@@ -1,13 +1,17 @@
-Sürüm 1.2.0 — İkinci Şans ve Akıllı Zorluk
+Sürüm 1.3 — Dünyalar ve İlerleme
 
 YENİ
-• Ölünce CANLAN — kısa bir reklam izleyerek tam uzunluk ve güçlerinle anında devam et
-• Akıllı zorluk eğrisi: Sen büyüdükçe botlar zekileşir, her oyun zorlu kalır
+• 3 Oyun Modu — Klasik, Rush (90 saniyelik sprint) ve Boss Rush
+• Kovalanacak 10 Başarım
+• İzler — skinlerin yanında açılabilen yepyeni bir kozmetik
+• Rütbe Kademeleri — Bronz'dan Master'a tırman
+• Günlük Görevler + dokunmatik 7 günlük Günlük Ödül
+• Haftalık Öne Çıkan mağaza fırsatı
 
 İYİLEŞTİRMELER
-• Günlük bonus sıfırlama hatası düzeltildi — serin artık günler arası doğru korunuyor
-• Kalkan gücü çarpışmada gerçekten koruyor (artık nadir haksız ölüm yok)
-• Yoğun sahnelerde yılan gövdeleri görünür kalıyor
-• Daha sıkı reklam yaşam döngüsü — daha az yükleme gecikmesi, slot hata verirse hızlı toparlanma
+• Hesap XP'si ve seviyeler, dönüm noktası ödülleriyle
+• Daha sakin, daha akıcı arka plan müziği
+• Daha zengin efektler — öldürme patlamaları, boost izleri ve canlı arenalar
+• Ayarlar'da yeni Hareket Azaltma seçeneği
 
 Grow.io'yu oynadığın için teşekkürler! Oyunu beğendiysen App Store'da puanlamayı unutma, çok yardımcı oluyor.
