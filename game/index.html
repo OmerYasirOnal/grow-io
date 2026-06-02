@@ -68,6 +68,12 @@ const L={
   tapContinue:isTR?'Devam için dokun':'Tap to continue',
   dailyBonus:isTR?'GÜNLÜK ÖDÜL':'DAILY BONUS',
   streak:isTR?'Seri':'Streak',
+  dailyMissions:isTR?'GÜNLÜK GÖREVLER':'DAILY MISSIONS',
+  missionScore:isTR?'Skor {t} ulaş':'Reach score {t}',
+  missionKills:isTR?'{t} öldürme yap':'Get {t} kills',
+  missionKing:isTR?'Kral\'ı yen':'Slay a King',
+  missionSurvive:isTR?'{t}s hayatta kal':'Survive {t}s',
+  missionBonus:isTR?'TÜM GÖREVLER TAMAMLANDI! +300 🪙':'ALL MISSIONS DONE! +300 🪙',
   protected:isTR?'KORUMALI':'PROTECTED',
   today:isTR?'bugün':'today',
   yesterday:isTR?'dün':'yesterday',
@@ -426,6 +432,101 @@ function awardXp(runScore,runKills){
   saveBlob('prog',{xp:xp,lvl:plevel});
 }
 
+// ═══ DAILY MISSIONS ═══
+// Deterministic seeded PRNG (mulberry32 variant).
+function _missionPrng(seed){
+  let s=seed>>>0;
+  return function(){s+=0x6D2B79F5;let t=s;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};
+}
+// String hash: small deterministic integer from a date string like '2026-6-2'.
+function _missionSeed(key){
+  let h=0x811c9dc5;for(let i=0;i<key.length;i++){h^=key.charCodeAt(i);h=Math.imul(h,0x01000193)|0;}
+  return h>>>0;
+}
+// Mission pool — each entry has a type, label template fn, target array, and check fn.
+// check(stats) receives {score, kills, kingKills, playTime}.
+const MISSION_POOL=[
+  {type:'score',
+   labelFn:function(t){return isTR?L.missionScore.replace('{t}',t):L.missionScore.replace('{t}',t);},
+   targets:[2000,3500,5000],
+   check:function(t,st){return st.score>=t;}},
+  {type:'kills',
+   labelFn:function(t){return isTR?L.missionKills.replace('{t}',t):L.missionKills.replace('{t}',t);},
+   targets:[5,8,12],
+   check:function(t,st){return st.kills>=t;}},
+  {type:'king',
+   labelFn:function(){return L.missionKing;},
+   targets:[1],
+   check:function(t,st){return st.kingKills>=t;}},
+  {type:'survive',
+   labelFn:function(t){return isTR?L.missionSurvive.replace('{t}',t):L.missionSurvive.replace('{t}',t);},
+   targets:[60,90],
+   check:function(t,st){return st.playTime>=t;}}
+];
+let missions=[];       // [{type,target,label,done}] — 3 active for today
+let missionDay='';     // todayKey() when missions were last rolled
+function _rollMissions(){
+  const key=todayKey();
+  const rng=_missionPrng(_missionSeed(key));
+  // Pick 3 DISTINCT indices from MISSION_POOL.
+  const pool=MISSION_POOL.slice();
+  const picked=[];
+  for(let i=pool.length-1;i>0&&picked.length<3;i--){
+    const j=Math.floor(rng()*(i+1));const tmp=pool[i];pool[i]=pool[j];pool[j]=tmp;
+    picked.push(pool[i]);
+  }
+  if(picked.length<3)picked.push(pool[0]); // safety (pool has 4 items, so this is unreachable)
+  missions=picked.slice(0,3).map(function(mp){
+    const tArr=mp.targets;
+    const t=tArr[Math.floor(rng()*tArr.length)];
+    return {type:mp.type,target:t,label:mp.labelFn(t),done:false,_mp:mp};
+  });
+  missionDay=key;
+}
+function loadMissions(){
+  const def={day:'',done:[false,false,false],bonus:false};
+  const m=loadBlob('missions',def);
+  _rollMissions(); // always roll fresh from todayKey seed
+  if(m.day===todayKey()){
+    // Restore done states from today's persist.
+    for(let i=0;i<3;i++){if(m.done[i])missions[i].done=true;}
+  }
+  // Persist current state (handles fresh day reset).
+  _saveMissions(m.day===todayKey()?m.bonus:false);
+}
+function _saveMissions(bonusDone){
+  saveBlob('missions',{day:missionDay,done:missions.map(function(m){return m.done;}),bonus:!!bonusDone});
+}
+// Evaluate missions at run-end. stats = {score, kills, kingKills, playTime}.
+// bonusDone is passed in so we can grant the all-3 bonus once.
+function evaluateMissions(stats){
+  const persisted=loadBlob('missions',{day:'',done:[false,false,false],bonus:false});
+  const bonusAlreadyDone=persisted.bonus||false;
+  let anyNew=false;
+  for(let i=0;i<missions.length;i++){
+    const m=missions[i];
+    if(m.done)continue;
+    const mp=MISSION_POOL.find(function(p){return p.type===m.type;});
+    if(mp&&mp.check(m.target,stats)){
+      m.done=true;anyNew=true;
+      // Per-mission reward: 150 coins + 80 XP (added directly, no level toast spam now).
+      coins+=150;saveCoins();
+      xp+=80;plevel=levelForXp(xp);saveBlob('prog',{xp:xp,lvl:plevel});
+      showToast('✓ '+m.label,'success');
+    }
+  }
+  // All-3 bonus — fires once per day.
+  const allDone=missions.every(function(m){return m.done;});
+  const bonusDone=bonusAlreadyDone||(allDone&&anyNew&&!bonusAlreadyDone);
+  if(allDone&&!bonusAlreadyDone&&anyNew){
+    coins+=300;saveCoins();
+    showToast(L.missionBonus,'success');
+  }
+  _saveMissions(bonusDone);
+}
+// Per-run King kill counter — reset in startGame, incremented in killSnake.
+let runKingKills=0;
+
 // ═══ POSTMESSAGE BRIDGE ═══
 let adReady = {interstitial:false, rewarded:false, rewardedLoading:false};
 let hostBridgeSeen = false;
@@ -573,7 +674,7 @@ function skinPrice(sk){
   return 1000; // fallback (should never be reached with current SKINS table)
 }
 loadHSLocal();
-loadBlobs(); loadSkins(); loadStats(); loadCoins(); loadSettings(); loadTopScores(); loadTutorialSeen(); loadLogin(); checkDailyBonus();
+loadBlobs(); loadSkins(); loadStats(); loadCoins(); loadSettings(); loadTopScores(); loadTutorialSeen(); loadLogin(); checkDailyBonus(); loadMissions();
 // Load progression XP/level.
 (function(){const p=loadBlob('prog',{xp:0,lvl:1});xp=p.xp|0;plevel=levelForXp(xp);})();
 // Restore last-played mode (persisted via saveBlob('opts',{mode})).
@@ -1102,7 +1203,7 @@ function killSnake(victim,killer,cause){
     }
     if(victim.isKing&&killer.isPlayer){
       score+=KING_SCORE_REWARD;coins+=KING_COIN_REWARD;sndKingSlain();postMsg({type:'HAPTIC',data:'heavy'});
-      flashAlpha=0.3;flashColor='#ffd600';nextKingScore=score+2000;
+      flashAlpha=0.3;flashColor='#ffd600';nextKingScore=score+2000;runKingKills++;
     }
     if(victim.isBoss&&killer.isPlayer){
       score+=BOSS_SCORE_REWARD;coins+=BOSS_COIN_REWARD;sndKingSlain();
@@ -1132,6 +1233,8 @@ function killSnake(victim,killer,cause){
     if(mode==='classic'){saveHS();addTopScore(score);}
     saveStats();saveCoins();checkUnlocks();saveSkins();
     awardXp(score,player?player.killCount:0);
+    // Evaluate daily missions for this run.
+    evaluateMissions({score:score,kills:player?player.killCount:0,kingKills:runKingKills,playTime:playTime});
     state='dead';
     resetTouchState();
     // Defensive: if a King was alive at the moment of death, clear the flag so
@@ -1304,7 +1407,7 @@ function startGame(modeId){
   const _modeCfg=MODES.find(function(m){return m.id===_modeId;})||MODES[0];
   // Update the global so HUD / other systems can read it.
   mode=_modeCfg.id;
-  initAudio();score=0;killCombo=0;killComboTimer=0;hasRevived=false;currentRank=0;
+  initAudio();score=0;killCombo=0;killComboTimer=0;hasRevived=false;currentRank=0;runKingKills=0;
   foods=[];powerups=[];particles=[];snakes=[];scorePopups=[];
   kingActive=false;nextKingScore=2000;
   bossActive=false;nextBossScore=5000;bossToast=0;
@@ -2183,6 +2286,24 @@ function drawMenu(){
   ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=2;
   ctx.beginPath();ctx.arc(35,sat+35,18,0,TAU);ctx.stroke();
   ctx.fillStyle='rgba(255,255,255,0.75)';ctx.font='700 20px Rajdhani';ctx.fillText('⚙',35,sat+43);
+  // Daily Missions panel — compact 3-row strip above the PLAY button.
+  if(missions&&missions.length===3){
+    const mpw=220,mpx=W/2-mpw/2,mpBase=oy+uh*0.335,mpRowH=17,mpGap=1;
+    ctx.fillStyle='rgba(255,255,255,0.25)';ctx.font='700 10px Rajdhani';ctx.textAlign='center';
+    ctx.fillText((isTR?'GÜNLÜK GÖREVLER':'DAILY MISSIONS'),W/2,mpBase);
+    for(let mi=0;mi<3;mi++){
+      const mv=missions[mi];
+      const mry=mpBase+4+mi*(mpRowH+mpGap);
+      ctx.fillStyle=mv.done?'rgba(0,230,118,0.15)':'rgba(255,255,255,0.06)';
+      rr(mpx,mry,mpw,mpRowH,4);ctx.fill();
+      ctx.strokeStyle=mv.done?'rgba(0,230,118,0.50)':'rgba(255,255,255,0.12)';
+      ctx.lineWidth=1;rr(mpx,mry,mpw,mpRowH,4);ctx.stroke();
+      ctx.fillStyle=mv.done?'#00e676':'rgba(255,255,255,0.68)';
+      ctx.font='600 11px Rajdhani';ctx.textAlign='left';
+      ctx.fillText((mv.done?'✓ ':'')+mv.label,mpx+6,mry+12);
+    }
+    ctx.textAlign='center';
+  }
   const bw=220,bh=58,bx=W/2-bw/2,by=oy+uh*0.42;
   ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=15+7*Math.sin(menuPulseT*3.6);rr(bx,by,bw,bh,28);ctx.fill();ctx.shadowBlur=0;
   ctx.fillStyle='#0a0a1a';ctx.font='900 24px Orbitron';ctx.fillText(L.play,W/2,by+38);
