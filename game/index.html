@@ -75,7 +75,13 @@ const L={
   games:isTR?'Oyun':'Games',
   deaths:isTR?'Ölüm':'Deaths',
   sureQuit:isTR?'EMİN MİSİN?':'SURE?',
-  kingArrived:isTR?'👑 KRAL GELDİ!':'👑 KING ARRIVED!'
+  kingArrived:isTR?'👑 KRAL GELDİ!':'👑 KING ARRIVED!',
+  modes:isTR?'MODLAR':'MODES',
+  classic:isTR?'KLASİK':'CLASSIC',
+  rush:isTR?'HIZLI':'RUSH',
+  classicDesc:isTR?'Sonsuz mod, klasik oyun':'Endless, classic gameplay',
+  rushDesc:isTR?'90 saniye, azami skor':'90 seconds, max score',
+  selectMode:isTR?'MOD SEÇ':'SELECT MODE'
 };
 
 function resize(){
@@ -145,6 +151,18 @@ const ZONES = [
   {min:151,bg:'#2b0a0a',accent:'#ff6d00'},
   {min:251,bg:'#0d0020',accent:'#d500f9'}
 ];
+
+// ═══ GAME MODES ═══
+// Each entry carries the per-run knobs startGame() reads.
+// classic MUST reproduce the current endless behavior exactly:
+//   botCount = MAX_BOTS (12), startLength = 22, timeLimit = 0 (endless).
+// rush is a placeholder for the future Rush task — timeLimit stored but
+// not wired into update() yet; classic behavior is unchanged.
+const MODES = [
+  {id:'classic', name:'classic', botCount:MAX_BOTS, startLength:22, timeLimit:0},
+  {id:'rush',    name:'rush',    botCount:MAX_BOTS, startLength:22, timeLimit:90}
+];
+let mode = 'classic';
 
 const BOT_NAMES = ['Viper','Neon','Pixel','Blaze','Zenith','Shadow','Echo','Pulse','Flux','Nova','Glitch','Storm','Phantom','Cobra','Fang','Specter','Volt','Drift','Shard','Ember','Frost','Raze','Spark','Thorn','Wrath','Crimson','Zephyr','Onyx','Cipher','Apex','Bolt','Razor','Haze','Quake','Jolt','Turbo','Byte','Nexus','Rogue','Blitz'];
 
@@ -436,6 +454,8 @@ function skinPrice(sk){
 }
 loadHSLocal();
 loadBlobs(); loadSkins(); loadStats(); loadCoins(); loadSettings(); loadTopScores(); loadTutorialSeen(); loadLogin(); checkDailyBonus();
+// Restore last-played mode (persisted via saveBlob('opts',{mode})).
+(function(){const o=loadBlob('opts',{mode:'classic'});if(MODES.some(function(m){return m.id===o.mode;}))mode=o.mode;})();
 // Defer bridge LOADs until the next frame so window.ReactNativeWebView is
 // guaranteed to be ready, then retry once at +500ms if hostBridgeSeen is still
 // false (covers slow native injection on cold launch).
@@ -1074,7 +1094,12 @@ function updateZone(){
 }
 
 // ═══ GAME INIT ═══
-function startGame(){
+function startGame(modeId){
+  // Resolve mode config; default to current global `mode`, then 'classic' as safety.
+  const _modeId=modeId||mode||'classic';
+  const _modeCfg=MODES.find(function(m){return m.id===_modeId;})||MODES[0];
+  // Update the global so HUD / other systems can read it.
+  mode=_modeCfg.id;
   initAudio();score=0;killCombo=0;killComboTimer=0;hasRevived=false;currentRank=0;
   foods=[];powerups=[];particles=[];snakes=[];scorePopups=[];
   kingActive=false;nextKingScore=2000;
@@ -1085,7 +1110,7 @@ function startGame(){
   // Lock initial heading to "up" instead of random so the snake doesn't drift
   // in an unexpected direction during the spawn-protection window.
   player=createSnake(true,WCX,WCY,currentSkin);
-  player.length=22;player.invulnTimer=2.5;
+  player.length=_modeCfg.startLength;player.invulnTimer=2.5;
   player.angle=-PI/2;player.targetAngle=-PI/2;
   // Re-anchor the body trail so the visible segments line up behind the head
   // along the new facing — otherwise the random initial trail drawn by
@@ -1108,7 +1133,7 @@ function startGame(){
   }
   player._lastHX=WCX;player._lastHY=WCY;
   snakes.push(player);
-  for(let i=0;i<MAX_BOTS;i++){
+  for(let i=0;i<_modeCfg.botCount;i++){
     const sp=pickSafeBotSpawn(500);
     const b=createSnake(false,sp.x,sp.y);b.length=randInt(15,50);snakes.push(b);
   }
@@ -1263,6 +1288,7 @@ function render(){
   if(state==='paused')drawPauseScreen();
   if(state==='skinselect')drawSkinSelect();
   if(state==='leaderboard')drawLeaderboard();
+  if(state==='modeselect')drawModeSelect();
   // Tutorial overlay renders on top of menu / pause / playing only — never
   // over the death screen, where it would just confuse the player.
   if(showTutorial&&state!=='dead')drawTutorial();
@@ -1789,6 +1815,56 @@ function drawLeaderboard(){
   ctx.textAlign='left';
 }
 
+// ═══ MODE SELECT ═══
+function drawModeSelect(){
+  ctx.fillStyle='#0a0a1a';ctx.fillRect(0,0,W,H);
+  const oy=sat;
+  // Back chip (mirrors drawLeaderboard / drawSkinSelect pattern)
+  ctx.fillStyle='rgba(0,229,255,0.12)';rr(12,oy+12,84,40,20);ctx.fill();
+  ctx.fillStyle='#00e5ff';ctx.font='900 16px Rajdhani';ctx.textAlign='center';ctx.shadowColor='#00e5ff';ctx.shadowBlur=4;
+  ctx.fillText(L.back,54,oy+38);ctx.shadowBlur=0;
+  // Title
+  const titleSize=Math.min(32,Math.floor(W*0.078));
+  ctx.fillStyle='#fff';ctx.font='900 '+titleSize+'px Orbitron';
+  ctx.fillText(L.selectMode,W/2,oy+88);
+  // Mode cards
+  const cardW=Math.min(300,W-40),cardH=100,cardX=W/2-cardW/2;
+  const startY=oy+116;
+  const modeIcons={classic:'∞',rush:'⏱'};
+  const modeAccents={classic:'#00e5ff',rush:'#ffab00'};
+  const modeDescs={classic:L.classicDesc,rush:L.rushDesc};
+  for(let i=0;i<MODES.length;i++){
+    const m=MODES[i],cy=startY+i*(cardH+14);
+    const accent=modeAccents[m.id]||'#00e5ff';
+    const isActive=mode===m.id;
+    // Card bg
+    ctx.fillStyle=isActive?'rgba(0,229,255,0.10)':'rgba(255,255,255,0.04)';
+    rr(cardX,cy,cardW,cardH,16);ctx.fill();
+    ctx.strokeStyle=isActive?accent:'rgba(255,255,255,0.18)';
+    ctx.lineWidth=isActive?2:1.5;
+    rr(cardX,cy,cardW,cardH,16);ctx.stroke();
+    // Icon circle
+    const iconR=28,ix=cardX+iconR+18,iy=cy+cardH/2;
+    ctx.fillStyle=accent;ctx.shadowColor=accent;ctx.shadowBlur=isActive?14:6;
+    ctx.beginPath();ctx.arc(ix,iy,iconR,0,TAU);ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle='#0a0a1a';ctx.font='900 20px Orbitron';
+    ctx.textBaseline='middle';ctx.fillText(modeIcons[m.id]||'?',ix,iy+1);ctx.textBaseline='alphabetic';
+    // Name + desc
+    ctx.textAlign='left';
+    ctx.fillStyle=isActive?accent:'#fff';ctx.font='900 18px Orbitron';
+    ctx.fillText(L[m.id]||m.id,cardX+iconR*2+30,cy+cardH*0.42);
+    ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='600 13px Rajdhani';
+    ctx.fillText(modeDescs[m.id]||'',cardX+iconR*2+30,cy+cardH*0.68);
+    if(m.timeLimit>0){
+      ctx.fillStyle=accent;ctx.font='700 11px Rajdhani';
+      ctx.fillText('⏱ '+m.timeLimit+'s',cardX+iconR*2+30,cy+cardH*0.90);
+    }
+    // Active checkmark
+    if(isActive){ctx.fillStyle=accent;ctx.font='900 20px Orbitron';ctx.textAlign='right';ctx.fillText('✓',cardX+cardW-14,cy+cardH/2+7);}
+  }
+  ctx.textAlign='left';
+}
+
 // ═══ MENU ═══
 // Pre-render the static background grid to an offscreen canvas. The grid
 // only depends on W/H/dpr, so we redraw it lazily when those change.
@@ -1868,15 +1944,20 @@ function drawMenu(){
   const ly=oy+uh*0.63;
   ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=10;rr(bx+20,ly,bw-40,42,21);ctx.fill();ctx.shadowBlur=0;
   ctx.fillStyle='#0a0a1a';ctx.font='700 16px Orbitron';ctx.fillText(L.leaderboard,W/2,ly+27);
+  // Modes button
+  const my=oy+uh*0.72;
+  const modeAccentCol=mode==='rush'?'#ffab00':'#00bfa5';
+  ctx.fillStyle=modeAccentCol;ctx.shadowColor=modeAccentCol;ctx.shadowBlur=10;rr(bx+20,my,bw-40,42,21);ctx.fill();ctx.shadowBlur=0;
+  ctx.fillStyle='#0a0a1a';ctx.font='700 16px Orbitron';ctx.fillText(L.modes+' · '+(L[mode]||mode.toUpperCase()),W/2,my+27);
   // Watch ad for coins (greyed out if no ad ready)
-  const ay=oy+uh*0.72;
+  const ay=oy+uh*0.81;
   const adOk=adReady.rewarded;
   ctx.globalAlpha=adOk?1:0.4;
   ctx.strokeStyle='#00e676';ctx.lineWidth=2;ctx.shadowColor='#00e676';ctx.shadowBlur=adOk?8:0;rr(bx+20,ay,bw-40,42,21);ctx.stroke();ctx.shadowBlur=0;
   ctx.fillStyle='#00e676';ctx.font='700 14px Orbitron';ctx.fillText(L.watchForCoins,W/2,ay+27);
   ctx.globalAlpha=1;
   // Preview
-  const py=oy+uh*0.86;const skin=SKINS[currentSkin];
+  const py=oy+uh*0.92;const skin=SKINS[currentSkin];
   for(let i=0;i<15;i++){const a=(i/15)*TAU+frameCount*0.02;const px=W/2+Math.cos(a)*30,ppy=py+Math.sin(a)*30;const t=i/15;ctx.fillStyle=lerpColor(skin.c[1],skin.c[0],t);ctx.beginPath();ctx.arc(px,ppy,5-t*2,0,TAU);ctx.fill();}
   ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='600 12px Rajdhani';ctx.fillText(skin.name,W/2,py+50);
   // Version stamp (bottom)
@@ -2062,6 +2143,7 @@ $.addEventListener('touchstart',function(e){
   if(state==='paused'){handlePauseTap(t.clientX,t.clientY);return;}
   if(state==='leaderboard'){handleLeaderboardTap(t.clientX,t.clientY);return;}
   if(state==='skinselect'){handleSkinTap(t.clientX,t.clientY);skinScrollLastY=t.clientY;return;}
+  if(state==='modeselect'){handleModeselectTap(t.clientX,t.clientY);return;}
   if(state==='playing'){
     // Pause button (bottom-left) — only remaining HUD button
     if(dist({x:t.clientX,y:t.clientY},{x:50,y:H-sab-60})<46){state='paused';if(player)player.boosting=false;joystick.active=false;sndMenu();return;}
@@ -2125,6 +2207,7 @@ $.addEventListener('mousedown',function(e){
   if(state==='paused'){handlePauseTap(e.clientX,e.clientY);return;}
   if(state==='leaderboard'){handleLeaderboardTap(e.clientX,e.clientY);return;}
   if(state==='skinselect'){handleSkinTap(e.clientX,e.clientY);return;}
+  if(state==='modeselect'){handleModeselectTap(e.clientX,e.clientY);return;}
   if(state==='playing'&&dist({x:e.clientX,y:e.clientY},{x:50,y:H-sab-60})<42){state='paused';if(player)player.boosting=false;sndMenu();return;}
   if(e.button===2&&player){player.boosting=true;sndBoost();}
 });
@@ -2167,10 +2250,11 @@ function handleMenuTap(x,y){
   // Help button (top-right corner)
   if(x>W-60&&x<W-10&&y>sat+10&&y<sat+60){showTutorial=true;sndMenu();return;}
   sndMenu();const uh=H-sat-sab,oy=sat,bw=220,bh=58,bx=W/2-bw/2,by=oy+uh*0.42;
-  if(x>bx&&x<bx+bw&&y>by&&y<by+bh){startGame();return;}
+  if(x>bx&&x<bx+bw&&y>by&&y<by+bh){startGame(mode);return;}
   const sy=oy+uh*0.54;if(x>bx+20&&x<bx+bw-20&&y>sy&&y<sy+44){state='skinselect';skinScroll=0;return;}
   const ly=oy+uh*0.63;if(x>bx+20&&x<bx+bw-20&&y>ly&&y<ly+42){state='leaderboard';return;}
-  const ay=oy+uh*0.72;if(x>bx+20&&x<bx+bw-20&&y>ay&&y<ay+42){
+  const mmy=oy+uh*0.72;if(x>bx+20&&x<bx+bw-20&&y>mmy&&y<mmy+42){state='modeselect';resetTouchState();return;}
+  const ay=oy+uh*0.81;if(x>bx+20&&x<bx+bw-20&&y>ay&&y<ay+42){
     if(!adReady.rewarded){showToast(L.adNotAvailable,'error');postMsg({type:'CHECK_AD_READY'});return;}
     postMsg({type:'SHOW_REWARDED_AD',data:{reward:'coins'}});return;
   }
@@ -2212,6 +2296,24 @@ function handlePauseTap(x,y){
 }
 function handleLeaderboardTap(x,y){
   if(x>=12&&x<=12+84&&y>=sat+12&&y<=sat+12+40){state='menu';resetTouchState();sndMenu();}
+}
+function handleModeselectTap(x,y){
+  // Back chip
+  if(x>=12&&x<=12+84&&y>=sat+12&&y<=sat+12+40){state='menu';resetTouchState();sndMenu();return;}
+  // Mode cards (mirror drawModeSelect geometry)
+  const oy=sat;
+  const cardW=Math.min(300,W-40),cardH=100,cardX=W/2-cardW/2;
+  const startY=oy+116;
+  for(let i=0;i<MODES.length;i++){
+    const cy=startY+i*(cardH+14);
+    if(x>=cardX&&x<=cardX+cardW&&y>=cy&&y<=cy+cardH){
+      sndMenu();
+      mode=MODES[i].id;
+      saveBlob('opts',{mode:mode});
+      startGame(mode);
+      return;
+    }
+  }
 }
 function handleDeathTap(x,y){
   sndMenu();const uh=H-sat-sab,oy=sat;
