@@ -656,6 +656,7 @@ const MISSION_POOL=[
 ];
 let missions=[];       // [{type,target,label,done}] — 3 active for today
 let missionDay='';     // todayKey() when missions were last rolled
+let missionBonusDone=false; // today's all-3 bonus flag, restored by loadMissions
 // Menu missions-summary-chip geometry (shared by drawMenu + handleMenuTap).
 // FY is a fraction of usable height; chip sits where the old 3-row strip began.
 const MISSIONS_CHIP_FY=0.335, MISSIONS_CHIP_H=30;
@@ -677,16 +678,28 @@ function _rollMissions(){
   });
   missionDay=key;
 }
-function loadMissions(){
+// Roll today's missions, then restore done/bonus from the missions blob.
+// persist=true writes the (possibly reset) state back; the boot caller passes
+// false so it does NOT insert a missions blob into gBlobs before the native
+// STATS floor arrives (which would block adoption of the native missions copy).
+// Returns the today-or-not-matched bonus flag so callers can re-persist later.
+function loadMissions(persist){
   const def={day:'',done:[false,false,false],bonus:false};
   const m=loadBlob('missions',def);
   _rollMissions(); // always roll fresh from todayKey seed
-  if(m.day===todayKey()){
+  const sameDay=m.day===todayKey();
+  // Reset done flags first (a re-run after the floor must drop any stale
+  // done-state that was restored from a pre-floor / different-day blob).
+  for(let i=0;i<missions.length;i++)missions[i].done=false;
+  if(sameDay){
     // Restore done states from today's persist.
     for(let i=0;i<3;i++){if(m.done[i])missions[i].done=true;}
   }
-  // Persist current state (handles fresh day reset).
-  _saveMissions(m.day===todayKey()?m.bonus:false);
+  const bonusDone=sameDay?m.bonus:false;
+  missionBonusDone=bonusDone; // remember for a deferred persist (web-only fallback)
+  // Persist current state (handles fresh day reset) only when asked.
+  if(persist)_saveMissions(bonusDone);
+  return bonusDone;
 }
 function _saveMissions(bonusDone){
   saveBlob('missions',{day:missionDay,done:missions.map(function(m){return m.done;}),bonus:!!bonusDone});
@@ -785,7 +798,19 @@ window.addEventListener('message',function(e){
       // Floor-merge complete: native backup has been read, so future saveStats
       // pushes are safe. Give any adopted namespaces a durable local home.
       statsReconciled=true;
-      if(adoptedBlob)persistBlobs();
+      if(adoptedBlob){
+        persistBlobs();
+        // Re-hydrate the LIVE game vars from the just-adopted blobs. Without
+        // this, the boot-time reads (run BEFORE this async round-trip) left
+        // xp/level, bests, achievements, trails, missions and the daily guard
+        // at fresh-install defaults; the FIRST gameplay write would then push
+        // those stale defaults back over the adopted data — corrupting BOTH
+        // the local blob and the native backup in exactly the cross-device
+        // restore case the floor exists for. persistMissions=true now: the
+        // native missions namespace (if any) has already been adopted above,
+        // so writing the restored missions blob can no longer block adoption.
+        hydrateBlobState(true);
+      }
     }
     if(m.type==='SKIN_STATE_LOADED'&&m.data){
       const s=m.data;
@@ -963,26 +988,51 @@ function featuredTrailPrice(idx){const base=TRAILS[idx].price;if(base<=0)return 
 function isFeaturedSkin(idx){return idx===featuredPick().skin;}
 function isFeaturedTrail(idx){return idx===featuredPick().trail;}
 
+// ─── hydrateBlobState ──────────────────────────────────────────────────────
+// Read every blob-backed LIVE game var (prog xp/level, last-mode, bestByMode,
+// achievements, cosmetic trails, missions, and the daily guard) out of gBlobs
+// into memory. Called BOTH at boot AND again inside the STATS_LOADED handler
+// after the native floor-merge adopts native namespaces — so a cross-device
+// restore (native blob present, local growio_v13 absent) leaves the live state
+// consistent with the adopted data instead of stranding it at boot defaults
+// (which the first gameplay write would then push back over the adopted blob,
+// corrupting BOTH layers). persistMissions controls whether the missions blob
+// is written back: false at boot (so it can't pre-insert a missions namespace
+// that blocks native adoption), true on the post-floor re-run.
+function hydrateBlobState(persistMissions){
+  // Progression XP/level.
+  {const p=loadBlob('prog',{xp:0,lvl:1});xp=p.xp|0;plevel=levelForXp(xp);}
+  // Last-played mode (persisted via saveBlob('opts',{mode})).
+  {const o=loadBlob('opts',{mode:'classic'});if(MODES.some(function(m){return m.id===o.mode;}))mode=o.mode;}
+  // Per-mode best scores (flat object: {classic:N, rush:N, …}).
+  {const b=loadBlob('bests',{});bestByMode=b;}
+  // Achievements (unlocked set + persisted boss-kill counter + apex flag).
+  loadAch();
+  // Cosmetic trail selection + owned set (axis #2). 'none' (0) is always owned;
+  // sanitise any persisted indices against the current TRAILS table.
+  {
+    const c=loadBlob('cos',{trail:0,owned:[0]});
+    const owned=Array.isArray(c.owned)?c.owned.filter(function(i){return typeof i==='number'&&i>=0&&i<TRAILS.length;}):[0];
+    if(owned.indexOf(0)<0)owned.push(0);
+    unlockedTrails=owned;
+    const t=c.trail|0;
+    currentTrail=(t>=0&&t<TRAILS.length&&owned.indexOf(t)>=0)?t:0;
+  }
+  // Missions done/bonus restore (re-rolls fresh from todayKey, restores done
+  // states). Boot defers the write; the post-floor re-run persists it.
+  loadMissions(!!persistMissions);
+  // Re-evaluate the daily guard against the (possibly newly-adopted) daily blob
+  // so a same-day claimedDay floored in from native suppresses a duplicate
+  // bonus modal. checkDailyBonus is same-day idempotent.
+  checkDailyBonus();
+}
+
 loadHSLocal();
-loadBlobs(); loadSkins(); loadStats(); loadCoins(); loadSettings(); loadTopScores(); loadTutorialSeen(); loadLogin(); checkDailyBonus(); loadMissions();
-// Load progression XP/level.
-(function(){const p=loadBlob('prog',{xp:0,lvl:1});xp=p.xp|0;plevel=levelForXp(xp);})();
-// Restore last-played mode (persisted via saveBlob('opts',{mode})).
-(function(){const o=loadBlob('opts',{mode:'classic'});if(MODES.some(function(m){return m.id===o.mode;}))mode=o.mode;})();
-// Load per-mode best scores (flat object: {classic:N, rush:N, …}).
-(function(){const b=loadBlob('bests',{});bestByMode=b;})();
-// Load achievements (unlocked set + persisted boss-kill counter + apex flag).
-loadAch();
-// Load cosmetic trail selection + owned set (axis #2). 'none' (0) is always
-// owned; sanitise any persisted indices against the current TRAILS table.
-(function(){
-  const c=loadBlob('cos',{trail:0,owned:[0]});
-  const owned=Array.isArray(c.owned)?c.owned.filter(function(i){return typeof i==='number'&&i>=0&&i<TRAILS.length;}):[0];
-  if(owned.indexOf(0)<0)owned.push(0);
-  unlockedTrails=owned;
-  const t=c.trail|0;
-  currentTrail=(t>=0&&t<TRAILS.length&&owned.indexOf(t)>=0)?t:0;
-})();
+loadBlobs(); loadSkins(); loadStats(); loadCoins(); loadSettings(); loadTopScores(); loadTutorialSeen(); loadLogin();
+// Boot hydration. Missions write is deferred (false) so the native STATS floor
+// can still adopt native missions; it is persisted either by the post-floor
+// re-run in STATS_LOADED or by the web-only fallback below.
+hydrateBlobState(false);
 // Defer bridge LOADs until the next frame so window.ReactNativeWebView is
 // guaranteed to be ready, then retry once at +500ms if hostBridgeSeen is still
 // false (covers slow native injection on cold launch).
@@ -995,6 +1045,13 @@ function pingBridge(){
 }
 requestAnimationFrame(pingBridge);
 setTimeout(function(){if(!hostBridgeSeen)pingBridge();},500);
+// Web-only / bridge-absent fallback: the boot hydrateBlobState(false) deferred
+// the missions blob write so a native STATS floor could still adopt native
+// missions. When there is no host bridge, STATS_LOADED never fires, so persist
+// the (already-restored, today-seeded) missions blob here once it's clear no
+// floor is coming. Guarded by !statsReconciled so a real floor (which re-runs
+// hydrateBlobState(true) itself) is never double-written.
+setTimeout(function(){if(!hostBridgeSeen&&!statsReconciled)_saveMissions(missionBonusDone);},1200);
 // Re-poll ad readiness periodically (host pushes too, but this catches early misses)
 // Re-poll ad readiness every 10s in foreground only. Stored ID lets the
 // visibility/blur handlers stop & restart it (no leak across re-mounts).
