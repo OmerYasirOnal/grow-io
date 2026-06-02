@@ -102,7 +102,9 @@ const L={
   timeUp:isTR?'SÜRE DOLDU!':'TIME\'S UP!',
   modeBest:isTR?'En İyi':'Best',
   rushMode:isTR?'HIZLI MOD':'RUSH MODE',
-  classicMode:isTR?'KLASİK MOD':'CLASSIC MODE'
+  classicMode:isTR?'KLASİK MOD':'CLASSIC MODE',
+  tier:isTR?'Kademe':'Tier',
+  nextTier:isTR?'Sonraki':'Next'
 };
 
 function resize(){
@@ -469,6 +471,23 @@ function awardXp(runScore,runKills){
   grantLevelRewards(prevLevel,plevel,false);
   saveBlob('prog',{xp:xp,lvl:plevel});
 }
+
+// ═══ SCORE TIERS (Bronze→Master) ═══
+// Named rank tiers DERIVED from the player's CLASSIC best (highScore). Pure
+// read-only: NO new persisted state — reads the existing highScore. Thresholds
+// are tunable. tierForScore() returns the highest tier whose min ≤ score;
+// nextTier() returns the next tier above it (or null at Master).
+const TIERS=[
+  {name:'Bronze',  nameTR:'Bronz',  min:0,     color:'#cd7f32'},
+  {name:'Silver',  nameTR:'Gümüş',  min:2000,  color:'#c0c0c0'},
+  {name:'Gold',    nameTR:'Altın',  min:5000,  color:'#ffd700'},
+  {name:'Platinum',nameTR:'Platin', min:10000, color:'#7fffd4'},
+  {name:'Diamond', nameTR:'Elmas',  min:18000, color:'#5ec8ff'},
+  {name:'Master',  nameTR:'Usta',   min:30000, color:'#ff5edb'}
+];
+function tierForScore(s){let t=TIERS[0];for(let i=0;i<TIERS.length;i++){if(s>=TIERS[i].min)t=TIERS[i];else break;}return t;}
+function nextTier(s){for(let i=0;i<TIERS.length;i++){if(s<TIERS[i].min)return TIERS[i];}return null;}
+function tierName(t){return isTR?t.nameTR:t.name;}
 
 // ═══ DAILY MISSIONS ═══
 // Deterministic seeded PRNG (mulberry32 variant).
@@ -2672,6 +2691,17 @@ function drawMenu(){
   if(xpFrac>0){ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=6;rr(xbx,xby,Math.max(8,xbw*xpFrac),xbh,4);ctx.fill();ctx.shadowBlur=0;}
   ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='600 11px Rajdhani';ctx.textAlign='center';
   ctx.fillText('LV '+plevel,W/2,xby+xbh+13);ctx.textAlign='center';}
+  // Tier badge — compact colored pill derived from CLASSIC best (highScore).
+  // Centered, below the LV label; narrow enough to clear the corner gift/
+  // settings chips and well above the centered missions chip.
+  {const tr=tierForScore(highScore);
+  const tnm=tierName(tr);
+  ctx.font='700 11px Rajdhani';
+  const tw=ctx.measureText(tnm).width+30,tbh=18,tbx=W/2-tw/2,tby=oy+74;
+  ctx.fillStyle='rgba(0,0,0,0.30)';rr(tbx,tby,tw,tbh,9);ctx.fill();
+  ctx.strokeStyle=tr.color;ctx.lineWidth=1.2;rr(tbx,tby,tw,tbh,9);ctx.stroke();
+  ctx.fillStyle=tr.color;ctx.beginPath();ctx.arc(tbx+11,tby+tbh/2,3.2,0,TAU);ctx.fill();
+  ctx.fillStyle=tr.color;ctx.textAlign='left';ctx.fillText(tnm,tbx+18,tby+tbh*0.68);ctx.textAlign='center';}
   // Help button (top-right)
   ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=2;
   ctx.beginPath();ctx.arc(W-35,sat+35,18,0,TAU);ctx.stroke();
@@ -2806,6 +2836,13 @@ function drawDeathScreen(){
     ctx.fillStyle='rgba(255,255,255,0.45)';ctx.font='600 13px Rajdhani';
     ctx.fillText(L.modeBest+': '+currentModeBest,W/2,oy+uh*0.51);
   }
+  // Tier line — current named tier (derived from CLASSIC best highScore) plus,
+  // if not yet Master, the "Next: {tier} at {min}" nudge. Read-only, no persist.
+  {const tr=tierForScore(highScore),nt=nextTier(highScore);
+  ctx.fillStyle=tr.color;ctx.font='700 13px Rajdhani';ctx.textAlign='center';
+  ctx.fillText(L.tier+': '+tierName(tr),W/2,oy+uh*0.54);
+  if(nt){ctx.fillStyle='rgba(255,255,255,0.45)';ctx.font='600 11px Rajdhani';
+    ctx.fillText(L.nextTier+': '+tierName(nt)+' @ '+nt.min,W/2,oy+uh*0.562);}}
   // Buttons
   const bw=Math.min(260,W-40),bh=50;
   const canRevive=!hasRevived;
