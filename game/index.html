@@ -98,6 +98,10 @@ const L={
   rush:isTR?'HIZLI':'RUSH',
   classicDesc:isTR?'Sonsuz mod, klasik oyun':'Endless, classic gameplay',
   rushDesc:isTR?'90 saniye, azami skor':'90 seconds, max score',
+  bossrush:isTR?'BOSS AKINI':'BOSS RUSH',
+  bossrushDesc:isTR?'Art arda boss dalgaları':'Back-to-back boss waves',
+  bossrushMode:isTR?'BOSS AKINI':'BOSS RUSH',
+  wave:isTR?'Dalga':'Wave',
   selectMode:isTR?'MOD SEÇ':'SELECT MODE',
   timeUp:isTR?'SÜRE DOLDU!':'TIME\'S UP!',
   modeBest:isTR?'En İyi':'Best',
@@ -217,8 +221,11 @@ const ZONES = [
 // rush is a placeholder for the future Rush task — timeLimit stored but
 // not wired into update() yet; classic behavior is unchanged.
 const MODES = [
-  {id:'classic', name:'classic', botCount:MAX_BOTS, startLength:22, timeLimit:0},
-  {id:'rush',    name:'rush',    botCount:MAX_BOTS, startLength:22, timeLimit:90}
+  {id:'classic',  name:'classic',  botCount:MAX_BOTS, startLength:22, timeLimit:0},
+  {id:'rush',     name:'rush',     botCount:MAX_BOTS, startLength:22, timeLimit:90},
+  // Boss Rush (Wave 3.1): fewer ambient bots, back-to-back bosses. The run's
+  // "score" proxy is waves-cleared (runWaves), not points. timeLimit 0 = endless.
+  {id:'bossrush', name:'bossrush', botCount:4,        startLength:22, timeLimit:0}
 ];
 let mode = 'classic';
 
@@ -624,6 +631,10 @@ function evaluateMissions(stats){
 }
 // Per-run King kill counter — reset in startGame, incremented in killSnake.
 let runKingKills=0;
+// Per-run Boss-Rush wave counter (Wave 3.1) — reset in startGame, incremented
+// each time a boss is slain while mode==='bossrush'. Doubles as that mode's
+// score proxy (bestByMode['bossrush'] tracks max runWaves).
+let runWaves=0;
 
 // ═══ POSTMESSAGE BRIDGE ═══
 let adReady = {interstitial:false, rewarded:false, rewardedLoading:false};
@@ -1500,7 +1511,14 @@ function killSnake(victim,killer,cause){
       postMsg({type:'HAPTIC',data:'heavy'});
       flashAlpha=0.5;flashColor='#ffd600';shakeTimer=0.35;shakeMag=8;
       addScorePopup(victim.segments[0].x,victim.segments[0].y-30,'+'+BOSS_SCORE_REWARD+' BOSS','#ffd600');
-      showToast(isTR?'BOSS YENİLDİ! +'+BOSS_COIN_REWARD+' 🪙':'BOSS DEFEATED! +'+BOSS_COIN_REWARD+' 🪙','success');
+      // Boss Rush: count the cleared wave; the next boss auto-spawns once
+      // bossActive clears below. The toast announces the wave just cleared.
+      if(mode==='bossrush'){
+        runWaves++;
+        showToast(isTR?'DALGA '+runWaves+' TEMİZLENDİ!':'WAVE '+runWaves+' CLEARED!','success');
+      }else{
+        showToast(isTR?'BOSS YENİLDİ! +'+BOSS_COIN_REWARD+' 🪙':'BOSS DEFEATED! +'+BOSS_COIN_REWARD+' 🪙','success');
+      }
       // Shockwave: boss slay — hot white-gold, biggest ring.
       spawnShock(victim.segments[0].x,victim.segments[0].y,'#ffd600',true);
     }
@@ -1515,10 +1533,14 @@ function killSnake(victim,killer,cause){
     spawnShock(victim.segments[0].x,victim.segments[0].y,'#ff1744',true);
     killerName=killer?killer.name:(cause==='boundary'?'the boundary':(cause==='timeout'?'time':'unknown'));
     deathCount++;
-    // Per-mode best: update bestByMode[mode] if score beats it.
-    if(score>0){
-      const prevBest=bestByMode[mode]||0;
-      if(score>prevBest){bestByMode[mode]=score;saveBlob('bests',bestByMode);}
+    // Per-mode best: update bestByMode[mode] if this run beats it. Boss Rush
+    // uses waves-cleared (runWaves) as its proxy; all other modes use score.
+    {
+      const runMetric=mode==='bossrush'?runWaves:score;
+      if(runMetric>0){
+        const prevBest=bestByMode[mode]||0;
+        if(runMetric>prevBest){bestByMode[mode]=runMetric;saveBlob('bests',bestByMode);}
+      }
     }
     // Classic: also maintain the existing highScore / topScores records unchanged.
     if(mode==='classic'){saveHS();addTopScore(score);}
@@ -1719,7 +1741,7 @@ function startGame(modeId){
   const _modeCfg=MODES.find(function(m){return m.id===_modeId;})||MODES[0];
   // Update the global so HUD / other systems can read it.
   mode=_modeCfg.id;
-  initAudio();score=0;killCombo=0;killComboTimer=0;hasRevived=false;currentRank=0;runKingKills=0;
+  initAudio();score=0;killCombo=0;killComboTimer=0;hasRevived=false;currentRank=0;runKingKills=0;runWaves=0;
   foods=[];powerups=[];particles=[];snakes=[];scorePopups=[];
   kingActive=false;nextKingScore=2000;
   bossActive=false;nextBossScore=5000;bossToast=0;
@@ -1853,15 +1875,24 @@ function update(dt){
     kingToast=3.5;flashAlpha=0.35;flashColor='#ffd600';shakeTimer=0.3;shakeMag=6;postMsg({type:'HAPTIC',data:'heavy'});
   }
   // Boss (D1) — rarer, every 5k score, length 300+, +30% speed, big rewards.
-  if(!bossActive&&score>=nextBossScore){
+  // Boss Rush (Wave 3.1): bosses spawn back-to-back regardless of score — the
+  // gate is just !bossActive, and each wave (runWaves) is longer/tougher. The
+  // re-arm is automatic: killSnake clears bossActive on a boss death, so the
+  // next frame spawns the next wave's boss. classic/rush keep the score-gate.
+  const _bossWanted=mode==='bossrush'?!bossActive:(!bossActive&&score>=nextBossScore);
+  if(_bossWanted){
     bossActive=true;sndKingSlain(); // dramatic chord, reused
     const bsp=pickSafeBotSpawn(700);
-    const b=createSnake(false,bsp.x,bsp.y);b.name='BOSS';b.isBoss=true;b.length=300+Math.floor(score/120);
+    const b=createSnake(false,bsp.x,bsp.y);b.name='BOSS';b.isBoss=true;
+    // Boss Rush length escalates per wave (waves cleared so far); classic/rush
+    // keep the existing score-driven length so they're byte-for-byte unchanged.
+    b.length=mode==='bossrush'?(260+runWaves*55):(300+Math.floor(score/120));
     b.personality='aggressive';b.skin=BOSS_SKIN_IDX;b.skill=1.0; // Blood skin, max skill
     snakes.push(b);
     bossToast=4;flashAlpha=0.45;flashColor='#ff1744';shakeTimer=0.45;shakeMag=9;
     postMsg({type:'HAPTIC',data:'heavy'});
-    showToast(isTR?'⚠ BOSS GELDİ!':'⚠ BOSS INCOMING!','error');
+    if(mode==='bossrush')showToast(isTR?'⚠ DALGA '+(runWaves+1)+'!':'⚠ WAVE '+(runWaves+1)+'!','error');
+    else showToast(isTR?'⚠ BOSS GELDİ!':'⚠ BOSS INCOMING!','error');
   }
   // Camera
   if(player&&player.alive){
@@ -2175,8 +2206,10 @@ function drawBrandTitle(cx,cy,scale){
 
 function drawHUD(){
   const m=sat+10;
+  // Boss Rush headline = "Wave N" (the run's score proxy); classic/rush show score.
   ctx.fillStyle=zoneAccent;ctx.font='900 28px Orbitron';ctx.textAlign='left';
-  ctx.shadowColor=zoneAccent;ctx.shadowBlur=10;ctx.fillText(score,15,m+30);ctx.shadowBlur=0;
+  ctx.shadowColor=zoneAccent;ctx.shadowBlur=10;
+  ctx.fillText(mode==='bossrush'?(L.wave+' '+(runWaves+1)):(''+score),15,m+30);ctx.shadowBlur=0;
   ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='700 14px Rajdhani';
   ctx.fillText(L.length+': '+(player?player.length:0),15,m+50);
   ctx.fillText(L.kills+': '+(player?player.killCount:0),15,m+66);
@@ -2740,9 +2773,9 @@ function drawModeSelect(){
   // Mode cards
   const cardW=Math.min(300,W-40),cardH=100,cardX=W/2-cardW/2;
   const startY=oy+116;
-  const modeIcons={classic:'∞',rush:'⏱'};
-  const modeAccents={classic:'#00e5ff',rush:'#ffab00'};
-  const modeDescs={classic:L.classicDesc,rush:L.rushDesc};
+  const modeIcons={classic:'∞',rush:'⏱',bossrush:'☠'};
+  const modeAccents={classic:'#00e5ff',rush:'#ffab00',bossrush:'#ff1744'};
+  const modeDescs={classic:L.classicDesc,rush:L.rushDesc,bossrush:L.bossrushDesc};
   for(let i=0;i<MODES.length;i++){
     const m=MODES[i],cy=startY+i*(cardH+14);
     const accent=modeAccents[m.id]||'#00e5ff';
@@ -2940,9 +2973,9 @@ function drawDeathScreen(){
   ctx.globalAlpha=Math.max(0,Math.min(1,fade));
   ctx.fillStyle='rgba(0,0,0,0.78)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';
   const uh=H-sat-sab,oy=sat;
-  // Mode badge — small pill at very top so Rush score is visibly distinct.
-  const modeAccentDs=mode==='rush'?'#ffab00':'#00e5ff';
-  const modeLabelDs=mode==='rush'?L.rushMode:L.classicMode;
+  // Mode badge — small pill at very top so each mode's result is visibly distinct.
+  const modeAccentDs=mode==='rush'?'#ffab00':(mode==='bossrush'?'#ff1744':'#00e5ff');
+  const modeLabelDs=mode==='rush'?L.rushMode:(mode==='bossrush'?L.bossrushMode:L.classicMode);
   ctx.fillStyle='rgba(0,0,0,0.45)';rr(W/2-60,oy+10,120,26,13);ctx.fill();
   ctx.strokeStyle=modeAccentDs;ctx.lineWidth=1.5;rr(W/2-60,oy+10,120,26,13);ctx.stroke();
   ctx.fillStyle=modeAccentDs;ctx.font='700 12px Rajdhani';ctx.fillText(modeLabelDs,W/2,oy+27);
@@ -2952,11 +2985,14 @@ function drawDeathScreen(){
   const titleTxt=isTimeout?L.timeUp:L.eliminated;
   ctx.fillStyle=titleCol;ctx.font='900 38px Orbitron';ctx.shadowColor=titleCol;ctx.shadowBlur=20;
   ctx.fillText(titleTxt,W/2,oy+uh*0.13);ctx.shadowBlur=0;
-  // Big score
-  ctx.fillStyle='#fff';ctx.font='900 52px Orbitron';ctx.shadowColor=zoneAccent;ctx.shadowBlur=14;
-  ctx.fillText(score,W/2,oy+uh*0.235);ctx.shadowBlur=0;
+  // Big headline number — Boss Rush shows waves cleared (its score proxy) with
+  // a WAVE label/badge; every other mode shows the raw score unchanged.
+  const bigNum=mode==='bossrush'?runWaves:score;
+  const bigLabel=mode==='bossrush'?L.wave.toUpperCase():L.score.toUpperCase();
+  ctx.fillStyle='#fff';ctx.font='900 52px Orbitron';ctx.shadowColor=mode==='bossrush'?'#ff1744':zoneAccent;ctx.shadowBlur=14;
+  ctx.fillText(bigNum,W/2,oy+uh*0.235);ctx.shadowBlur=0;
   ctx.fillStyle='rgba(255,255,255,0.45)';ctx.font='600 13px Rajdhani';
-  ctx.fillText(L.score.toUpperCase(),W/2,oy+uh*0.265);
+  ctx.fillText(bigLabel,W/2,oy+uh*0.265);
   // Compact stats line
   ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font='700 15px Rajdhani';
   const mn=Math.floor(playTime/60),sc=Math.floor(playTime%60);
@@ -2972,14 +3008,14 @@ function drawDeathScreen(){
     ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='600 13px Rajdhani';
     ctx.fillText(L.eliminatedBy+' '+killerName,W/2,oy+uh*0.465);
   }
-  // Rank/best badge — use per-mode best for the new-best check.
+  // Rank/best badge — use per-mode best for the new-best check. Boss Rush's
+  // metric is waves-cleared (runWaves); every other mode uses score.
   const currentModeBest=bestByMode[mode]||0;
-  const prevModeBest=currentModeBest>score?currentModeBest:(currentModeBest===score&&score>0?score:0);
+  const runMetricDs=mode==='bossrush'?runWaves:score;
   // bestByMode was already updated in killSnake before drawDeathScreen runs,
-  // so currentModeBest IS the new best if score > previous. Check by comparing
-  // score to what best was BEFORE this run (stored as pre-run snapshot is unavailable,
-  // so we just check if score === currentModeBest, meaning this run set it).
-  const isNewModeBest=(score>0&&score===currentModeBest);
+  // so currentModeBest IS the new best if the run beat the previous best. We
+  // detect that by checking runMetric === currentModeBest (this run set it).
+  const isNewModeBest=(runMetricDs>0&&runMetricDs===currentModeBest);
   // For classic, also check highScore path for the existing top-rank display.
   if(isNewModeBest){
     ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=10;ctx.font='900 20px Orbitron';
