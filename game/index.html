@@ -81,7 +81,11 @@ const L={
   rush:isTR?'HIZLI':'RUSH',
   classicDesc:isTR?'Sonsuz mod, klasik oyun':'Endless, classic gameplay',
   rushDesc:isTR?'90 saniye, azami skor':'90 seconds, max score',
-  selectMode:isTR?'MOD SEÇ':'SELECT MODE'
+  selectMode:isTR?'MOD SEÇ':'SELECT MODE',
+  timeUp:isTR?'SÜRE DOLDU!':'TIME\'S UP!',
+  modeBest:isTR?'En İyi':'Best',
+  rushMode:isTR?'HIZLI MOD':'RUSH MODE',
+  classicMode:isTR?'KLASİK MOD':'CLASSIC MODE'
 };
 
 function resize(){
@@ -211,6 +215,11 @@ let adFailedMsg = 0, buyFailedMsg = 0, hasRevived = false;
 let unlockToast = 0, unlockToastName = '';
 let unlockCheckTimer = 0;
 let currentRank = 0, playTime = 0, showTutorial = false;
+// Active run time limit (0 = endless classic; > 0 = timed mode like Rush).
+// Set in startGame() from the selected mode's timeLimit.
+let runTimeLimit = 0;
+// Per-mode best scores: {classic: N, rush: N, …}. Persisted via saveBlob('bests',{}).
+let bestByMode = {};
 let lastLoginDate = '', loginStreak = 0;
 let dailyToast = 0, dailyAmount = 0, dailyStreakVal = 0;
 let quitConfirmTimer = 0, kingToast = 0, coinsAtStart = 0;
@@ -523,6 +532,8 @@ loadBlobs(); loadSkins(); loadStats(); loadCoins(); loadSettings(); loadTopScore
 (function(){const p=loadBlob('prog',{xp:0,lvl:1});xp=p.xp|0;plevel=levelForXp(xp);})();
 // Restore last-played mode (persisted via saveBlob('opts',{mode})).
 (function(){const o=loadBlob('opts',{mode:'classic'});if(MODES.some(function(m){return m.id===o.mode;}))mode=o.mode;})();
+// Load per-mode best scores (flat object: {classic:N, rush:N, …}).
+(function(){const b=loadBlob('bests',{});bestByMode=b;})();
 // Defer bridge LOADs until the next frame so window.ReactNativeWebView is
 // guaranteed to be ready, then retry once at +500ms if hostBridgeSeen is still
 // false (covers slow native injection on cold launch).
@@ -1064,8 +1075,16 @@ function killSnake(victim,killer,cause){
     flashAlpha=0.4;flashColor='#ff1744';shakeTimer=0.3;shakeMag=8;
     // Shockwave: player death — large red-orange burst centered on the player's head.
     spawnShock(victim.segments[0].x,victim.segments[0].y,'#ff1744',true);
-    killerName=killer?killer.name:(cause==='boundary'?'the boundary':'unknown');
-    deathCount++;saveHS();saveStats();saveCoins();addTopScore(score);checkUnlocks();saveSkins();
+    killerName=killer?killer.name:(cause==='boundary'?'the boundary':(cause==='timeout'?'time':'unknown'));
+    deathCount++;
+    // Per-mode best: update bestByMode[mode] if score beats it.
+    if(score>0){
+      const prevBest=bestByMode[mode]||0;
+      if(score>prevBest){bestByMode[mode]=score;saveBlob('bests',bestByMode);}
+    }
+    // Classic: also maintain the existing highScore / topScores records unchanged.
+    if(mode==='classic'){saveHS();addTopScore(score);}
+    saveStats();saveCoins();checkUnlocks();saveSkins();
     awardXp(score,player?player.killCount:0);
     state='dead';
     resetTouchState();
@@ -1278,7 +1297,7 @@ function startGame(modeId){
   }
   for(let i=0;i<50;i++){const a=rand(0,TAU),r=rand(30,200);spawnFood(WCX+Math.cos(a)*r,WCY+Math.sin(a)*r,1);}
   camera.x=WCX;camera.y=WCY;camera.zoom=1;
-  state='playing';totalGames++;playTime=0;coinsAtStart=coins;saveStats();
+  state='playing';totalGames++;playTime=0;runTimeLimit=_modeCfg.timeLimit;coinsAtStart=coins;saveStats();
   lastBotStageMin=BOT_STAGES[0].min;
   hitPauseTimer=0;deathCamTimer=0;
   // Reset zone colours to ZONES[0] so a fresh run doesn't trigger a "new
@@ -1309,6 +1328,12 @@ function update(dt){
   // player death, giving the moment a beat of weight.
   if(hitPauseTimer>0){hitPauseTimer-=dt;return;}
   playTime+=dt;
+  // Rush (or any timed mode) timeout: end the run as if the player died,
+  // but via a 'time' cause so the death screen says TIME'S UP instead of
+  // a killer name. Classic (runTimeLimit===0) never enters this branch.
+  if(runTimeLimit>0&&playTime>=runTimeLimit&&player&&player.alive){
+    killSnake(player,null,'timeout');
+  }
   unlockCheckTimer-=dt;if(unlockCheckTimer<=0){unlockCheckTimer=1.5;checkUnlocks();checkBotStageTransition();}
   // 1) AI decisions once per frame (full dt for stable timer accumulation)
   //    Entry-guard: skip whole call if bot's think timer hasn't elapsed —
@@ -1627,6 +1652,24 @@ function drawHUD(){
   const stg=currentBotStage();
   ctx.fillStyle='rgba(255,255,255,0.45)';ctx.font='700 11px Rajdhani';
   ctx.fillText('AI: '+stg.name,15,m+98);
+  // Rush (timed mode) countdown — top-center, turns red/urgent under 10s.
+  // Classic (runTimeLimit===0) shows nothing here — path unchanged.
+  if(runTimeLimit>0){
+    const rem=Math.max(0,runTimeLimit-playTime);
+    const remSec=Math.ceil(rem);
+    const urgent=rem<=10;
+    const mm=Math.floor(rem/60),ss=Math.floor(rem%60);
+    const timerTxt=mm>0?mm+':'+(ss<10?'0':'')+ss:(remSec>0?remSec+'s':'0s');
+    const tcol=urgent?'#ff1744':'#ffab00';
+    ctx.textAlign='center';
+    ctx.fillStyle=tcol;ctx.shadowColor=tcol;ctx.shadowBlur=urgent?16:8;
+    ctx.font='900 '+(urgent?30:24)+'px Orbitron';
+    ctx.fillText(timerTxt,W/2,m+30);
+    ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='600 10px Rajdhani';
+    ctx.fillText('⏱',W/2,m+46);
+    ctx.textAlign='left';
+  }
   if(kingToast>0){
     const a=Math.min(kingToast,1);ctx.textAlign='center';ctx.globalAlpha=a;
     ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=20;
@@ -1927,15 +1970,25 @@ function drawLeaderboard(){
   const titleSize=Math.min(32,Math.floor(W*0.078));
   ctx.fillStyle='#ffd600';ctx.font='900 '+titleSize+'px Orbitron';ctx.shadowColor='#ffd600';ctx.shadowBlur=15;
   ctx.fillText(L.leaderboard,W/2,oy+88);ctx.shadowBlur=0;
+  // Mode badge — shows that topScores list is Classic-mode records.
+  // Per-mode bests for each mode are displayed separately below.
+  ctx.fillStyle='rgba(0,229,255,0.15)';rr(W/2-58,oy+96,116,22,11);ctx.fill();
+  ctx.strokeStyle='rgba(0,229,255,0.5)';ctx.lineWidth=1;rr(W/2-58,oy+96,116,22,11);ctx.stroke();
+  ctx.fillStyle='rgba(0,229,255,0.9)';ctx.font='600 11px Rajdhani';
+  ctx.fillText(L.classicMode,W/2,oy+111);
+  // Per-mode bests row (shown for all defined modes)
+  {const mbY=oy+132;ctx.fillStyle='rgba(255,255,255,0.35)';ctx.font='600 11px Rajdhani';
+  const parts=[];for(let i=0;i<MODES.length;i++){const mid=MODES[i].id;const b=bestByMode[mid]||0;parts.push((L[mid]||mid)+': '+(b>0?b:'-'));}
+  ctx.fillText(parts.join('   ·   '),W/2,mbY);}
   // Stats line
   ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='600 13px Rajdhani';
-  ctx.fillText(L.games+': '+totalGames+'  ·  '+L.kills+': '+totalKills+'  ·  '+L.deaths+': '+deathCount,W/2,oy+114);
+  ctx.fillText(L.games+': '+totalGames+'  ·  '+L.kills+': '+totalKills+'  ·  '+L.deaths+': '+deathCount,W/2,oy+150);
   // Score list
   if(!topScores.length){
     ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='600 18px Rajdhani';
     ctx.fillText(L.noScores,W/2,oy+uh*0.5);
   }else{
-    const sy=oy+150,rh=40,now=Date.now();
+    const sy=oy+170,rh=40,now=Date.now();
     for(let i=0;i<topScores.length;i++){
       const y=sy+i*rh;if(y>H-sab-20)break;
       ctx.fillStyle=i===0?'#ffd600':(i===1?'#c0c0c0':(i===2?'#cd7f32':'rgba(255,255,255,0.6)'));
@@ -2061,7 +2114,10 @@ function drawMenu(){
   ctx.textAlign='center';
   const uh=H-sat-sab,oy=sat;
   drawBrandTitle(W/2,oy+uh*0.22);
-  if(highScore>0){ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='600 18px Rajdhani';ctx.fillText(L.best+': '+highScore,W/2,oy+uh*0.32);}
+  // Show best for the currently selected mode. Classic falls back to highScore
+  // so existing leaderboard integration is unchanged. Other modes use bestByMode.
+  {const menuBest=mode==='classic'?highScore:(bestByMode[mode]||0);
+  if(menuBest>0){ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='600 18px Rajdhani';ctx.fillText(L.best+': '+menuBest,W/2,oy+uh*0.32);}}
   // Coin counter (top)
   ctx.fillStyle='#ffd600';ctx.font='900 22px Orbitron';ctx.shadowColor='#ffd600';ctx.shadowBlur=10;
   ctx.fillText('🪙 '+coins,W/2,oy+36);ctx.shadowBlur=0;
@@ -2122,9 +2178,18 @@ function drawDeathScreen(){
   ctx.globalAlpha=Math.max(0,Math.min(1,fade));
   ctx.fillStyle='rgba(0,0,0,0.78)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';
   const uh=H-sat-sab,oy=sat;
-  // Title
-  ctx.fillStyle='#ff1744';ctx.font='900 38px Orbitron';ctx.shadowColor='#ff1744';ctx.shadowBlur=20;
-  ctx.fillText(L.eliminated,W/2,oy+uh*0.13);ctx.shadowBlur=0;
+  // Mode badge — small pill at very top so Rush score is visibly distinct.
+  const modeAccentDs=mode==='rush'?'#ffab00':'#00e5ff';
+  const modeLabelDs=mode==='rush'?L.rushMode:L.classicMode;
+  ctx.fillStyle='rgba(0,0,0,0.45)';rr(W/2-60,oy+10,120,26,13);ctx.fill();
+  ctx.strokeStyle=modeAccentDs;ctx.lineWidth=1.5;rr(W/2-60,oy+10,120,26,13);ctx.stroke();
+  ctx.fillStyle=modeAccentDs;ctx.font='700 12px Rajdhani';ctx.fillText(modeLabelDs,W/2,oy+27);
+  // Title: TIME'S UP for timeout, ELIMINATED for collisions.
+  const isTimeout=(killerName==='time');
+  const titleCol=isTimeout?'#ffab00':'#ff1744';
+  const titleTxt=isTimeout?L.timeUp:L.eliminated;
+  ctx.fillStyle=titleCol;ctx.font='900 38px Orbitron';ctx.shadowColor=titleCol;ctx.shadowBlur=20;
+  ctx.fillText(titleTxt,W/2,oy+uh*0.13);ctx.shadowBlur=0;
   // Big score
   ctx.fillStyle='#fff';ctx.font='900 52px Orbitron';ctx.shadowColor=zoneAccent;ctx.shadowBlur=14;
   ctx.fillText(score,W/2,oy+uh*0.235);ctx.shadowBlur=0;
@@ -2138,19 +2203,32 @@ function drawDeathScreen(){
   const stats2=L.time+': '+mn+':'+(sc<10?'0':'')+sc;
   ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='600 13px Rajdhani';
   ctx.fillText(stats2,W/2,oy+uh*0.385);
-  // Coins earned + killer
+  // Coins earned + killer/timeout line
   const earned=Math.max(0,coins-coinsAtStart);
   if(earned>0){ctx.fillStyle='#ffd600';ctx.font='700 15px Rajdhani';ctx.fillText('🪙 +'+earned,W/2,oy+uh*0.43);}
-  ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='600 13px Rajdhani';
-  ctx.fillText(L.eliminatedBy+' '+killerName,W/2,oy+uh*0.465);
-  // Rank/best badge
-  if(score>=highScore&&score>0){
+  if(!isTimeout){
+    ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='600 13px Rajdhani';
+    ctx.fillText(L.eliminatedBy+' '+killerName,W/2,oy+uh*0.465);
+  }
+  // Rank/best badge — use per-mode best for the new-best check.
+  const currentModeBest=bestByMode[mode]||0;
+  const prevModeBest=currentModeBest>score?currentModeBest:(currentModeBest===score&&score>0?score:0);
+  // bestByMode was already updated in killSnake before drawDeathScreen runs,
+  // so currentModeBest IS the new best if score > previous. Check by comparing
+  // score to what best was BEFORE this run (stored as pre-run snapshot is unavailable,
+  // so we just check if score === currentModeBest, meaning this run set it).
+  const isNewModeBest=(score>0&&score===currentModeBest);
+  // For classic, also check highScore path for the existing top-rank display.
+  if(isNewModeBest){
     ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=10;ctx.font='900 20px Orbitron';
     ctx.fillText('★ '+L.newBest+' ★',W/2,oy+uh*0.51);ctx.shadowBlur=0;
-  }else if(currentRank>0&&currentRank<=10){
+  }else if(mode==='classic'&&currentRank>0&&currentRank<=10){
     const col=currentRank===1?'#ffd600':(currentRank<=3?'#c0c0c0':'#00e5ff');
     ctx.fillStyle=col;ctx.shadowColor=col;ctx.shadowBlur=8;ctx.font='900 18px Orbitron';
     ctx.fillText('TOP '+currentRank,W/2,oy+uh*0.51);ctx.shadowBlur=0;
+  }else if(currentModeBest>0){
+    ctx.fillStyle='rgba(255,255,255,0.45)';ctx.font='600 13px Rajdhani';
+    ctx.fillText(L.modeBest+': '+currentModeBest,W/2,oy+uh*0.51);
   }
   // Buttons
   const bw=Math.min(260,W-40),bh=50;
