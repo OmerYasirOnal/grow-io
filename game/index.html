@@ -306,6 +306,15 @@ let soundOn = true, musicOn = true, vibrationOn = true;
 // shockwave rings, zone-entry sweep) for motion-sensitive players + low-end devices.
 // Gameplay is identical; only cosmetic 'lighter'-composite effects are suppressed.
 let reducedMotion = false;
+// ═══ LIVING EYES (Wave 3.2) ═══
+// Synchronized blink: a single shared accumulator drives every snake's eyes so
+// the whole field blinks together. eyeBlinkT counts up in seconds via gdt and
+// fires a blink (eyeBlinkP 1→0 over EYE_BLINK_DUR) every EYE_BLINK_GAP. Driven
+// once per update() frame — NOT per-frame allocation, NOT a per-frame coin-flip.
+let eyeBlinkT = 0;       // seconds since last blink fired
+let eyeBlinkP = 0;       // active blink progress 1→0 (0 = eyes fully open)
+const EYE_BLINK_GAP = 4.2;   // seconds between blinks
+const EYE_BLINK_DUR = 0.14;  // seconds a single blink lasts
 let coins = 0, topScores = [];
 let shakeTimer = 0, shakeMag = 0;
 let kingActive = false, nextKingScore = 2000;
@@ -1283,7 +1292,11 @@ function createSnake(isPlayer,x,y,skinIdx){
     killCount:0,invulnTimer:0,
     aiTimer:rand(0,0.2),respawnTimer:0,isKing:false,
     skill:0.6+rand(0,0.4), // per-bot skill multiplier 0.6..1
-    pathHistory:pathHistory,_lastHX:x,_lastHY:y
+    pathHistory:pathHistory,_lastHX:x,_lastHY:y,
+    // Eat-punch (Wave 3.2): short-lived scalar 0→eases back, scales the head on
+    // food pickup. Stored on the snake so the per-frame draw reads it with zero
+    // allocation. Only the player ever sets it (eat feedback is player-gated).
+    headPunch:0
   };
 }
 
@@ -1454,6 +1467,16 @@ function checkCollisions(){
           score+=pts;coins+=Math.max(1,Math.floor(pts*0.3));
           if(inZone)addScorePopup(f.x,f.y,'+'+pts,'#ffd600');
           sndCollect();postMsg({type:'HAPTIC',data:'light'});
+          // Eat feedback (Wave 3.2): head scale-punch + a short absorb streak
+          // pulling from the food toward the head. Player-only. The streak reuses
+          // the existing particle pool (capped at MAX_PARTICLES, swap-removed),
+          // spawned only on this discrete pickup — no per-frame allocation.
+          s.headPunch=Math.min(0.5,s.headPunch+0.35);
+          const _ax=angleTo(f,head);
+          for(let k=0;k<3&&particles.length<MAX_PARTICLES;k++){
+            const _sp=140+k*40;
+            particles.push({x:f.x,y:f.y,vx:Math.cos(_ax)*_sp,vy:Math.sin(_ax)*_sp,life:1,ml:0.22,color:f.color,size:2.2});
+          }
         }
         spawnP(f.x,f.y,f.color,3,60,2);foods.splice(i,1);
       }
@@ -1806,6 +1829,11 @@ function update(dt){
   if(kingToast>0&&state==='playing')kingToast-=dt;
   if(bossToast>0&&state==='playing')bossToast-=dt;
   if(deathCamTimer>0)deathCamTimer-=dt;
+  // Living-eyes blink accumulator (Wave 3.2). Time-driven, shared across all
+  // snakes. Ticks every frame (cheap) so eyes blink on menu/death too. When the
+  // gap elapses, fire a blink and decay it over EYE_BLINK_DUR.
+  if(eyeBlinkP>0){eyeBlinkP-=dt/EYE_BLINK_DUR;if(eyeBlinkP<0)eyeBlinkP=0;}
+  else{eyeBlinkT+=dt;if(eyeBlinkT>=EYE_BLINK_GAP){eyeBlinkT=0;eyeBlinkP=1;}}
   updateToasts(dt);
   if(state!=='playing')return;
   // Hit-pause: render keeps running (camera shake / death flash stay
@@ -1849,6 +1877,9 @@ function update(dt){
     checkCollisions();
   }
   gdt=dt;
+  // Eat-punch decay (Wave 3.2): ease the player's head-scale punch back to 0.
+  // Exponential-ish decay; clamped so it never lingers. Player-only state.
+  if(player&&player.headPunch>0){player.headPunch-=dt*5;if(player.headPunch<0)player.headPunch=0;}
   updateParticles(dt);updateScorePopups(dt);updateShocks(dt);
   emitPlayerTrail(dt);updateTrailParts(dt);
   foodSpawnTimer-=dt;if(foodSpawnTimer<=0){foodSpawnTimer=0.2;spawnFood();}
@@ -1948,6 +1979,10 @@ function render(){
     // Additive trail (neon/rainbow) in the effects layer alongside particles/shocks.
     drawTrailPartsAdditive();
     drawParticles();drawScorePopups();drawShocks();ctx.restore();
+    // Boundary danger glow (Wave 3.2): screen-space red edge vignette that
+    // intensifies as the player's head nears the arena rim. Drawn AFTER the
+    // world transform is popped (it hugs the screen edges, not the world).
+    if(state==='playing')drawBoundaryDanger();
     drawHUD();drawMinimap();
     if(joystick.active&&state==='playing')drawJoystick();
     if(state==='playing'){drawBoostFuel();drawPauseBtn();}
@@ -2034,6 +2069,36 @@ function drawBoundary(){
   // Outer soft glow halo: wider, very transparent accent colour
   ctx.strokeStyle='rgba('+_br+','+_bg2+','+_bb+',0.07)';ctx.lineWidth=24;ctx.stroke();
 }
+// BOUNDARY DANGER GLOW (Wave 3.2) — screen-space red vignette that fades in as
+// the player's head approaches the arena rim (within ~220px of WR). Additive,
+// fully save()/restore()-bounded, and gated behind !reducedMotion so motion-
+// sensitive players never see it. No allocation in the hot path (gradient is
+// only built on the frames the player is actually near the rim).
+const BOUNDARY_DANGER_RANGE = 220;
+function drawBoundaryDanger(){
+  if(reducedMotion)return;
+  if(!player||!player.alive)return;
+  const head=player.segments[0];
+  const dfc=dist(head,{x:WCX,y:WCY});
+  const near=WR-dfc;                       // distance from the rim, +ve inside
+  if(near>BOUNDARY_DANGER_RANGE)return;     // too far from the edge — nothing to draw
+  // Proximity 0 (at range) → 1 (at the rim). Square it so it ramps gently then
+  // bites hard right at the edge.
+  let prox=1-Math.max(0,near)/BOUNDARY_DANGER_RANGE;
+  prox=prox*prox;
+  const a=prox*0.55;
+  ctx.save();
+  ctx.globalCompositeOperation='lighter';
+  // Radial gradient: transparent in the centre, red toward the screen edges.
+  const cx=W/2,cy=H/2,inner=Math.min(W,H)*0.32,outer=Math.max(W,H)*0.72;
+  const grd=ctx.createRadialGradient(cx,cy,inner,cx,cy,outer);
+  grd.addColorStop(0,'rgba(255,23,68,0)');
+  grd.addColorStop(0.7,'rgba(255,23,68,'+(a*0.45)+')');
+  grd.addColorStop(1,'rgba(255,40,60,'+a+')');
+  ctx.fillStyle=grd;
+  ctx.fillRect(0,0,W,H);
+  ctx.restore(); // globalCompositeOperation reset to 'source-over'
+}
 function drawFood(){
   // Dropped per-food shadowBlur (was 6 with on/off per pellet × ~600 visible
   // foods = the biggest draw-op contributor). Pellets are 4-5 px and barely
@@ -2082,10 +2147,14 @@ function drawSnake(s){
     const r=halfW*(0.55+t*0.45)+1.2;
     ctx.beginPath();ctx.arc(seg.x,seg.y,r,0,TAU);ctx.fill();
   }
+  // Eat-punch (Wave 3.2): head fill swells by headPunch then eases back to 1
+  // (decayed in update). Player-only state; 1 for everyone else.
+  const headScale=1+(s.headPunch||0);
   // Fill pass with skin colours.
   for(let i=segLen-1;i>=0;i--){
     const seg=segs[i];const t=1-i/denom;
-    const r=halfW*(0.55+t*0.45);let color;
+    let r=halfW*(0.55+t*0.45);let color;
+    if(i===0&&headScale!==1)r*=headScale;
     if(skin.p==='rainbow')color=hsl((i*8+frameCount*2)%360,80,60);
     else if(skin.p==='striped')color=((i/3)|0)%2===0?skin.c[0]:skin.c[1];
     else color=lerpColor(skin.c[1],skin.c[0],t);
@@ -2099,14 +2168,47 @@ function drawSnake(s){
   if(s.powerups.shield>0){ctx.strokeStyle='rgba(64,196,255,0.4)';ctx.lineWidth=3;ctx.shadowColor='#40c4ff';ctx.shadowBlur=10;ctx.beginPath();ctx.arc(s.segments[0].x,s.segments[0].y,w/2+6,0,TAU);ctx.stroke();ctx.shadowBlur=0;}
   // Magnet range (player only — hint)
   if(s.isPlayer&&s.powerups.magnet>0){ctx.strokeStyle='rgba(118,255,3,0.18)';ctx.lineWidth=1;ctx.setLineDash([6,6]);ctx.beginPath();ctx.arc(s.segments[0].x,s.segments[0].y,200,0,TAU);ctx.stroke();ctx.setLineDash([]);}
-  // Eyes
-  const head=s.segments[0];const eyeD=w/4,eyeR=w/6;
+  // Eyes — LIVING EYES (Wave 3.2). Eye sockets ride the head scale-punch; pupils
+  // track the gaze direction (heading by default, nearest threat for the player);
+  // a shared time-driven blink squashes both eyes vertically in sync. All cheap,
+  // no per-frame allocation (gaze scan reuses snakes[] in place).
+  const head=s.segments[0];const eyeD=w/4*headScale,eyeR=w/6*headScale;
+  // Gaze: default to heading. For the player, glance toward the nearest other
+  // snake head if one is reasonably close (a wary "watching the threat" feel).
+  let gazeA=s.angle;
+  if(s.isPlayer){
+    let _nd=520*520,_nx=0,_ny=0,_found=false;
+    for(let qi=0;qi<snakes.length;qi++){
+      const o=snakes[qi];
+      if(o===s||!o.alive)continue;
+      const oh=o.segments[0];const ddx=oh.x-head.x,ddy=oh.y-head.y;const dd=ddx*ddx+ddy*ddy;
+      if(dd<_nd){_nd=dd;_nx=ddx;_ny=ddy;_found=true;}
+    }
+    if(_found)gazeA=Math.atan2(_ny,_nx);
+  }
+  // Blink: eyeBlinkP 1→0 maps to a brief eye squash via a sine hump (0 at the
+  // ends, full squash mid-blink). Eyes never fully vanish — scaleY floors at ~0.12.
+  const blinkSq=eyeBlinkP>0?Math.sin(eyeBlinkP*PI):0;   // 0..1, peaks mid-blink
+  const eyeSY=1-blinkSq*0.88;                           // vertical scale 1 → 0.12
   const ex1=head.x+Math.cos(s.angle-0.4)*eyeD,ey1=head.y+Math.sin(s.angle-0.4)*eyeD;
   const ex2=head.x+Math.cos(s.angle+0.4)*eyeD,ey2=head.y+Math.sin(s.angle+0.4)*eyeD;
-  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(ex1,ey1,eyeR,0,TAU);ctx.fill();ctx.beginPath();ctx.arc(ex2,ey2,eyeR,0,TAU);ctx.fill();
-  ctx.fillStyle='#111';
-  ctx.beginPath();ctx.arc(ex1+Math.cos(s.angle)*eyeR*0.4,ey1+Math.sin(s.angle)*eyeR*0.4,eyeR*0.5,0,TAU);ctx.fill();
-  ctx.beginPath();ctx.arc(ex2+Math.cos(s.angle)*eyeR*0.4,ey2+Math.sin(s.angle)*eyeR*0.4,eyeR*0.5,0,TAU);ctx.fill();
+  // Pupil offset toward gaze (clamped inside the sclera).
+  const pdx=Math.cos(gazeA)*eyeR*0.42,pdy=Math.sin(gazeA)*eyeR*0.42;
+  if(eyeSY>=0.999){
+    // Fast path — no blink this frame, draw round eyes directly (no save/scale).
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(ex1,ey1,eyeR,0,TAU);ctx.fill();ctx.beginPath();ctx.arc(ex2,ey2,eyeR,0,TAU);ctx.fill();
+    ctx.fillStyle='#111';
+    ctx.beginPath();ctx.arc(ex1+pdx,ey1+pdy,eyeR*0.5,0,TAU);ctx.fill();
+    ctx.beginPath();ctx.arc(ex2+pdx,ey2+pdy,eyeR*0.5,0,TAU);ctx.fill();
+  }else{
+    // Blinking — squash each eye vertically about its own center.
+    ctx.fillStyle='#fff';
+    ctx.save();ctx.translate(ex1,ey1);ctx.scale(1,eyeSY);
+    ctx.beginPath();ctx.arc(0,0,eyeR,0,TAU);ctx.fill();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(pdx,pdy,eyeR*0.5,0,TAU);ctx.fill();ctx.restore();
+    ctx.fillStyle='#fff';
+    ctx.save();ctx.translate(ex2,ey2);ctx.scale(1,eyeSY);
+    ctx.beginPath();ctx.arc(0,0,eyeR,0,TAU);ctx.fill();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(pdx,pdy,eyeR*0.5,0,TAU);ctx.fill();ctx.restore();
+  }
   // King crown
   if(s.isKing){ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=10;const cx=head.x,cy=head.y-w/2-2;ctx.beginPath();ctx.moveTo(cx-6,cy+4);ctx.lineTo(cx-6,cy-2);ctx.lineTo(cx-3,cy+1);ctx.lineTo(cx,cy-4);ctx.lineTo(cx+3,cy+1);ctx.lineTo(cx+6,cy-2);ctx.lineTo(cx+6,cy+4);ctx.closePath();ctx.fill();ctx.shadowBlur=0;}
   // Boss aura: pulsating red halo + skull mark above the head.
