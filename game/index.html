@@ -113,6 +113,7 @@ const L={
   trailEquipped:isTR?'TAKILI':'EQUIPPED',
   trailSelect:isTR?'SEÇ':'SELECT',
   buyTrail:isTR?'Bu izi satın al?':'Buy this trail?',
+  featured:isTR?'ÖNE ÇIKAN':'FEATURED',
   achievements:isTR?'BAŞARIMLAR':'ACHIEVEMENTS',
   achUnlocked:isTR?'BAŞARIM AÇILDI!':'ACHIEVEMENT UNLOCKED!',
   achProgress:isTR?'Açılan':'Unlocked',
@@ -924,6 +925,44 @@ function skinPrice(sk){
   // ── end tunable ────────────────────────────────────────────────────────────
   return 1000; // fallback (should never be reached with current SKINS table)
 }
+
+// ═══ FEATURED SHOP SLOT (Wave 3.4) ═══
+// A weekly-rotating "Featured" pick shown at the top of the shop. The week index
+// is a pure function of the runtime calendar date (UTC day-count since the epoch
+// ÷ 7) — no backend, fully deterministic: same week → same pick on every device.
+// The chosen item(s) get a FEATURED badge and a small discount (FEATURED_DISCOUNT).
+// CRITICAL: every price read — display AND the coin-deduction in the buy path —
+// goes through featuredSkinPrice/featuredTrailPrice, so the shown number is the
+// charged number (no mismatch / underflow possible).
+const FEATURED_DISCOUNT=0.8; // ← TUNABLE: 0.8 = 20% off the featured item this week
+// Day-count since the Unix epoch in UTC (date read at runtime — not server-bound).
+function _weekIndex(){return Math.floor(Date.now()/86400000/7);}
+// Candidate pools (static, built once): coins-rail skin indices + coins-only trail
+// indices. Earn/free skins and the free 'none' trail are excluded (nothing to buy).
+const _featSkinPool=(function(){const a=[];for(let i=0;i<SKINS.length;i++)if(skinRail(SKINS[i])==='coins')a.push(i);return a;})();
+const _featTrailPool=(function(){const a=[];for(let i=0;i<TRAILS.length;i++)if(TRAILS[i].price>0)a.push(i);return a;})();
+// Memoized weekly pick: {week, skin:idx|-1, trail:idx|-1}. Recomputed only when the
+// week rolls over, so draw/tap never redo the PRNG work.
+let _featCache=null;
+function featuredPick(){
+  const wk=_weekIndex();
+  if(_featCache&&_featCache.week===wk)return _featCache;
+  const rng=_missionPrng(_missionSeed('feat-'+wk));
+  // Always feature one coins-rail skin.
+  const skin=_featSkinPool.length?_featSkinPool[Math.floor(rng()*_featSkinPool.length)]:-1;
+  // ~50% of weeks also feature a trail (1-2 items total), deterministically.
+  let trail=-1;
+  if(_featTrailPool.length&&rng()<0.5)trail=_featTrailPool[Math.floor(rng()*_featTrailPool.length)];
+  _featCache={week:wk,skin:skin,trail:trail};
+  return _featCache;
+}
+// Discounted price for a skin idx: full price if NOT this week's featured skin,
+// else floor(full*DISCOUNT) (floor → charged ≤ shown, never an underflow).
+function featuredSkinPrice(idx){const base=skinPrice(SKINS[idx]);if(base<=0)return base;return idx===featuredPick().skin?Math.floor(base*FEATURED_DISCOUNT):base;}
+function featuredTrailPrice(idx){const base=TRAILS[idx].price;if(base<=0)return base;return idx===featuredPick().trail?Math.floor(base*FEATURED_DISCOUNT):base;}
+function isFeaturedSkin(idx){return idx===featuredPick().skin;}
+function isFeaturedTrail(idx){return idx===featuredPick().trail;}
+
 loadHSLocal();
 loadBlobs(); loadSkins(); loadStats(); loadCoins(); loadSettings(); loadTopScores(); loadTutorialSeen(); loadLogin(); checkDailyBonus(); loadMissions();
 // Load progression XP/level.
@@ -3403,18 +3442,26 @@ function drawSkinSelect(){
         ctx.fillStyle='rgba(100,220,255,0.55)';ctx.font='600 8px Rajdhani';ctx.fillText(hint,cx,cy+14);
         ctx.fillStyle='rgba(100,220,255,0.35)';ctx.font='600 7px Rajdhani';ctx.fillText('▲ EARN',cx,cy+24);
       }else{
-        // Coins-only: show price + Buy cue
-        const p=skinPrice(skL);
+        // Coins-only: show price + Buy cue. Featured skin → discounted price.
+        const p=featuredSkinPrice(i);
         ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='600 8px Rajdhani';
         const hintC=tL==='k'?vL+' '+L.killsReq:(tL==='l'?L.lengthReq+' '+vL:vL+' '+L.gamesReq);
         ctx.fillText(hintC,cx,cy+14);
         ctx.fillStyle=coins>=p?'#ffd600':'rgba(255,214,0,0.3)';ctx.font='bold 9px Rajdhani';ctx.fillText('🪙'+p,cx,cy+24);
       }
     }
+    // FEATURED highlight badge on this week's featured skin cell (any state).
+    if(isFeaturedSkin(i)){
+      const pulse=reducedMotion?0:0.18+0.12*Math.sin(frameCount*0.12);
+      ctx.strokeStyle='rgba(255,214,0,'+(0.55+pulse)+')';ctx.lineWidth=2;
+      rr(cx-cellW/2+4,cy-cellH/2+4,cellW-8,cellH-8,8);ctx.stroke();
+      ctx.fillStyle='#ffd600';ctx.font='900 7px Rajdhani';ctx.textAlign='center';
+      ctx.fillText('★ '+L.featured,cx,cy-cellH/2+13);ctx.textAlign='center';
+    }
   }
   // Buy confirm modal
   if(pendingSkinBuy>=0){
-    const idx=pendingSkinBuy,sk=SKINS[idx],p=skinPrice(sk);
+    const idx=pendingSkinBuy,sk=SKINS[idx],p=featuredSkinPrice(idx);
     ctx.fillStyle='rgba(0,0,0,0.92)';ctx.fillRect(0,0,W,H);
     const mw=Math.min(320,W-40),mh=Math.min(240,H-sat-sab-40);
     const mx=W/2-mw/2,my=Math.max(sat+20,(H-mh)/2);
@@ -3498,6 +3545,13 @@ function drawTrailSelect(){
     ctx.lineWidth=equipped?2:1.2;rr(r.x,r.y,r.w,r.h,10);ctx.stroke();
     // Preview swatch (left)
     drawTrailPreview(td,r.x+44,r.y+r.h/2);
+    // FEATURED highlight on this week's featured trail row (gold pulse + badge).
+    if(isFeaturedTrail(i)){
+      const pulse=reducedMotion?0:0.18+0.12*Math.sin(frameCount*0.12);
+      ctx.strokeStyle='rgba(255,214,0,'+(0.55+pulse)+')';ctx.lineWidth=2;rr(r.x,r.y,r.w,r.h,10);ctx.stroke();
+      ctx.textAlign='left';ctx.fillStyle='#ffd600';ctx.font='900 9px Rajdhani';
+      ctx.fillText('★ '+L.featured,r.x+86,r.y+13);
+    }
     // Name (center-left)
     ctx.textAlign='left';ctx.fillStyle=owned?'#fff':'rgba(255,255,255,0.55)';ctx.font='700 15px Rajdhani';
     ctx.fillText(td.name,r.x+86,r.y+r.h/2+5);
@@ -3505,12 +3559,12 @@ function drawTrailSelect(){
     ctx.textAlign='right';
     if(equipped){ctx.fillStyle='#b39dff';ctx.font='900 12px Rajdhani';ctx.fillText('✓ '+L.trailEquipped,r.x+r.w-16,r.y+r.h/2+4);}
     else if(owned){ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='700 13px Rajdhani';ctx.fillText(L.trailSelect,r.x+r.w-16,r.y+r.h/2+4);}
-    else{ctx.fillStyle=coins>=td.price?'#ffd600':'rgba(255,214,0,0.35)';ctx.font='900 14px Orbitron';ctx.fillText('🪙'+td.price,r.x+r.w-16,r.y+r.h/2+4);}
+    else{const tp=featuredTrailPrice(i);ctx.fillStyle=coins>=tp?'#ffd600':'rgba(255,214,0,0.35)';ctx.font='900 14px Orbitron';ctx.fillText('🪙'+tp,r.x+r.w-16,r.y+r.h/2+4);}
     ctx.textAlign='left';
   }
   // Buy confirm modal (mirrors skinselect)
   if(pendingTrailBuy>=0){
-    const idx=pendingTrailBuy,td=TRAILS[idx],p=td.price;
+    const idx=pendingTrailBuy,td=TRAILS[idx],p=featuredTrailPrice(idx);
     ctx.fillStyle='rgba(0,0,0,0.92)';ctx.fillRect(0,0,W,H);
     const mw=Math.min(320,W-40),mh=Math.min(240,H-sat-sab-40);
     const mx=W/2-mw/2,my=Math.max(sat+20,(H-mh)/2);
@@ -3538,9 +3592,9 @@ function handleTrailTap(x,y){
     const mx=W/2-mw/2,my=Math.max(sat+20,(H-mh)/2);
     const cbw=120,cbh=48,cyB=my+mh-cbh-20;
     if(x>mx+20&&x<mx+20+cbw&&y>cyB&&y<cyB+cbh){
-      const idx=pendingTrailBuy,td=TRAILS[idx];
-      if(td&&td.price>0&&unlockedTrails.indexOf(idx)<0&&coins>=td.price){
-        coins-=td.price;unlockedTrails.push(idx);currentTrail=idx;saveCoins();saveTrails();sndPowerup();showToast(td.name+' ✓','success');
+      const idx=pendingTrailBuy,td=TRAILS[idx],tp=featuredTrailPrice(idx); // discounted if featured — same number shown in modal
+      if(td&&tp>0&&unlockedTrails.indexOf(idx)<0&&coins>=tp){
+        coins-=tp;unlockedTrails.push(idx);currentTrail=idx;saveCoins();saveTrails();sndPowerup();showToast(td.name+' ✓','success');
       }else{buyFailedMsg=2;showToast(L.notEnough,'error');sndDeath();}
       pendingTrailBuy=-1;return;
     }
@@ -3556,9 +3610,10 @@ function handleTrailTap(x,y){
     if(x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h){
       const td=TRAILS[i];
       if(unlockedTrails.indexOf(i)>=0){currentTrail=i;trailSpawnAcc=0;saveTrails();sndMenu();return;}
-      // Locked → coins-only buy: guard affordance, open confirm.
-      if(td.price<=0)return;
-      if(coins<td.price){buyFailedMsg=2;sndDeath();showToast(L.notEnough,'error');return;}
+      // Locked → coins-only buy: guard affordance, open confirm (discounted if featured).
+      const tp=featuredTrailPrice(i);
+      if(tp<=0)return;
+      if(coins<tp){buyFailedMsg=2;sndDeath();showToast(L.notEnough,'error');return;}
       pendingTrailBuy=i;sndMenu();return;
     }
   }
@@ -3817,7 +3872,7 @@ function handleSkinTap(x,y){
     const cbw=120,cbh=48,cy=my+mh-cbh-20;
     // Yes (left)
     if(x>mx+20&&x<mx+20+cbw&&y>cy&&y<cy+cbh){
-      const idx=pendingSkinBuy,p=skinPrice(SKINS[idx]);
+      const idx=pendingSkinBuy,p=featuredSkinPrice(idx); // discounted if featured — same number shown in modal
       // Double-guard: only coins-rail skins can be purchased (earn-rail p===0)
       if(skinRail(SKINS[idx])==='coins'&&p>0&&coins>=p){
         coins-=p;unlockedSkins.push(idx);currentSkin=idx;saveCoins();saveSkins();saveStats();sndPowerup();showToast(SKINS[idx].name+' ✓','success');
@@ -3839,8 +3894,8 @@ function handleSkinTap(x,y){
   if(unlockedSkins.includes(idx)){currentSkin=idx;saveStats();sndMenu();return;}
   // Earn-only skins (score-tier) are NOT purchasable — tapping does nothing
   if(skinRail(SKINS[idx])==='earn'){return;}
-  // Coins-only skins: guard affordance then open buy confirm modal
-  const p=skinPrice(SKINS[idx]);
+  // Coins-only skins: guard affordance then open buy confirm modal (discounted if featured)
+  const p=featuredSkinPrice(idx);
   if(p<=0){return;} // safety: should never be 0 for a coins skin
   if(coins<p){buyFailedMsg=2;sndDeath();showToast(L.notEnough,'error');return;}
   // Open buy confirm modal
