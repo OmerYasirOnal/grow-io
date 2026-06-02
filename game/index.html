@@ -51,14 +51,18 @@ const L={
   lengthReq:isTR?'Uzunluk':'Length',gamesReq:isTR?'oyun':'games',
   paused:isTR?'DURAKLATILDI':'PAUSED',resume:isTR?'DEVAM ET':'RESUME',
   sound:isTR?'Ses':'Sound',on:isTR?'AÇIK':'ON',off:isTR?'KAPALI':'OFF',
+  motion:isTR?'Efekt':'Motion',
   camera:isTR?'Kamera':'Camera',zoomNormal:isTR?'Normal':'Normal',
   zoomClose:isTR?'Yakın':'Close',zoomFar:isTR?'Uzak':'Far',
   mainMenu:isTR?'ANA MENÜ':'MAIN MENU',coins:isTR?'Para':'Coins',
   notEnough:isTR?'Yetersiz para':'Not enough coins',
   leaderboard:isTR?'SKOR TABLOSU':'LEADERBOARD',noScores:isTR?'Henüz skor yok':'No scores yet',
   skinUnlocked:isTR?'YENİ SKIN AÇILDI!':'NEW SKIN UNLOCKED!',
-  watchForCoins:isTR?'REKLAM İZLE +100':'WATCH AD +100',
-  coinsEarned:isTR?'+100 PARA':'+100 COINS',
+  watchForCoins:isTR?'REKLAM İZLE · 🪙':'WATCH AD · 🪙',
+  coinsEarned:isTR?'PARA KAZANILDI':'COINS EARNED',
+  doubleCoins:isTR?'▶ KATLAYABİLİRSİN':'▶ DOUBLE',
+  nextSkinHint:isTR?'Sonraki skin: ':'Next skin: ',
+  toGo:isTR?' daha':'  to go',
   time:isTR?'Süre':'Time',
   howToPlay:isTR?'NASIL OYNANIR':'HOW TO PLAY',
   tut1:isTR?'Sürükle: yön ver':'Drag to steer',
@@ -68,14 +72,73 @@ const L={
   tapContinue:isTR?'Devam için dokun':'Tap to continue',
   dailyBonus:isTR?'GÜNLÜK ÖDÜL':'DAILY BONUS',
   streak:isTR?'Seri':'Streak',
+  dailyMissions:isTR?'GÜNLÜK GÖREVLER':'DAILY MISSIONS',
+  missionScore:isTR?'Skor {t} ulaş':'Reach score {t}',
+  missionKills:isTR?'{t} öldürme yap':'Get {t} kills',
+  missionKing:isTR?'Kral\'ı yen':'Slay a King',
+  missionSurvive:isTR?'{t}s hayatta kal':'Survive {t}s',
+  missionBonus:isTR?'TÜM GÖREVLER TAMAMLANDI! +300 🪙':'ALL MISSIONS DONE! +300 🪙',
   protected:isTR?'KORUMALI':'PROTECTED',
+  claim:isTR?'TALEP ET':'CLAIM',
+  streakSave:isTR?'SERİNE DEVAM ET':'KEEP STREAK',
+  streakSaveDesc:isTR?'Serinizi koru — reklam izle':'Watch an ad to keep your streak',
+  streakSaved:isTR?'Seri korundu!':'Streak saved!',
+  milestone:isTR?'ÖDÜL +':'MILESTONE +',
+  dailyReward:isTR?'GÜNLÜK ÖDÜL':'DAILY REWARD',
+  day:isTR?'Gün':'Day',
   today:isTR?'bugün':'today',
   yesterday:isTR?'dün':'yesterday',
   daysAgo:isTR?'gün önce':'days ago',
   games:isTR?'Oyun':'Games',
   deaths:isTR?'Ölüm':'Deaths',
   sureQuit:isTR?'EMİN MİSİN?':'SURE?',
-  kingArrived:isTR?'👑 KRAL GELDİ!':'👑 KING ARRIVED!'
+  kingArrived:isTR?'👑 KRAL GELDİ!':'👑 KING ARRIVED!',
+  modes:isTR?'MODLAR':'MODES',
+  classic:isTR?'KLASİK':'CLASSIC',
+  rush:isTR?'HIZLI':'RUSH',
+  classicDesc:isTR?'Sonsuz mod, klasik oyun':'Endless, classic gameplay',
+  rushDesc:isTR?'90 saniye, azami skor':'90 seconds, max score',
+  bossrush:isTR?'BOSS AKINI':'BOSS RUSH',
+  bossrushDesc:isTR?'Art arda boss dalgaları':'Back-to-back boss waves',
+  bossrushMode:isTR?'BOSS AKINI':'BOSS RUSH',
+  wave:isTR?'Dalga':'Wave',
+  selectMode:isTR?'MOD SEÇ':'SELECT MODE',
+  timeUp:isTR?'SÜRE DOLDU!':'TIME\'S UP!',
+  modeBest:isTR?'En İyi':'Best',
+  rushMode:isTR?'HIZLI MOD':'RUSH MODE',
+  classicMode:isTR?'KLASİK MOD':'CLASSIC MODE',
+  tier:isTR?'Kademe':'Tier',
+  nextTier:isTR?'Sonraki':'Next',
+  trails:isTR?'İZLER':'TRAILS',
+  cosmetics:isTR?'GÖRÜNÜM':'COSMETICS',
+  trailEquipped:isTR?'TAKILI':'EQUIPPED',
+  trailSelect:isTR?'SEÇ':'SELECT',
+  buyTrail:isTR?'Bu izi satın al?':'Buy this trail?',
+  featured:isTR?'ÖNE ÇIKAN':'FEATURED',
+  achievements:isTR?'BAŞARIMLAR':'ACHIEVEMENTS',
+  achUnlocked:isTR?'BAŞARIM AÇILDI!':'ACHIEVEMENT UNLOCKED!',
+  achProgress:isTR?'Açılan':'Unlocked',
+  achLocked:isTR?'KİLİTLİ':'LOCKED',
+  achFirstBlood:isTR?'İlk Kan':'First Blood',
+  achFirstBloodD:isTR?'İlk öldürmeni yap':'Get your first kill',
+  achCenturion:isTR?'Yüzbaşı':'Centurion',
+  achCenturionD:isTR?'Toplam 100 öldürme':'100 total kills',
+  achRegular:isTR?'Müdavim':'Regular',
+  achRegularD:isTR?'50 oyun oyna':'Play 50 games',
+  achApex:isTR?'Zirve':'Apex',
+  achApexD:isTR?'Bir koşuda #1 ol':'Hit rank #1 in a run',
+  achBossSlayer:isTR?'Boss Avcısı':'Boss Slayer',
+  achBossSlayerD:isTR?'Bir boss yen':'Defeat a boss',
+  achBossLord:isTR?'Boss Efendisi':'Boss Lord',
+  achBossLordD:isTR?'25 boss yen':'Defeat 25 bosses',
+  achDedicated:isTR?'Sadık':'Dedicated',
+  achDedicatedD:isTR?'7 günlük seri':'7-day login streak',
+  achVeteran:isTR?'Gazi':'Veteran',
+  achVeteranD:isTR?'Seviye 10\'a ulaş':'Reach level 10',
+  achRushMaster:isTR?'Hız Ustası':'Rush Master',
+  achRushMasterD:isTR?'Hızlı modda 5000 skor':'Score 5000 in Rush',
+  achHighRoller:isTR?'Rekortmen':'High Roller',
+  achHighRollerD:isTR?'Klasik modda 10000 skor':'Reach 10000 in Classic'
 };
 
 function resize(){
@@ -104,6 +167,8 @@ resize();
 const WS = 3000, WCX = 1500, WCY = 1500, WR = 1500;
 const SEG_DIST = 8, TURN_SPEED = 3.5, BASE_SPEED = 150;
 const MAX_FOOD = 600, MAX_BOTS = 12, MAX_PARTICLES = 300, MAX_POWERUPS = 8;
+const SHK_MAX = 24; // shockwave pool size — 24 slots: at most 1–2 simultaneous kills per frame
+const TRAIL_MAX = 90; // cosmetic-trail particle pool — pre-allocated, ring-buffer, never grows
 const CELL_SIZE = 200, GRID_W = Math.ceil(WS/CELL_SIZE);
 const JOY_RADIUS = 55, JOY_DEAD = 5;
 const PI = Math.PI, TAU = PI*2;
@@ -137,6 +202,37 @@ const SKINS = [
 // Stable index for Boss skin (decoupled from layout reordering).
 const BOSS_SKIN_IDX = SKINS.findIndex(s => s.name === 'Blood');
 
+// ═══ SKIN RAIL ═══
+// Classifies each skin into exactly one unlock path:
+//   'free'  — always unlocked (u==='free')
+//   'earn'  — score-threshold achievement (u[0]==='s'); auto-unlocks in
+//             checkUnlocks when score >= threshold; NOT buyable with coins.
+//   'coins' — kill/length/games threshold used only as flavour lore; the
+//             ONLY way to get these is to spend coins in the shop.
+function skinRail(sk){
+  if(sk.u==='free')return 'free';
+  return sk.u[0]==='s'?'earn':'coins';
+}
+
+// ═══ TRAILS (cosmetic axis #2 — coins-only) ═══
+// A SECOND cosmetic dimension, fully independent of skin. Each entry is a
+// distinct cheap particle/render style emitted at the snake's trail site.
+// 'none' is free + owned from boot (current behavior). The rest are a pure
+// coin SINK (no score/earn rail). Prices are TUNABLE balance knobs.
+//   col   : base tint used by render (some styles override per-particle).
+//   rich  : true → heaviest additive style, suppressed under reducedMotion.
+//   rate  : spawn cadence in seconds between particles (smaller = denser).
+const TRAILS=[
+  {id:'none',    name:'None',         nameTR:'Yok',          price:0,    col:'#ffffff', rich:false, rate:0},
+  {id:'sparkle', name:'Sparkle',      nameTR:'Parıltı',      price:600,  col:'#fff7c2', rich:false, rate:0.05},
+  {id:'embers',  name:'Embers',       nameTR:'Korlar',       price:900,  col:'#ff7a18', rich:false, rate:0.045},
+  {id:'neon',    name:'Neon Streak',  nameTR:'Neon Çizgi',   price:1200, col:'#18e0ff', rich:true,  rate:0.03},
+  {id:'bubbles', name:'Bubbles',      nameTR:'Baloncuklar',  price:1500, col:'#9fe6ff', rich:false, rate:0.07},
+  {id:'rainbow', name:'Rainbow Dust', nameTR:'Gökkuşağı Tozu',price:2500,col:'#ff0040', rich:true,  rate:0.03}
+];
+// Localized trail name (mirrors tierName()). Falls back to the English name.
+function trailName(td){return td?(isTR&&td.nameTR?td.nameTR:td.name):'';}
+
 // ═══ ZONES ═══
 const ZONES = [
   {min:0,bg:'#0a0a1a',accent:'#00e5ff'},
@@ -146,17 +242,33 @@ const ZONES = [
   {min:251,bg:'#0d0020',accent:'#d500f9'}
 ];
 
+// ═══ GAME MODES ═══
+// Each entry carries the per-run knobs startGame() reads.
+// classic MUST reproduce the current endless behavior exactly:
+//   botCount = MAX_BOTS (12), startLength = 22, timeLimit = 0 (endless).
+// rush is a placeholder for the future Rush task — timeLimit stored but
+// not wired into update() yet; classic behavior is unchanged.
+const MODES = [
+  {id:'classic',  name:'classic',  botCount:MAX_BOTS, startLength:22, timeLimit:0},
+  {id:'rush',     name:'rush',     botCount:MAX_BOTS, startLength:22, timeLimit:90},
+  // Boss Rush (Wave 3.1): fewer ambient bots, back-to-back bosses. The run's
+  // "score" proxy is waves-cleared (runWaves), not points. timeLimit 0 = endless.
+  {id:'bossrush', name:'bossrush', botCount:4,        startLength:22, timeLimit:0}
+];
+let mode = 'classic';
+
 const BOT_NAMES = ['Viper','Neon','Pixel','Blaze','Zenith','Shadow','Echo','Pulse','Flux','Nova','Glitch','Storm','Phantom','Cobra','Fang','Specter','Volt','Drift','Shard','Ember','Frost','Raze','Spark','Thorn','Wrath','Crimson','Zephyr','Onyx','Cipher','Apex','Bolt','Razor','Haze','Quake','Jolt','Turbo','Byte','Nexus','Rogue','Blitz'];
 
 // ═══ STATE ═══
 let state = 'menu';
+let gBlobs={};
 // Drop any stale touch/joystick state so a finger held during a state change
 // (e.g. tapping a menu button) doesn't leak into the next screen and steer
 // the snake by accident.
 function resetTouchState(){
   for(const k in touches)delete touches[k];
   joystick.active=false;joystick.dx=0;joystick.dy=0;
-  skinScrollLastY=null;
+  skinScrollLastY=null;achScrollLastY=null;
   if(player)player.boosting=false;
 }
 // Main-menu Settings overlay: same Sound / Music / Vibration toggles as the
@@ -164,6 +276,20 @@ function resetTouchState(){
 let showSettings=false;
 let score = 0, highScore = 0, deathCount = 0, totalKills = 0, totalGames = 0;
 let player = null, snakes = [], foods = [], powerups = [], particles = [];
+// Pre-allocated shockwave pool — never grows after init.
+const shockwaves = [];
+(function(){for(let i=0;i<SHK_MAX;i++)shockwaves.push({active:false,x:0,y:0,t:0,dur:0,maxR:0,r:0,g:0,b:0,big:false});}());
+let shkHead = 0; // ring-buffer write cursor
+// Cosmetic trail (axis #2): selected trail index + owned set. 'none' (0) is
+// free + owned from boot. Persisted via saveBlob('cos',{trail,owned}).
+let currentTrail = 0, unlockedTrails = [0];
+// Pre-allocated cosmetic-trail particle pool — ring-buffer, never grows. Kept
+// separate from the gameplay `particles` array so trails never starve the
+// kill/eat burst budget (MAX_PARTICLES). Each slot is overwritten in place.
+const trailParts = [];
+(function(){for(let i=0;i<TRAIL_MAX;i++)trailParts.push({active:false,x:0,y:0,vx:0,vy:0,life:0,ml:1,size:2,r:255,g:255,b:255,style:0,rot:0});}());
+let trailHead = 0;        // ring-buffer write cursor
+let trailSpawnAcc = 0;    // cadence accumulator (seconds) for the selected trail
 let spatialGrid = {};
 let camera = {x:WCX, y:WCY, zoom:1};
 let joystick = {active:false, cx:0, cy:0, dx:0, dy:0, angle:0};
@@ -172,11 +298,36 @@ let skinScroll = 0, killerName = '';
 let frameCount = 0, foodSpawnTimer = 0, puSpawnTimer = 0;
 let flashAlpha = 0, flashColor = '#fff';
 let adFailedMsg = 0, buyFailedMsg = 0, hasRevived = false;
+let lastRunEarned = 0, doubleClaimed = false;
 let unlockToast = 0, unlockToastName = '';
 let unlockCheckTimer = 0;
 let currentRank = 0, playTime = 0, showTutorial = false;
+// Active run time limit (0 = endless classic; > 0 = timed mode like Rush).
+// Set in startGame() from the selected mode's timeLimit.
+let runTimeLimit = 0;
+// Per-mode best scores: {classic: N, rush: N, …}. Persisted via saveBlob('bests',{}).
+let bestByMode = {};
 let lastLoginDate = '', loginStreak = 0;
-let dailyToast = 0, dailyAmount = 0, dailyStreakVal = 0;
+// ─── ACHIEVEMENTS (Wave 3.3) ─────────────────────────────────────────────────
+// Surface dead lifetime stats as unlockable badges. State persisted via
+// saveBlob('ach',{unlocked:[...ids], bossKills:n, apex:bool}) — additive, no
+// native message changes. achUnlocked is the source of truth that guards
+// against re-granting a toast/coin reward. bossKills is a NEW persisted lifetime
+// counter (incremented on every boss slay); achApex is a sticky lifetime flag
+// (true once the player has ever hit rank #1 in a run). runReachedApex is the
+// per-run mirror, set live in update() and folded into achApex at run-end.
+let achUnlocked = [], achBossKills = 0, achApex = false, runReachedApex = false;
+let achScroll = 0; // achievements list scroll offset (px)
+// ─── DAILY REWARD MODAL (Wave 2.3) ───────────────────────────────────────────
+// Escalating 7-day ladder: day index 0..6 cycles (day 7+ repeats at 6).
+const DAILY_REWARDS = [50, 80, 120, 180, 260, 380, 600];
+let dailyAvailable = false;   // true = bonus ready, not yet claimed
+let dailyClaimIdx = 0;        // index into DAILY_REWARDS for today's claim
+let dailyPendingStreak = 0;   // the streak value that will be committed on CLAIM
+let showDailyModal = false;   // overlay flag (mirrors showSettings pattern)
+let showMissionsPanel = false; // overlay flag — daily-missions panel (mirrors showDailyModal pattern)
+let dailyStreakSaveOffered = false; // streak-save can only fire once per break
+let dailyStreakPreBreak = 0;  // streak value before a miss, for ad restore
 let quitConfirmTimer = 0, kingToast = 0, coinsAtStart = 0;
 // Hit-pause: short global freeze the moment the player kills or is killed,
 // gives every collision a beat of weight (D3 in the polish plan).
@@ -186,8 +337,22 @@ let hitPauseTimer = 0;
 let deathCamTimer = 0;
 const DEATH_CAM_S = 0.55;
 let pendingSkinBuy = -1;
+let pendingTrailBuy = -1; // index into TRAILS awaiting buy-confirm, -1 = none
 let scorePopups = [];
 let soundOn = true, musicOn = true, vibrationOn = true;
+// Reduced-motion: when true, gate the heaviest additive VFX (boost glow/speed-lines,
+// shockwave rings, zone-entry sweep) for motion-sensitive players + low-end devices.
+// Gameplay is identical; only cosmetic 'lighter'-composite effects are suppressed.
+let reducedMotion = false;
+// ═══ LIVING EYES (Wave 3.2) ═══
+// Synchronized blink: a single shared accumulator drives every snake's eyes so
+// the whole field blinks together. eyeBlinkT counts up in seconds via gdt and
+// fires a blink (eyeBlinkP 1→0 over EYE_BLINK_DUR) every EYE_BLINK_GAP. Driven
+// once per update() frame — NOT per-frame allocation, NOT a per-frame coin-flip.
+let eyeBlinkT = 0;       // seconds since last blink fired
+let eyeBlinkP = 0;       // active blink progress 1→0 (0 = eyes fully open)
+const EYE_BLINK_GAP = 4.2;   // seconds between blinks
+const EYE_BLINK_DUR = 0.14;  // seconds a single blink lasts
 let coins = 0, topScores = [];
 let shakeTimer = 0, shakeMag = 0;
 let kingActive = false, nextKingScore = 2000;
@@ -250,6 +415,11 @@ function killComboMult(){
 }
 let zoneBg = '#0a0a1a', zoneAccent = '#00e5ff';
 let targetZoneBg = '#0a0a1a', targetZoneAccent = '#00e5ff';
+// ═══ BIOME GRADIENT CACHE ═══
+// Rebuilt ONLY when zoneBg settles/changes or W/H changes — never per-frame.
+let bgGrad = null, bgGradKey = '', bgGradW = 0, bgGradH = 0;
+// Current zone index (0-based); used to detect zone-entry for the sweep ring.
+let zoneIdx = 0;
 let gdt = 0;
 
 // ═══ AUDIO ═══
@@ -277,33 +447,308 @@ function sndKingSlain(){for(let i=0;i<6;i++)tone(440+i*110,'sine',0.12,0.05,i*0.
 function sndZone(){for(let i=0;i<5;i++)tone(330+i*80,'sine',0.15,0.04,i*0.06);}
 function sndMenu(){tone(440,'sine',0.15,0.04);postMsg({type:'HAPTIC',data:'light'});}
 
-// ═══ AMBIENT MUSIC (simple synthesized loop) ═══
+// ═══ AMBIENT MUSIC (calm generative pad engine — Wave 2.0) ═══
+// ── Tunable parameters ──────────────────────────────────────────────────
+const PAD_CHORD_INTERVAL_MIN = 4500;  // ms: minimum gap between chords
+const PAD_CHORD_INTERVAL_RANGE= 2500;  // ms: random range added on top (organic feel)
+const PAD_ATTACK    = 1.0;            // s: gain fade-in per pad note
+const PAD_HOLD      = 2.5;            // s: sustain at peak before release begins
+const PAD_RELEASE   = 2.8;            // s: gain fade-out
+const PAD_PEAK_GAIN = 0.022;          // peak gain per chord voice (2-3 voices → total ~0.05)
+const PAD_FILTER_HZ = 650;            // lowpass cutoff (keeps it muffled/warm, not bright)
+const PAD_DETUNE_HZ = 3;              // chorus detuning ±Hz for the doubled oscillators
+const TWINKLE_PROB  = 0.33;           // probability of a sparse high twinkle per chord (0=off)
+const TWINKLE_GAIN  = 0.009;          // gain for twinkle accent (very quiet)
+// ── Chord progression: root + fifth + octave (Cm-pentatonic-ish, low register) ──
+// Each entry is [root_Hz, fifth_Hz, third_Hz] — all in the 100-260 Hz range (warm/deep)
+const PAD_CHORDS = [
+  [110.00, 164.81, 130.81],   // A2 – E3 – C#3  (A minor feel, low)
+  [ 87.31, 130.81, 110.00],   // F2 – C3 – A2   (F major feel)
+  [130.81, 196.00, 164.81],   // C3 – G3 – E3   (C major, warm)
+  [ 98.00, 146.83, 123.47],   // G2 – D3 – B2   (G major, grounded)
+];
+// ────────────────────────────────────────────────────────────────────────
 let musicTimer=null,musicStep=0;
-const MUSIC_NOTES=[174.61,196.00,220.00,261.63,196.00,233.08,261.63,329.63];
+function _padNote(freq,now){
+  // Two slightly detuned oscillators → gentle chorus warmth
+  try{
+    const total=PAD_ATTACK+PAD_HOLD+PAD_RELEASE;
+    [freq-PAD_DETUNE_HZ,freq+PAD_DETUNE_HZ].forEach(function(f){
+      const o=ac.createOscillator(),g=ac.createGain(),lp=ac.createBiquadFilter();
+      o.type='sine';
+      o.frequency.setValueAtTime(f,now);
+      lp.type='lowpass';lp.frequency.setValueAtTime(PAD_FILTER_HZ,now);
+      g.gain.setValueAtTime(0,now);
+      g.gain.linearRampToValueAtTime(PAD_PEAK_GAIN/2,now+PAD_ATTACK);  // /2 because two oscs
+      g.gain.setValueAtTime(PAD_PEAK_GAIN/2,now+PAD_ATTACK+PAD_HOLD);
+      g.gain.linearRampToValueAtTime(0.0001,now+PAD_ATTACK+PAD_HOLD+PAD_RELEASE);
+      o.connect(lp);lp.connect(g);g.connect(ac.destination);
+      o.start(now);o.stop(now+total+0.1);
+    });
+  }catch(e){}
+}
 function musicTick(){
   if(!musicOn||!ac)return;
-  const note=MUSIC_NOTES[musicStep%MUSIC_NOTES.length];
   try{
     const now=ac.currentTime;
-    const o=ac.createOscillator(),g=ac.createGain(),f=ac.createBiquadFilter();
-    o.type='triangle';o.frequency.setValueAtTime(note,now);
-    f.type='lowpass';f.frequency.setValueAtTime(900,now);
-    g.gain.setValueAtTime(0,now);
-    g.gain.linearRampToValueAtTime(0.025,now+0.05);
-    g.gain.linearRampToValueAtTime(0,now+0.7);
-    o.connect(f);f.connect(g);g.connect(ac.destination);
-    o.start(now);o.stop(now+0.75);
+    const chord=PAD_CHORDS[musicStep%PAD_CHORDS.length];
+    chord.forEach(function(f){_padNote(f,now);});
+    // Optional sparse twinkle — single quiet high sine
+    if(Math.random()<TWINKLE_PROB){
+      const hi=chord[0]*4+(Math.random()-0.5)*30;  // ~4 octaves up from root, tiny wobble
+      try{
+        const to=ac.createOscillator(),tg=ac.createGain(),tl=ac.createBiquadFilter();
+        to.type='sine';to.frequency.setValueAtTime(hi,now);
+        tl.type='lowpass';tl.frequency.setValueAtTime(900,now);
+        tg.gain.setValueAtTime(0,now);
+        tg.gain.linearRampToValueAtTime(TWINKLE_GAIN,now+0.6);
+        tg.gain.linearRampToValueAtTime(0.0001,now+2.5);
+        to.connect(tl);tl.connect(tg);tg.connect(ac.destination);
+        to.start(now);to.stop(now+2.7);
+      }catch(e){}
+    }
   }catch(e){}
   musicStep++;
+  // Re-arm with organic, varied delay so chords never feel mechanical
+  const delay=PAD_CHORD_INTERVAL_MIN+Math.random()*PAD_CHORD_INTERVAL_RANGE;
+  musicTimer=setTimeout(musicTick,delay);
 }
 function startMusic(){
   if(musicTimer||!musicOn)return;
-  musicTick();
-  musicTimer=setInterval(musicTick,750);
+  musicTick();  // play first chord immediately; musicTick re-arms itself via setTimeout
 }
 function stopMusic(){
-  if(musicTimer){clearInterval(musicTimer);musicTimer=null;}
+  if(musicTimer){clearTimeout(musicTimer);musicTimer=null;}
 }
+
+// ═══ PROGRESSION (XP / LEVEL) ═══
+// Cumulative XP to reach level L: XP_BASE*(L-1)*L/2
+// L2=120 L3=360 L4=720 L5=1200 L8=3360 L12=7920 L16=14400
+const XP_BASE=120;
+const XP_PER_SCORE=8;   // 1 XP per 8 score points
+const XP_PER_KILL=4;    // 4 XP per kill
+const MILESTONES={3:200,5:500,8:1000,12:2500,16:5000}; // level → coin reward
+let xp=0, plevel=1;
+function levelForXp(x){let l=1;while(x>=XP_BASE*l*(l+1)/2)l++;return l;}
+function xpForLevel(L){return XP_BASE*(L-1)*L/2;}   // cumulative XP needed to REACH level L
+function xpInLevel(x){return x-xpForLevel(plevel);}  // XP earned inside current level
+// Grant rewards for every level crossed in (prevLevel, newLevel]: a per-level
+// toast (unless suppressed) plus any MILESTONES coin payout. The coin payout is
+// NEVER suppressed — both awardXp and the mission XP path route through here so
+// mission-driven level-ups still pay out milestones.
+function grantLevelRewards(prevLevel,newLevel,suppressToast){
+  for(let l=prevLevel+1;l<=newLevel;l++){
+    if(!suppressToast){
+      showToast((isTR?'SEVİYE '+l+'!':'LEVEL '+l+'!'),'success');
+      sndPowerup();
+    }
+    if(MILESTONES[l]!==undefined){
+      const reward=MILESTONES[l];
+      coins+=reward;saveCoins();
+      showToast((L.milestone+reward+' 🪙'),'success');
+    }
+  }
+}
+function awardXp(runScore,runKills){
+  const gain=Math.floor(runScore/XP_PER_SCORE)+runKills*XP_PER_KILL;
+  if(gain<=0)return;
+  const prevLevel=plevel;
+  xp+=gain;
+  plevel=levelForXp(xp);
+  grantLevelRewards(prevLevel,plevel,false);
+  saveBlob('prog',{xp:xp,lvl:plevel});
+}
+
+// ═══ ACHIEVEMENTS ═══
+// Each entry: {id, name(L-key), desc(L-key), check()→bool}. check() reads only
+// EXISTING counters/state, so achievements are pure derived data — nothing here
+// drives gameplay. Evaluated at run-end and on relevant events (boss slay). A
+// newly-true check whose id is not yet in achUnlocked fires ONCE: toast + small
+// coin reward, then the id is recorded so it can never re-grant.
+const ACH_COIN_REWARD = 100; // one-time payout per achievement unlocked
+const ACHIEVEMENTS = [
+  {id:'first_blood', name:'achFirstBlood', desc:'achFirstBloodD', check:function(){return totalKills>=1;}},
+  {id:'centurion',   name:'achCenturion',  desc:'achCenturionD',  check:function(){return totalKills>=100;}},
+  {id:'regular',     name:'achRegular',    desc:'achRegularD',    check:function(){return totalGames>=50;}},
+  {id:'apex',        name:'achApex',       desc:'achApexD',       check:function(){return achApex;}},
+  {id:'boss_slayer', name:'achBossSlayer', desc:'achBossSlayerD', check:function(){return achBossKills>=1;}},
+  {id:'boss_lord',   name:'achBossLord',   desc:'achBossLordD',   check:function(){return achBossKills>=25;}},
+  {id:'dedicated',   name:'achDedicated',  desc:'achDedicatedD',  check:function(){return loginStreak>=7;}},
+  {id:'veteran',     name:'achVeteran',    desc:'achVeteranD',    check:function(){return plevel>=10;}},
+  {id:'rush_master', name:'achRushMaster', desc:'achRushMasterD', check:function(){return (bestByMode['rush']||0)>=5000;}},
+  {id:'high_roller', name:'achHighRoller', desc:'achHighRollerD', check:function(){return Math.max(highScore,bestByMode['classic']||0)>=10000;}}
+];
+function achIsUnlocked(id){return achUnlocked.indexOf(id)>=0;}
+function persistAch(){saveBlob('ach',{unlocked:achUnlocked.slice(),bossKills:achBossKills,apex:achApex});}
+function loadAch(){
+  const a=loadBlob('ach',{unlocked:[],bossKills:0,apex:false});
+  achUnlocked=Array.isArray(a.unlocked)?a.unlocked.filter(function(x){return typeof x==='string';}):[];
+  achBossKills=(typeof a.bossKills==='number'&&a.bossKills>0)?a.bossKills|0:0;
+  achApex=a.apex===true;
+}
+// Evaluate every achievement; unlock + reward any newly-satisfied one. Returns
+// the count newly unlocked. Guarded by achUnlocked so nothing re-grants. Persist
+// once at the end (covers both the new unlocks and any bossKills/apex changes
+// the caller already mutated before calling).
+function evaluateAchievements(){
+  let newCount=0;
+  for(let i=0;i<ACHIEVEMENTS.length;i++){
+    const a=ACHIEVEMENTS[i];
+    if(achIsUnlocked(a.id))continue;
+    let ok=false;try{ok=!!a.check();}catch(e){ok=false;}
+    if(ok){
+      achUnlocked.push(a.id);
+      newCount++;
+      coins+=ACH_COIN_REWARD;
+      showToast('🏆 '+L.achUnlocked+' '+L[a.name]+' +'+ACH_COIN_REWARD+' 🪙','success');
+      sndPowerup();
+    }
+  }
+  if(newCount>0)saveCoins();
+  persistAch();
+  return newCount;
+}
+
+// ═══ SCORE TIERS (Bronze→Master) ═══
+// Named rank tiers DERIVED from the player's CLASSIC best (highScore). Pure
+// read-only: NO new persisted state — reads the existing highScore. Thresholds
+// are tunable. tierForScore() returns the highest tier whose min ≤ score;
+// nextTier() returns the next tier above it (or null at Master).
+const TIERS=[
+  {name:'Bronze',  nameTR:'Bronz',  min:0,     color:'#cd7f32'},
+  {name:'Silver',  nameTR:'Gümüş',  min:2000,  color:'#c0c0c0'},
+  {name:'Gold',    nameTR:'Altın',  min:5000,  color:'#ffd700'},
+  {name:'Platinum',nameTR:'Platin', min:10000, color:'#7fffd4'},
+  {name:'Diamond', nameTR:'Elmas',  min:18000, color:'#5ec8ff'},
+  {name:'Master',  nameTR:'Usta',   min:30000, color:'#ff5edb'}
+];
+function tierForScore(s){let t=TIERS[0];for(let i=0;i<TIERS.length;i++){if(s>=TIERS[i].min)t=TIERS[i];else break;}return t;}
+function nextTier(s){for(let i=0;i<TIERS.length;i++){if(s<TIERS[i].min)return TIERS[i];}return null;}
+function tierName(t){return isTR?t.nameTR:t.name;}
+// Format a per-mode best value for display. Boss Rush bests are a raw wave
+// count (runWaves), not a points score, so suffix them with the localized wave
+// unit to disambiguate from points bests at every readout site.
+function formatModeBest(modeId,v){return modeId==='bossrush'?(v+' '+L.wave):(''+v);}
+
+// ═══ DAILY MISSIONS ═══
+// Deterministic seeded PRNG (mulberry32 variant).
+function _missionPrng(seed){
+  let s=seed>>>0;
+  return function(){s+=0x6D2B79F5;let t=s;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};
+}
+// String hash: small deterministic integer from a date string like '2026-6-2'.
+function _missionSeed(key){
+  let h=0x811c9dc5;for(let i=0;i<key.length;i++){h^=key.charCodeAt(i);h=Math.imul(h,0x01000193)|0;}
+  return h>>>0;
+}
+// Mission pool — each entry has a type, label template fn, target array, and check fn.
+// check(stats) receives {score, kills, kingKills, playTime}.
+const MISSION_POOL=[
+  {type:'score',
+   labelFn:function(t){return isTR?L.missionScore.replace('{t}',t):L.missionScore.replace('{t}',t);},
+   targets:[2000,3500,5000],
+   check:function(t,st){return st.score>=t;}},
+  {type:'kills',
+   labelFn:function(t){return isTR?L.missionKills.replace('{t}',t):L.missionKills.replace('{t}',t);},
+   targets:[5,8,12],
+   check:function(t,st){return st.kills>=t;}},
+  {type:'king',
+   labelFn:function(){return L.missionKing;},
+   targets:[1],
+   check:function(t,st){return st.kingKills>=t;}},
+  {type:'survive',
+   labelFn:function(t){return isTR?L.missionSurvive.replace('{t}',t):L.missionSurvive.replace('{t}',t);},
+   targets:[60,90],
+   check:function(t,st){return st.playTime>=t;}}
+];
+let missions=[];       // [{type,target,label,done}] — 3 active for today
+let missionDay='';     // todayKey() when missions were last rolled
+let missionBonusDone=false; // today's all-3 bonus flag, restored by loadMissions
+// Menu missions-summary-chip geometry (shared by drawMenu + handleMenuTap).
+// FY is a fraction of usable height; chip sits where the old 3-row strip began.
+const MISSIONS_CHIP_FY=0.335, MISSIONS_CHIP_H=30;
+function _rollMissions(){
+  const key=todayKey();
+  const rng=_missionPrng(_missionSeed(key));
+  // Pick 3 DISTINCT indices from MISSION_POOL.
+  const pool=MISSION_POOL.slice();
+  const picked=[];
+  for(let i=pool.length-1;i>0&&picked.length<3;i--){
+    const j=Math.floor(rng()*(i+1));const tmp=pool[i];pool[i]=pool[j];pool[j]=tmp;
+    picked.push(pool[i]);
+  }
+  if(picked.length<3)picked.push(pool[0]); // safety (pool has 4 items, so this is unreachable)
+  missions=picked.slice(0,3).map(function(mp){
+    const tArr=mp.targets;
+    const t=tArr[Math.floor(rng()*tArr.length)];
+    return {type:mp.type,target:t,label:mp.labelFn(t),done:false,_mp:mp};
+  });
+  missionDay=key;
+}
+// Roll today's missions, then restore done/bonus from the missions blob.
+// persist=true writes the (possibly reset) state back; the boot caller passes
+// false so it does NOT insert a missions blob into gBlobs before the native
+// STATS floor arrives (which would block adoption of the native missions copy).
+// Returns the today-or-not-matched bonus flag so callers can re-persist later.
+function loadMissions(persist){
+  const def={day:'',done:[false,false,false],bonus:false};
+  const m=loadBlob('missions',def);
+  _rollMissions(); // always roll fresh from todayKey seed
+  const sameDay=m.day===todayKey();
+  // Reset done flags first (a re-run after the floor must drop any stale
+  // done-state that was restored from a pre-floor / different-day blob).
+  for(let i=0;i<missions.length;i++)missions[i].done=false;
+  if(sameDay){
+    // Restore done states from today's persist.
+    for(let i=0;i<3;i++){if(m.done[i])missions[i].done=true;}
+  }
+  const bonusDone=sameDay?m.bonus:false;
+  missionBonusDone=bonusDone; // remember for a deferred persist (web-only fallback)
+  // Persist current state (handles fresh day reset) only when asked.
+  if(persist)_saveMissions(bonusDone);
+  return bonusDone;
+}
+function _saveMissions(bonusDone){
+  saveBlob('missions',{day:missionDay,done:missions.map(function(m){return m.done;}),bonus:!!bonusDone});
+}
+// Evaluate missions at run-end. stats = {score, kills, kingKills, playTime}.
+// bonusDone is passed in so we can grant the all-3 bonus once.
+function evaluateMissions(stats){
+  const persisted=loadBlob('missions',{day:'',done:[false,false,false],bonus:false});
+  const bonusAlreadyDone=persisted.bonus||false;
+  let anyNew=false;
+  for(let i=0;i<missions.length;i++){
+    const m=missions[i];
+    if(m.done)continue;
+    const mp=MISSION_POOL.find(function(p){return p.type===m.type;});
+    if(mp&&mp.check(m.target,stats)){
+      m.done=true;anyNew=true;
+      // Per-mission reward: 150 coins + 80 XP. Route the level-up through
+      // grantLevelRewards (toast suppressed to avoid spam) so any crossed
+      // milestone STILL pays out its coin reward.
+      coins+=150;saveCoins();
+      const prevLevel=plevel;
+      xp+=80;plevel=levelForXp(xp);
+      grantLevelRewards(prevLevel,plevel,true);
+      saveBlob('prog',{xp:xp,lvl:plevel});
+      showToast('✓ '+m.label,'success');
+    }
+  }
+  // All-3 bonus — fires once per day.
+  const allDone=missions.every(function(m){return m.done;});
+  const bonusDone=bonusAlreadyDone||(allDone&&anyNew&&!bonusAlreadyDone);
+  if(allDone&&!bonusAlreadyDone&&anyNew){
+    coins+=300;saveCoins();
+    showToast(L.missionBonus,'success');
+  }
+  _saveMissions(bonusDone);
+}
+// Per-run King kill counter — reset in startGame, incremented in killSnake.
+let runKingKills=0;
+// Per-run Boss-Rush wave counter (Wave 3.1) — reset in startGame, incremented
+// each time a boss is slain while mode==='bossrush'. Doubles as that mode's
+// score proxy (bestByMode['bossrush'] tracks max runWaves).
+let runWaves=0;
 
 // ═══ POSTMESSAGE BRIDGE ═══
 let adReady = {interstitial:false, rewarded:false, rewardedLoading:false};
@@ -317,7 +762,18 @@ window.addEventListener('message',function(e){
     const m=typeof e.data==='string'?JSON.parse(e.data):e.data;
     if(m.type==='AD_REWARD_EARNED'&&m.data){
       if(m.data.reward==='continue')revivePlayer();
-      else if(m.data.reward==='coins'){coins+=100;saveCoins();showToast(L.coinsEarned,'success');sndPowerup();}
+      else if(m.data.reward==='coins'){const amt=75+Math.floor(Math.random()*226);coins+=amt;saveCoins();showToast('+'+amt+' 🪙','success');sndPowerup();}
+      else if(m.data.reward==='double'){if(!doubleClaimed&&lastRunEarned>0){coins+=lastRunEarned;doubleClaimed=true;saveCoins();showToast('+'+lastRunEarned+' 🪙','success');sndPowerup();}}
+      else if(m.data.reward==='streak'){
+        // Streak-save via rewarded ad — restore pre-break streak, recompute claim index.
+        if(dailyStreakSaveOffered&&dailyStreakPreBreak>1){
+          // Restore streak: the pending streak is now consecutive from the saved value.
+          dailyPendingStreak=dailyStreakPreBreak+1;
+          dailyClaimIdx=Math.min(6,Math.max(0,dailyPendingStreak-1));
+          saveLogin();showToast(L.streakSaved,'success');sndPowerup();
+          dailyStreakSaveOffered=false; // once only
+        }
+      }
     }
     if(m.type==='AD_FAILED'){
       const reward=m.data&&m.data.reward;
@@ -343,16 +799,50 @@ window.addEventListener('message',function(e){
       if(typeof s.totalKills==='number')totalKills=Math.max(totalKills,s.totalKills);
       if(typeof s.totalGames==='number')totalGames=Math.max(totalGames,s.totalGames);
       if(typeof s.totalDeaths==='number')deathCount=Math.max(deathCount,s.totalDeaths);
+      // Adopt native blob namespaces only where local lacks them (first-load floor — never overwrite).
+      let adoptedBlob=false;
+      if(m.data.blob&&typeof m.data.blob==='object'){for(const ns in m.data.blob){if(!(ns in gBlobs)){gBlobs[ns]=m.data.blob[ns];adoptedBlob=true;}}}
+      // Floor-merge complete: native backup has been read, so future saveStats
+      // pushes are safe. Give any adopted namespaces a durable local home.
+      statsReconciled=true;
+      if(adoptedBlob){
+        persistBlobs();
+        // Re-hydrate the LIVE game vars from the just-adopted blobs. Without
+        // this, the boot-time reads (run BEFORE this async round-trip) left
+        // xp/level, bests, achievements, trails, missions and the daily guard
+        // at fresh-install defaults; the FIRST gameplay write would then push
+        // those stale defaults back over the adopted data — corrupting BOTH
+        // the local blob and the native backup in exactly the cross-device
+        // restore case the floor exists for. persistMissions=true now: the
+        // native missions namespace (if any) has already been adopted above,
+        // so writing the restored missions blob can no longer block adoption.
+        hydrateBlobState(true);
+      }
     }
     if(m.type==='SKIN_STATE_LOADED'&&m.data){
       const s=m.data;
-      if(Array.isArray(s.unlocked))for(const idx of s.unlocked)if(typeof idx==='number'&&!unlockedSkins.includes(idx))unlockedSkins.push(idx);
+      // Range-guard idx (matches loadSkins migration) so a future SKINS reorder
+      // can't slip a stale native index through.
+      if(Array.isArray(s.unlocked))for(const idx of s.unlocked)if(typeof idx==='number'&&idx>=0&&idx<SKINS.length&&!unlockedSkins.includes(idx))unlockedSkins.push(idx);
       if(typeof s.current==='number'&&unlockedSkins.includes(s.current))currentSkin=s.current;
     }
   }catch(e){}
 });
 
 // ═══ PERSISTENCE ═══
+// ─── V1.3 SAVE BLOBS (namespaced, versioned, additive) ───
+// One authoritative localStorage key holds every v1.3 namespace; the native
+// mirror rides inside the STATS payload (blob field) as a first-load floor only.
+const V13_KEY='growio_v13', V13_VER=1;
+function loadBlobs(){try{const d=localStorage.getItem(V13_KEY);if(d){const o=JSON.parse(d);if(o&&typeof o==='object')gBlobs=o;}}catch(e){}if(typeof gBlobs!=='object'||!gBlobs)gBlobs={};gBlobs.v=V13_VER;}
+function persistBlobs(){try{localStorage.setItem(V13_KEY,JSON.stringify(gBlobs));}catch(e){}saveStats();}
+function loadBlob(ns,defaults){const cur=(gBlobs&&typeof gBlobs[ns]==='object')?gBlobs[ns]:null;const out={};
+  // No defaults (or empty object) → whole-object mode: return a copy of every
+  // stored key in the namespace (supports dynamic-key namespaces like bests/ach/cos).
+  let hasDefault=false;for(const k in defaults){hasDefault=true;break;}
+  if(!hasDefault){if(cur)for(const k in cur)out[k]=cur[k];return out;}
+  for(const k in defaults)out[k]=(cur&&k in cur)?cur[k]:defaults[k];return out;}
+function saveBlob(ns,obj){gBlobs[ns]=obj;persistBlobs();}
 function saveHS(){if(score>highScore){highScore=score;try{localStorage.setItem('growio_hs',String(highScore));}catch(e){}postMsg({type:'SAVE_HIGH_SCORE',data:highScore});}}
 function loadHSLocal(){try{const v=parseInt(localStorage.getItem('growio_hs'));if(!isNaN(v)&&v>highScore)highScore=v;}catch(e){}}
 function saveSkins(){try{localStorage.setItem('growio_skins',JSON.stringify(unlockedSkins));}catch(e){}postMsg({type:'SAVE_SKIN_STATE',data:{current:currentSkin,unlocked:unlockedSkins.slice()}});}
@@ -363,9 +853,16 @@ function loadSkins(){
   for(let i=0;i<5;i++)if(!unlockedSkins.includes(i))unlockedSkins.push(i);
   if(currentSkin<0||currentSkin>=SKINS.length)currentSkin=0;
 }
-function saveStats(){try{localStorage.setItem('growio_stats',JSON.stringify({tk:totalKills,tg:totalGames,cs:currentSkin,td:deathCount}));}catch(e){}postMsg({type:'SAVE_STATS',data:{totalKills:totalKills,totalGames:totalGames,totalDeaths:deathCount}});postMsg({type:'SAVE_SKIN_STATE',data:{current:currentSkin,unlocked:unlockedSkins.slice()}});}
+// Persist cosmetic-trail state (axis #2) through the v1.3 blob store.
+function saveTrails(){saveBlob('cos',{trail:currentTrail,owned:unlockedTrails.slice()});}
+function saveStats(){try{localStorage.setItem('growio_stats',JSON.stringify({tk:totalKills,tg:totalGames,cs:currentSkin,td:deathCount}));}catch(e){}if(statsReconciled)postMsg({type:'SAVE_STATS',data:{totalKills:totalKills,totalGames:totalGames,totalDeaths:deathCount,blob:gBlobs}});postMsg({type:'SAVE_SKIN_STATE',data:{current:currentSkin,unlocked:unlockedSkins.slice()}});}
 function loadStats(){try{const d=localStorage.getItem('growio_stats');if(d){const s=JSON.parse(d);totalKills=s.tk||0;totalGames=s.tg||0;currentSkin=s.cs||0;deathCount=s.td||0;}}catch(e){}}
 let coinsHadLocal=false,coinsReconciled=false;
+// Hold the native SAVE_STATS push (xp/level/bests/daily/missions blob) until the
+// STATS_LOADED floor-merge has run, so a boot-time saveStats (e.g. loadMissions's
+// _saveMissions) can't clobber the native backup BEFORE the native copy is read.
+// localStorage stays authoritative and is written unconditionally below.
+let statsReconciled=false;
 // Hold the native SAVE_COINS push until the first reconcile completes, so a
 // boot-time save (e.g. the daily bonus) can't overwrite the native backup
 // BEFORE reconcileLoadedCoins has read it. localStorage is written immediately
@@ -393,8 +890,8 @@ function reconcileLoadedCoins(localCoins,hadLocal,nativeCoins,firstLoad){
 // corrupt/half-flushed value must fall through to the native-backup branch
 // instead of locking in 0 and healing the backup down to 0.
 function loadCoins(){try{const raw=localStorage.getItem('growio_coins');const n=parseInt(raw,10);coinsHadLocal=Number.isFinite(n);coins=Number.isFinite(n)?n:0;}catch(e){}postMsg({type:'LOAD_COINS'});}
-function saveSettings(){try{localStorage.setItem('growio_settings',JSON.stringify({s:soundOn,m:musicOn,v:vibrationOn}));}catch(e){}}
-function loadSettings(){try{const d=localStorage.getItem('growio_settings');if(d){const s=JSON.parse(d);soundOn=s.s!==false;musicOn=s.m!==false;vibrationOn=s.v!==false;}}catch(e){}}
+function saveSettings(){try{localStorage.setItem('growio_settings',JSON.stringify({s:soundOn,m:musicOn,v:vibrationOn,r:reducedMotion}));}catch(e){}}
+function loadSettings(){try{const d=localStorage.getItem('growio_settings');if(d){const s=JSON.parse(d);soundOn=s.s!==false;musicOn=s.m!==false;vibrationOn=s.v!==false;reducedMotion=s.r===true;}}catch(e){}}
 function saveTopScores(){try{localStorage.setItem('growio_top',JSON.stringify(topScores));}catch(e){}}
 function loadTopScores(){try{const d=localStorage.getItem('growio_top');if(d)topScores=JSON.parse(d)||[];}catch(e){}}
 function loadTutorialSeen(){try{showTutorial=!localStorage.getItem('growio_tutorial');}catch(e){showTutorial=true;}}
@@ -402,29 +899,147 @@ function todayKey(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+
 function loadLogin(){try{const d=localStorage.getItem('growio_login');if(d){const s=JSON.parse(d);lastLoginDate=s.d||'';loginStreak=s.s||0;}}catch(e){}}
 function saveLogin(){try{localStorage.setItem('growio_login',JSON.stringify({d:lastLoginDate,s:loginStreak}));}catch(e){}}
 function checkDailyBonus(){
-  const today=todayKey();if(today===lastLoginDate)return;
+  const today=todayKey();
+  // Guard: already claimed today via the blob (reopening app mid-day must not re-open modal).
+  const dailyBlob=loadBlob('daily',{claimedDay:''});
+  if(today===lastLoginDate&&dailyBlob.claimedDay===today){dailyAvailable=false;return;}
+  if(today===lastLoginDate&&dailyAvailable)return; // already set pending
   if(!lastLoginDate){lastLoginDate=today;saveLogin();return;}
-  const y=new Date();y.setDate(y.getDate()-1);const yKey=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();
-  loginStreak=(lastLoginDate===yKey)?loginStreak+1:1;lastLoginDate=today;saveLogin();
-  const bonus=Math.min(25+loginStreak*5,250);coins+=bonus;saveCoins();
-  dailyToast=5;dailyAmount=bonus;dailyStreakVal=loginStreak;
+  // Determine yesterday's key to check for consecutive-day streak.
+  const yDate=new Date();yDate.setDate(yDate.getDate()-1);
+  const yKey=yDate.getFullYear()+'-'+(yDate.getMonth()+1)+'-'+yDate.getDate();
+  const consecutive=(lastLoginDate===yKey);
+  if(!consecutive&&loginStreak>1&&!dailyStreakSaveOffered){
+    // Missed a day — offer streak-save before resetting.
+    dailyStreakPreBreak=loginStreak;
+    dailyStreakSaveOffered=true;
+  }
+  // Compute new streak (will be applied on CLAIM, not here).
+  dailyPendingStreak=consecutive?loginStreak+1:1;
+  // Day-index into ladder: 0-based, cycle at 6.
+  dailyClaimIdx=Math.min(6,Math.max(0,dailyPendingStreak-1));
+  dailyAvailable=true;
+  // NOTE: lastLoginDate is intentionally NOT advanced here. It commits only on a
+  // successful CLAIM, so a force-quit before claiming lets the next same-day
+  // re-entry recompute the IDENTICAL pending streak (idempotent) instead of
+  // demoting the player to day-1.
+  showDailyModal=true; // auto-open on first menu entry
 }
 function markTutorialSeen(){try{localStorage.setItem('growio_tutorial','1');}catch(e){}showTutorial=false;}
 function addTopScore(s){if(s<=0){currentRank=0;return;}const entry={s,d:Date.now()};topScores.push(entry);topScores.sort((a,b)=>b.s-a.s);topScores=topScores.slice(0,10);saveTopScores();currentRank=topScores.indexOf(entry)+1;}
 // Tougher prices: every category roughly doubled vs. v1.1.x. The plan asks
 // for a steeper economy curve so Rainbow at s30000 → 6000 coin and the
 // other tiers scale with it.
+// ─── skinPrice ───────────────────────────────────────────────────────────────
+// Returns the coin COST to purchase a skin, or 0 if the skin cannot be bought.
+//
+// Rail breakdown:
+//   free  → 0  (already owned from boot)
+//   earn  → 0  (unlocked by score threshold; never purchasable)
+//   coins → tiered curve below  ← TUNABLE BALANCE KNOB
+//
+// Coins-only (k/l/g) price curve — targets a ~2-4 week earn arc:
+//   k20  → 400   k50  →  900   k100 → 1800   k150 → 2500
+//   l100 → 500   l250 → 1200   l500 → 2200
+//   g100 → 6500
+// Formula per type (v = numeric threshold, used only as a rough scale signal):
+//   k : base 400 + (v-20)*14   (capped at 2500)
+//   l : base 500 + (v-100)*3.4 (capped at 2200)
+//   g : flat 6500 (Matrix is the prestige endgame coin sink)
 function skinPrice(sk){
-  const u=sk.u;if(u==='free')return 0;
-  const t=u[0],v=parseInt(u.slice(1));
-  if(t==='s')return Math.max(100,Math.floor(v/5));   // s1000 → 200,  s30000 → 6000
-  if(t==='k')return Math.max(200,v*40);              // k20  → 800,  k150  → 6000
-  if(t==='l')return Math.max(200,v*6);               // l100 → 600,  l500  → 3000
-  if(t==='g')return Math.max(200,v*20);              // g100 → 2000
-  return 1000;
+  const rail=skinRail(sk);
+  if(rail==='free'||rail==='earn')return 0;          // not purchasable
+  const t=sk.u[0],v=parseInt(sk.u.slice(1));
+  // ── TUNABLE numbers below ──────────────────────────────────────────────────
+  if(t==='k')return Math.min(2500,Math.round(400+(v-20)*14));  // 400 – 2500
+  if(t==='l')return Math.min(2200,Math.round(500+(v-100)*3.4));// 500 – 2200
+  if(t==='g')return 6500;                                       // prestige sink
+  // ── end tunable ────────────────────────────────────────────────────────────
+  return 1000; // fallback (should never be reached with current SKINS table)
 }
+
+// ═══ FEATURED SHOP SLOT (Wave 3.4) ═══
+// A weekly-rotating "Featured" pick shown at the top of the shop. The week index
+// is a pure function of the runtime calendar date (UTC day-count since the epoch
+// ÷ 7) — no backend, fully deterministic: same week → same pick on every device.
+// The chosen item(s) get a FEATURED badge and a small discount (FEATURED_DISCOUNT).
+// CRITICAL: every price read — display AND the coin-deduction in the buy path —
+// goes through featuredSkinPrice/featuredTrailPrice, so the shown number is the
+// charged number (no mismatch / underflow possible).
+const FEATURED_DISCOUNT=0.8; // ← TUNABLE: 0.8 = 20% off the featured item this week
+// Day-count since the Unix epoch in UTC (date read at runtime — not server-bound).
+function _weekIndex(){return Math.floor(Date.now()/86400000/7);}
+// Candidate pools (static, built once): coins-rail skin indices + coins-only trail
+// indices. Earn/free skins and the free 'none' trail are excluded (nothing to buy).
+const _featSkinPool=(function(){const a=[];for(let i=0;i<SKINS.length;i++)if(skinRail(SKINS[i])==='coins')a.push(i);return a;})();
+const _featTrailPool=(function(){const a=[];for(let i=0;i<TRAILS.length;i++)if(TRAILS[i].price>0)a.push(i);return a;})();
+// Memoized weekly pick: {week, skin:idx|-1, trail:idx|-1}. Recomputed only when the
+// week rolls over, so draw/tap never redo the PRNG work.
+let _featCache=null;
+function featuredPick(){
+  const wk=_weekIndex();
+  if(_featCache&&_featCache.week===wk)return _featCache;
+  const rng=_missionPrng(_missionSeed('feat-'+wk));
+  // Always feature one coins-rail skin.
+  const skin=_featSkinPool.length?_featSkinPool[Math.floor(rng()*_featSkinPool.length)]:-1;
+  // ~50% of weeks also feature a trail (1-2 items total), deterministically.
+  let trail=-1;
+  if(_featTrailPool.length&&rng()<0.5)trail=_featTrailPool[Math.floor(rng()*_featTrailPool.length)];
+  _featCache={week:wk,skin:skin,trail:trail};
+  return _featCache;
+}
+// Discounted price for a skin idx: full price if NOT this week's featured skin,
+// else floor(full*DISCOUNT) (floor → charged ≤ shown, never an underflow).
+function featuredSkinPrice(idx){const base=skinPrice(SKINS[idx]);if(base<=0)return base;return idx===featuredPick().skin?Math.floor(base*FEATURED_DISCOUNT):base;}
+function featuredTrailPrice(idx){const base=TRAILS[idx].price;if(base<=0)return base;return idx===featuredPick().trail?Math.floor(base*FEATURED_DISCOUNT):base;}
+function isFeaturedSkin(idx){return idx===featuredPick().skin;}
+function isFeaturedTrail(idx){return idx===featuredPick().trail;}
+
+// ─── hydrateBlobState ──────────────────────────────────────────────────────
+// Read every blob-backed LIVE game var (prog xp/level, last-mode, bestByMode,
+// achievements, cosmetic trails, missions, and the daily guard) out of gBlobs
+// into memory. Called BOTH at boot AND again inside the STATS_LOADED handler
+// after the native floor-merge adopts native namespaces — so a cross-device
+// restore (native blob present, local growio_v13 absent) leaves the live state
+// consistent with the adopted data instead of stranding it at boot defaults
+// (which the first gameplay write would then push back over the adopted blob,
+// corrupting BOTH layers). persistMissions controls whether the missions blob
+// is written back: false at boot (so it can't pre-insert a missions namespace
+// that blocks native adoption), true on the post-floor re-run.
+function hydrateBlobState(persistMissions){
+  // Progression XP/level.
+  {const p=loadBlob('prog',{xp:0,lvl:1});xp=p.xp|0;plevel=levelForXp(xp);}
+  // Last-played mode (persisted via saveBlob('opts',{mode})).
+  {const o=loadBlob('opts',{mode:'classic'});if(MODES.some(function(m){return m.id===o.mode;}))mode=o.mode;}
+  // Per-mode best scores (flat object: {classic:N, rush:N, …}).
+  {const b=loadBlob('bests',{});bestByMode=b;}
+  // Achievements (unlocked set + persisted boss-kill counter + apex flag).
+  loadAch();
+  // Cosmetic trail selection + owned set (axis #2). 'none' (0) is always owned;
+  // sanitise any persisted indices against the current TRAILS table.
+  {
+    const c=loadBlob('cos',{trail:0,owned:[0]});
+    const owned=Array.isArray(c.owned)?c.owned.filter(function(i){return typeof i==='number'&&i>=0&&i<TRAILS.length;}):[0];
+    if(owned.indexOf(0)<0)owned.push(0);
+    unlockedTrails=owned;
+    const t=c.trail|0;
+    currentTrail=(t>=0&&t<TRAILS.length&&owned.indexOf(t)>=0)?t:0;
+  }
+  // Missions done/bonus restore (re-rolls fresh from todayKey, restores done
+  // states). Boot defers the write; the post-floor re-run persists it.
+  loadMissions(!!persistMissions);
+  // Re-evaluate the daily guard against the (possibly newly-adopted) daily blob
+  // so a same-day claimedDay floored in from native suppresses a duplicate
+  // bonus modal. checkDailyBonus is same-day idempotent.
+  checkDailyBonus();
+}
+
 loadHSLocal();
-loadSkins(); loadStats(); loadCoins(); loadSettings(); loadTopScores(); loadTutorialSeen(); loadLogin(); checkDailyBonus();
+loadBlobs(); loadSkins(); loadStats(); loadCoins(); loadSettings(); loadTopScores(); loadTutorialSeen(); loadLogin();
+// Boot hydration. Missions write is deferred (false) so the native STATS floor
+// can still adopt native missions; it is persisted either by the post-floor
+// re-run in STATS_LOADED or by the web-only fallback below.
+hydrateBlobState(false);
 // Defer bridge LOADs until the next frame so window.ReactNativeWebView is
 // guaranteed to be ready, then retry once at +500ms if hostBridgeSeen is still
 // false (covers slow native injection on cold launch).
@@ -437,6 +1052,13 @@ function pingBridge(){
 }
 requestAnimationFrame(pingBridge);
 setTimeout(function(){if(!hostBridgeSeen)pingBridge();},500);
+// Web-only / bridge-absent fallback: the boot hydrateBlobState(false) deferred
+// the missions blob write so a native STATS floor could still adopt native
+// missions. When there is no host bridge, STATS_LOADED never fires, so persist
+// the (already-restored, today-seeded) missions blob here once it's clear no
+// floor is coming. Guarded by !statsReconciled so a real floor (which re-runs
+// hydrateBlobState(true) itself) is never double-written.
+setTimeout(function(){if(!hostBridgeSeen&&!statsReconciled)_saveMissions(missionBonusDone);},1200);
 // Re-poll ad readiness periodically (host pushes too, but this catches early misses)
 // Re-poll ad readiness every 10s in foreground only. Stored ID lets the
 // visibility/blur handlers stop & restart it (no leak across re-mounts).
@@ -489,6 +1111,33 @@ function lerpColor(c1,c2,t){
 }
 function hsl(h,s,l){return 'hsl('+h+','+s+'%,'+l+'%)';}
 function clampWorld(x,y){const dx=x-WCX,dy=y-WCY,d=Math.sqrt(dx*dx+dy*dy);if(d<WR-20)return{x,y};const a=Math.atan2(dy,dx);return{x:WCX+Math.cos(a)*(WR-20),y:WCY+Math.sin(a)*(WR-20)};}
+// ─── Biome gradient builder ───────────────────────────────────────────────────
+// Produces a cached radial gradient for the background fill.  The inner stop is
+// the current zoneBg colour; the outer stop is a darkened version so the edges
+// fade toward black — giving each biome a subtle depth/vignette.  Called at most
+// a handful of times during a ~1 s zone lerp (guarded by a quantised key), never
+// per-frame once the colour settles.
+function _darkenHex(c,f){
+  // f in 0..1: how much to darken (multiply each channel by (1-f)).
+  const r=parseInt(c.slice(1,3),16),g=parseInt(c.slice(3,5),16),b=parseInt(c.slice(5,7),16);
+  const dr=Math.round(r*(1-f)),dg=Math.round(g*(1-f)),db=Math.round(b*(1-f));
+  return '#'+(dr<16?'0':'')+dr.toString(16)+(dg<16?'0':'')+dg.toString(16)+(db<16?'0':'')+db.toString(16);
+}
+function buildBgGrad(){
+  // Centre: slightly lighter (multiply toward white at 1.25×, clamped).
+  const pr=parseInt(zoneBg.slice(1,3),16),pg=parseInt(zoneBg.slice(3,5),16),pb=parseInt(zoneBg.slice(5,7),16);
+  const lr=Math.min(255,Math.round(pr*1.25+8)),lg=Math.min(255,Math.round(pg*1.25+8)),lb=Math.min(255,Math.round(pb*1.25+8));
+  const inner='#'+(lr<16?'0':'')+lr.toString(16)+(lg<16?'0':'')+lg.toString(16)+(lb<16?'0':'')+lb.toString(16);
+  const outer=_darkenHex(zoneBg,0.55);
+  // The gradient covers the screen in screen-space (before world transform).
+  const grd=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.sqrt(W*W+H*H)*0.5);
+  grd.addColorStop(0,inner);
+  grd.addColorStop(1,outer);
+  bgGrad=grd;
+  bgGradW=W;bgGradH=H;
+  // Note: bgGradKey is set by the caller (quantised) so this function only
+  // updates the gradient object and the dimension guard.
+}
 
 // ═══ SPATIAL GRID ═══
 function resetGrid(){spatialGrid={};}
@@ -535,6 +1184,178 @@ function drawParticles(){
     ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life,0,TAU);ctx.fill();
   }
   ctx.globalAlpha=1;
+}
+
+// ═══ SHOCKWAVES (kill/death burst) ═══
+// Pool is pre-allocated at boot; spawnShock() overwrites the oldest slot —
+// never allocates. updateShocks/drawShocks contain NO new/filter/map calls.
+function _parseHex(c){
+  // Returns {r,g,b} 0-255 from a CSS hex color. Falls back to white.
+  let h=(c||'#ffffff').replace('#','');
+  if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  // Parse each channel; fall back to 255 ONLY on NaN (a true parse failure).
+  // A legitimate 00 byte must NOT be coerced to 255 — half the SKINS palette
+  // (e.g. default #00e5ff) has a 00 channel and was rendering pinkish-white.
+  const ri=parseInt(h.slice(0,2),16),gi=parseInt(h.slice(2,4),16),bi=parseInt(h.slice(4,6),16);
+  return{r:isNaN(ri)?255:ri,g:isNaN(gi)?255:gi,b:isNaN(bi)?255:bi};
+}
+function spawnShock(x,y,color,big){
+  // reducedMotion: suppress shockwave rings entirely (cosmetic only — no gameplay state here).
+  if(reducedMotion)return;
+  // Grab next pool slot (ring-buffer: overwrites oldest, O(1), no alloc).
+  const slot=shockwaves[shkHead];
+  shkHead=(shkHead+1)%SHK_MAX;
+  const rgb=_parseHex(color);
+  slot.active=true;slot.x=x;slot.y=y;slot.t=0;
+  slot.dur=big?0.55:0.38;
+  slot.maxR=big?220:120;
+  slot.r=rgb.r;slot.g=rgb.g;slot.b=rgb.b;
+  slot.big=!!big;
+}
+function updateShocks(dt){
+  for(let i=0;i<SHK_MAX;i++){
+    const s=shockwaves[i];
+    if(!s.active)continue;
+    s.t+=dt;
+    if(s.t>=s.dur)s.active=false;
+  }
+}
+function drawShocks(){
+  // Additive composite is strictly bounded between save/restore.
+  ctx.save();
+  ctx.globalCompositeOperation='lighter';
+  for(let i=0;i<SHK_MAX;i++){
+    const s=shockwaves[i];
+    if(!s.active)continue;
+    const p=s.t/s.dur;               // 0→1 progress
+    // Smooth ease-out for radius; fade alpha out sharply in last quarter
+    const ep=1-(1-p)*(1-p);          // ease-out quad
+    const radius=ep*s.maxR;
+    const alpha=Math.max(0,(1-p)*(1-p)*0.7); // squared fade, peak 0.7 → 0
+    if(alpha<0.005)continue;
+    const lw=Math.max(1,(1-p)*(s.big?7:4));
+    // Expanding ring stroke
+    ctx.beginPath();
+    ctx.arc(s.x,s.y,radius,0,TAU);
+    ctx.strokeStyle='rgba('+s.r+','+s.g+','+s.b+','+alpha+')';
+    ctx.lineWidth=lw;
+    ctx.stroke();
+    // Soft radial glow — single gradient fill circle, very transparent
+    if(p<0.55){
+      const glowR=radius*(s.big?1.5:1.4);
+      const glowA=alpha*0.35;
+      const grd=ctx.createRadialGradient(s.x,s.y,radius*0.35,s.x,s.y,glowR);
+      grd.addColorStop(0,'rgba('+s.r+','+s.g+','+s.b+','+glowA+')');
+      grd.addColorStop(1,'rgba('+s.r+','+s.g+','+s.b+',0)');
+      ctx.beginPath();ctx.arc(s.x,s.y,glowR,0,TAU);
+      ctx.fillStyle=grd;ctx.fill();
+    }
+  }
+  ctx.restore(); // globalCompositeOperation reset to 'source-over'
+}
+
+// ═══ COSMETIC TRAILS (axis #2) ═══
+// Pooled, ring-buffered particle trail emitted from the player snake's body.
+// spawnTrailParticle() overwrites the oldest slot (O(1), NO alloc). The richer
+// additive styles ('neon','rainbow') are suppressed under reducedMotion at the
+// spawn site, and their additive draw pass is strictly save/restore-bounded.
+// style codes (cached on the slot so the draw loop needs no TRAILS lookup):
+//   0 sparkle  1 embers  2 neon  3 bubbles  4 rainbow
+function _trailSlot(){const s=trailParts[trailHead];trailHead=(trailHead+1)%TRAIL_MAX;s.active=true;s.life=1;return s;}
+function spawnTrailParticle(x,y){
+  if(currentTrail<=0)return;                 // 'none' = no trail
+  const td=TRAILS[currentTrail];if(!td)return;
+  if(td.rich&&reducedMotion)return;          // gate heaviest styles for reduced-motion
+  const id=td.id;
+  if(id==='sparkle'){
+    const s=_trailSlot();s.x=x+rand(-3,3);s.y=y+rand(-3,3);s.vx=rand(-12,12);s.vy=rand(-12,12);s.ml=rand(0.35,0.6);s.size=rand(1.2,2.4);
+    const rgb=_parseHex(td.col);s.r=rgb.r;s.g=rgb.g;s.b=rgb.b;s.style=0;
+  }else if(id==='embers'){
+    const s=_trailSlot();s.x=x+rand(-2,2);s.y=y+rand(-2,2);s.vx=rand(-8,8);s.vy=rand(-26,-6);s.ml=rand(0.4,0.75);s.size=rand(1.4,2.8);
+    s.r=255;s.g=randInt(90,180);s.b=randInt(0,40);s.style=1;
+  }else if(id==='neon'){
+    const s=_trailSlot();s.x=x;s.y=y;s.vx=rand(-6,6);s.vy=rand(-6,6);s.ml=rand(0.25,0.45);s.size=rand(2.2,3.6);
+    const rgb=_parseHex(td.col);s.r=rgb.r;s.g=rgb.g;s.b=rgb.b;s.style=2;
+  }else if(id==='bubbles'){
+    const s=_trailSlot();s.x=x+rand(-4,4);s.y=y+rand(-4,4);s.vx=rand(-10,10);s.vy=rand(-22,-4);s.ml=rand(0.5,0.95);s.size=rand(2.2,4.5);
+    const rgb=_parseHex(td.col);s.r=rgb.r;s.g=rgb.g;s.b=rgb.b;s.style=3;
+  }else if(id==='rainbow'){
+    const s=_trailSlot();s.x=x+rand(-3,3);s.y=y+rand(-3,3);s.vx=rand(-14,14);s.vy=rand(-14,14);s.ml=rand(0.3,0.55);s.size=rand(1.8,3.2);
+    const hue=(frameCount*6)%360;const rc=_hslToRgb(hue,0.85,0.6);s.r=rc.r;s.g=rc.g;s.b=rc.b;s.style=4;
+  }
+}
+// Emit from the player's body while playing, throttled to the trail's cadence.
+// Spawns at a near-head segment so the trail reads as flowing off the snake.
+function emitPlayerTrail(dt){
+  if(currentTrail<=0||!player||!player.alive||state!=='playing')return;
+  const td=TRAILS[currentTrail];if(!td||td.rate<=0)return;
+  trailSpawnAcc+=dt;
+  // Cap catch-up to 3 spawns/frame so a long dt (tab resume) can't burst-alloc.
+  let guard=0;
+  while(trailSpawnAcc>=td.rate&&guard<3){
+    trailSpawnAcc-=td.rate;guard++;
+    const segs=player.segments;
+    const seg=segs[Math.min(2,segs.length-1)]||segs[0];
+    spawnTrailParticle(seg.x,seg.y);
+  }
+  if(trailSpawnAcc>td.rate*4)trailSpawnAcc=0; // clamp accumulator drift
+}
+function updateTrailParts(dt){
+  for(let i=0;i<TRAIL_MAX;i++){
+    const p=trailParts[i];
+    if(!p.active)continue;
+    p.x+=p.vx*dt;p.y+=p.vy*dt;
+    p.vx*=0.93;p.vy*=0.93;
+    // embers/bubbles drift upward (buoyant); others settle with light gravity.
+    if(p.style===1||p.style===3)p.vy-=18*dt;else p.vy+=20*dt;
+    p.life-=dt/p.ml;
+    if(p.life<=0)p.active=false;
+  }
+}
+// Non-additive styles (sparkle/embers/bubbles). Drawn inside the world
+// transform, BEFORE the additive pass. No save/restore needed (source-over).
+function drawTrailPartsBase(){
+  for(let i=0;i<TRAIL_MAX;i++){
+    const p=trailParts[i];
+    if(!p.active||p.style===2||p.style===4)continue;
+    const lf=p.life<0?0:p.life;
+    if(p.style===3){ // bubbles: translucent ring
+      ctx.globalAlpha=lf*0.5;ctx.strokeStyle='rgba('+p.r+','+p.g+','+p.b+',1)';ctx.lineWidth=1;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.size*(0.6+lf*0.6),0,TAU);ctx.stroke();
+    }else{ // sparkle / embers: filled dot
+      ctx.globalAlpha=lf;ctx.fillStyle='rgb('+p.r+','+p.g+','+p.b+')';
+      ctx.beginPath();ctx.arc(p.x,p.y,p.size*(0.4+lf*0.8),0,TAU);ctx.fill();
+    }
+  }
+  ctx.globalAlpha=1;
+}
+// Additive styles (neon/rainbow). Strictly save/restore-bounded 'lighter' pass,
+// and gated behind !reducedMotion (spawn already suppresses them, this is a
+// belt-and-braces guard so a mid-run toggle stops drawing leftover particles).
+function drawTrailPartsAdditive(){
+  if(reducedMotion)return;
+  let any=false;
+  for(let i=0;i<TRAIL_MAX;i++){const p=trailParts[i];if(p.active&&(p.style===2||p.style===4)){any=true;break;}}
+  if(!any)return;
+  ctx.save();
+  ctx.globalCompositeOperation='lighter';
+  for(let i=0;i<TRAIL_MAX;i++){
+    const p=trailParts[i];
+    if(!p.active||(p.style!==2&&p.style!==4))continue;
+    const lf=p.life<0?0:p.life;
+    ctx.globalAlpha=lf*0.85;
+    ctx.fillStyle='rgb('+p.r+','+p.g+','+p.b+')';
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size*(0.5+lf*0.9),0,TAU);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  ctx.restore(); // composite reset to 'source-over'
+}
+// HSL→RGB (0..255) for the rainbow trail. h in degrees, s/l in 0..1.
+function _hslToRgb(h,s,l){
+  h=((h%360)+360)%360/360;
+  const q=l<0.5?l*(1+s):l+s-l*s,pp=2*l-q;
+  function hue(t){if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return pp+(q-pp)*6*t;if(t<1/2)return q;if(t<2/3)return pp+(q-pp)*(2/3-t)*6;return pp;}
+  return{r:Math.round(hue(h+1/3)*255),g:Math.round(hue(h)*255),b:Math.round(hue(h-1/3)*255)};
 }
 
 // ═══ FOOD ═══
@@ -595,6 +1416,8 @@ const TUT_CARDS = [
    desc:isTR?'Büyük yılanları kafanla ezdir':'Make bigger snakes hit your body'},
   {color:'#76ff03',icon:'⚙',title:isTR?'GÜÇLER':'POWER-UPS',
    desc:isTR?'⚡ hız · 🛡 kalkan · 🧲 mıknatıs · 👻 hayalet':'⚡ speed · 🛡 shield · 🧲 magnet · 👻 ghost'},
+  {color:'#ffd600',icon:'★',title:isTR?'KAZAN':'EARN',
+   desc:isTR?'Günlük görevler, 3 mod, skin & iz aç':'Daily missions, 3 game modes, unlock skins & trails'},
 ];
 function spawnPowerup(){
   if(powerups.length>=MAX_POWERUPS)return;
@@ -664,7 +1487,11 @@ function createSnake(isPlayer,x,y,skinIdx){
     killCount:0,invulnTimer:0,
     aiTimer:rand(0,0.2),respawnTimer:0,isKing:false,
     skill:0.6+rand(0,0.4), // per-bot skill multiplier 0.6..1
-    pathHistory:pathHistory,_lastHX:x,_lastHY:y
+    pathHistory:pathHistory,_lastHX:x,_lastHY:y,
+    // Eat-punch (Wave 3.2): short-lived scalar 0→eases back, scales the head on
+    // food pickup. Stored on the snake so the per-frame draw reads it with zero
+    // allocation. Only the player ever sets it (eat feedback is player-gated).
+    headPunch:0
   };
 }
 
@@ -835,6 +1662,16 @@ function checkCollisions(){
           score+=pts;coins+=Math.max(1,Math.floor(pts*0.3));
           if(inZone)addScorePopup(f.x,f.y,'+'+pts,'#ffd600');
           sndCollect();postMsg({type:'HAPTIC',data:'light'});
+          // Eat feedback (Wave 3.2): head scale-punch + a short absorb streak
+          // pulling from the food toward the head. Player-only. The streak reuses
+          // the existing particle pool (capped at MAX_PARTICLES, swap-removed),
+          // spawned only on this discrete pickup — no per-frame allocation.
+          s.headPunch=Math.min(0.5,s.headPunch+0.35);
+          const _ax=angleTo(f,head);
+          for(let k=0;k<3&&particles.length<MAX_PARTICLES;k++){
+            const _sp=140+k*40;
+            particles.push({x:f.x,y:f.y,vx:Math.cos(_ax)*_sp,vy:Math.sin(_ax)*_sp,life:1,ml:0.22,color:f.color,size:2.2});
+          }
         }
         spawnP(f.x,f.y,f.color,3,60,2);foods.splice(i,1);
       }
@@ -880,26 +1717,65 @@ function killSnake(victim,killer,cause){
       addScorePopup(victim.segments[0].x,victim.segments[0].y,popupTxt,popupCol);
       if(victim.length>killer.length){const bonus=Math.min((victim.length-killer.length)*2,500);score+=bonus;coins+=Math.ceil(bonus/6);flashAlpha=0.25;flashColor='#ff1744';addScorePopup(victim.segments[0].x,victim.segments[0].y-25,'+'+bonus+' BIG','#ffd600');}
       spawnP(victim.segments[0].x,victim.segments[0].y,SKINS[victim.skin].c[0],20,120,3);
+      // Shockwave: player kills a bot — use the victim's primary skin color, normal size.
+      spawnShock(victim.segments[0].x,victim.segments[0].y,SKINS[victim.skin].c[0],false);
     }
     if(victim.isKing&&killer.isPlayer){
       score+=KING_SCORE_REWARD;coins+=KING_COIN_REWARD;sndKingSlain();postMsg({type:'HAPTIC',data:'heavy'});
-      flashAlpha=0.3;flashColor='#ffd600';nextKingScore=score+2000;
+      flashAlpha=0.3;flashColor='#ffd600';nextKingScore=score+2000;runKingKills++;
     }
     if(victim.isBoss&&killer.isPlayer){
       score+=BOSS_SCORE_REWARD;coins+=BOSS_COIN_REWARD;sndKingSlain();
       postMsg({type:'HAPTIC',data:'heavy'});
       flashAlpha=0.5;flashColor='#ffd600';shakeTimer=0.35;shakeMag=8;
       addScorePopup(victim.segments[0].x,victim.segments[0].y-30,'+'+BOSS_SCORE_REWARD+' BOSS','#ffd600');
-      showToast(isTR?'BOSS YENİLDİ! +'+BOSS_COIN_REWARD+' 🪙':'BOSS DEFEATED! +'+BOSS_COIN_REWARD+' 🪙','success');
+      // Boss Rush: count the cleared wave; the next boss auto-spawns once
+      // bossActive clears below. The toast announces the wave just cleared.
+      if(mode==='bossrush'){
+        runWaves++;
+        showToast(isTR?'DALGA '+runWaves+' TEMİZLENDİ!':'WAVE '+runWaves+' CLEARED!','success');
+      }else{
+        showToast(isTR?'BOSS YENİLDİ! +'+BOSS_COIN_REWARD+' 🪙':'BOSS DEFEATED! +'+BOSS_COIN_REWARD+' 🪙','success');
+      }
+      // Shockwave: boss slay — hot white-gold, biggest ring.
+      spawnShock(victim.segments[0].x,victim.segments[0].y,'#ffd600',true);
+      // Achievements: bump the lifetime boss-kill counter and evaluate now so
+      // Boss Slayer / Boss Lord toast the moment they're earned (persisted here
+      // too, so a counter increment survives even if the player quits the run).
+      achBossKills++;evaluateAchievements();
     }
   }
   if(victim.isKing){kingActive=false;if(!nextKingScore||nextKingScore<=score)nextKingScore=score+2000;}
   if(victim.isBoss){bossActive=false;if(!nextBossScore||nextBossScore<=score)nextBossScore=score+5000;}
   if(victim.isPlayer){
+    lastRunEarned=Math.max(0,coins-coinsAtStart);doubleClaimed=false;
     sndDeath();postMsg({type:'HAPTIC',data:'heavy'});
     flashAlpha=0.4;flashColor='#ff1744';shakeTimer=0.3;shakeMag=8;
-    killerName=killer?killer.name:(cause==='boundary'?'the boundary':'unknown');
-    deathCount++;saveHS();saveStats();saveCoins();addTopScore(score);checkUnlocks();saveSkins();
+    // Shockwave: player death — large red-orange burst centered on the player's head.
+    spawnShock(victim.segments[0].x,victim.segments[0].y,'#ff1744',true);
+    killerName=killer?killer.name:(cause==='boundary'?'the boundary':(cause==='timeout'?'time':'unknown'));
+    deathCount++;
+    // Per-mode best: update bestByMode[mode] if this run beats it. Boss Rush
+    // uses waves-cleared (runWaves) as its proxy; all other modes use score.
+    {
+      const runMetric=mode==='bossrush'?runWaves:score;
+      if(runMetric>0){
+        const prevBest=bestByMode[mode]||0;
+        if(runMetric>prevBest){bestByMode[mode]=runMetric;saveBlob('bests',bestByMode);}
+      }
+    }
+    // Classic: also maintain the existing highScore / topScores records unchanged.
+    if(mode==='classic'){saveHS();addTopScore(score);}
+    saveStats();saveCoins();checkUnlocks();saveSkins();
+    awardXp(score,player?player.killCount:0);
+    // Evaluate daily missions for this run.
+    evaluateMissions({score:score,kills:player?player.killCount:0,kingKills:runKingKills,playTime:playTime});
+    // Achievements: fold this run's apex flag in (live #1 during the run, or the
+    // final #1 rank addTopScore just stamped for classic), then evaluate the full
+    // set so any newly-earned badge toasts + pays out once. persistAch() inside
+    // captures the updated apex/bossKills alongside the unlocked set.
+    if(runReachedApex||currentRank===1)achApex=true;
+    evaluateAchievements();
     state='dead';
     resetTouchState();
     // Defensive: if a King was alive at the moment of death, clear the flag so
@@ -1037,18 +1913,21 @@ function updateBot(bot,dt){
 }
 
 // ═══ SKIN UNLOCKS ═══
+// Only 'free' and 'earn' (score-tier, u[0]==='s') skins auto-unlock here.
+// 'coins' skins (k/l/g) are NEVER granted for free — they require a shop purchase.
 function checkUnlocks(){
   const prev=unlockedSkins.length;let lastName='';
   for(let i=0;i<SKINS.length;i++){
     if(unlockedSkins.includes(i))continue;
-    const u=SKINS[i].u;if(u==='free'){unlockedSkins.push(i);lastName=SKINS[i].name;continue;}
-    const t=u[0],v=parseInt(u.slice(1));
-    let ok=false;
-    if(t==='s'&&score>=v)ok=true;
-    if(t==='k'&&totalKills>=v)ok=true;
-    if(t==='l'&&player&&player.length>=v)ok=true;
-    if(t==='g'&&totalGames>=v)ok=true;
-    if(ok){unlockedSkins.push(i);lastName=SKINS[i].name;}
+    const sk=SKINS[i];
+    const rail=skinRail(sk);
+    if(rail==='free'){unlockedSkins.push(i);lastName=sk.name;continue;}
+    if(rail==='earn'){
+      // Auto-unlock when score threshold is met
+      const v=parseInt(sk.u.slice(1));
+      if(score>=v){unlockedSkins.push(i);lastName=sk.name;}
+    }
+    // rail==='coins': do nothing — only purchasable via the shop
   }
   if(unlockedSkins.length>prev){saveSkins();if(lastName){unlockToast=3;unlockToastName=lastName;sndPowerup();}}
 }
@@ -1056,25 +1935,58 @@ function checkUnlocks(){
 // ═══ ZONE UPDATE ═══
 function updateZone(){
   if(!player)return;
-  let z=ZONES[0];for(const zn of ZONES)if(player.length>=zn.min)z=zn;
-  if(z.bg!==targetZoneBg){targetZoneBg=z.bg;targetZoneAccent=z.accent;sndZone();flashAlpha=0.35;flashColor=z.accent;postMsg({type:'HAPTIC',data:'medium'});}
+  let z=ZONES[0],zi=0;
+  for(let i=0;i<ZONES.length;i++){if(player.length>=ZONES[i].min){z=ZONES[i];zi=i;}}
+  if(z.bg!==targetZoneBg){
+    targetZoneBg=z.bg;targetZoneAccent=z.accent;
+    sndZone();flashAlpha=0.35;flashColor=z.accent;
+    postMsg({type:'HAPTIC',data:'medium'});
+    // ─── Zone-entry sweep ring ────────────────────────────────────────────────
+    // Only spawn when moving INTO a deeper zone (zi > zoneIdx), not on the
+    // initial zone-0 set or on zone resets between runs.
+    // Spawn two nested rings: one standard and one wide sweep that expands to
+    // ~600 world units over 0.8 s, so the player clearly sees a biome boundary
+    // crossing.  We patch maxR/dur on the slot right after spawnShock fills it
+    // (cursor has already advanced; last written slot = (shkHead-1+SHK_MAX)%SHK_MAX).
+    // reducedMotion gates the zone-entry sweep ring (cosmetic). Guard the slot
+    // patch behind the same flag so we never mutate a stale slot when spawnShock
+    // no-ops (shkHead would not have advanced).
+    if(zi>zoneIdx&&!reducedMotion){
+      spawnShock(WCX,WCY,z.accent,true);
+      const _sweepSlot=shockwaves[(shkHead-1+SHK_MAX)%SHK_MAX];
+      _sweepSlot.maxR=600;_sweepSlot.dur=0.85;
+    }
+    zoneIdx=zi;
+  }
   zoneBg=lerpColor(zoneBg,targetZoneBg,0.02);
   zoneAccent=lerpColor(zoneAccent,targetZoneAccent,0.02);
 }
 
 // ═══ GAME INIT ═══
-function startGame(){
-  initAudio();score=0;killCombo=0;killComboTimer=0;hasRevived=false;currentRank=0;
+function startGame(modeId){
+  // Resolve mode config; default to current global `mode`, then 'classic' as safety.
+  const _modeId=modeId||mode||'classic';
+  const _modeCfg=MODES.find(function(m){return m.id===_modeId;})||MODES[0];
+  // Update the global so HUD / other systems can read it.
+  mode=_modeCfg.id;
+  initAudio();score=0;killCombo=0;killComboTimer=0;hasRevived=false;currentRank=0;runKingKills=0;runWaves=0;runReachedApex=false;
   foods=[];powerups=[];particles=[];snakes=[];scorePopups=[];
   kingActive=false;nextKingScore=2000;
   bossActive=false;nextBossScore=5000;bossToast=0;
+  // Rush is a short (~90s) sprint that typically scores ~800-1500, so the
+  // default King/Boss gates (2000/5000) almost never fire. Pull the first
+  // King/Boss thresholds in for Rush only so the mode actually shows its
+  // headline spectacle. Re-arm after a kill still uses the per-mode offset
+  // logic in killSnake(). Boss-Rush manages its own boss cadence — leave it
+  // (and Classic, which keeps 2000/5000) untouched.
+  if(mode==='rush'){nextKingScore=900;nextBossScore=2500;}
   spawnComboZones(true); // silent on first spawn — no "moved" toast at game start
   spawnInitialFood();
   // Player starts with extra length so they have a real "boost reserve" up front.
   // Lock initial heading to "up" instead of random so the snake doesn't drift
   // in an unexpected direction during the spawn-protection window.
   player=createSnake(true,WCX,WCY,currentSkin);
-  player.length=22;player.invulnTimer=2.5;
+  player.length=_modeCfg.startLength;player.invulnTimer=2.5;
   player.angle=-PI/2;player.targetAngle=-PI/2;
   // Re-anchor the body trail so the visible segments line up behind the head
   // along the new facing — otherwise the random initial trail drawn by
@@ -1097,13 +2009,13 @@ function startGame(){
   }
   player._lastHX=WCX;player._lastHY=WCY;
   snakes.push(player);
-  for(let i=0;i<MAX_BOTS;i++){
+  for(let i=0;i<_modeCfg.botCount;i++){
     const sp=pickSafeBotSpawn(500);
     const b=createSnake(false,sp.x,sp.y);b.length=randInt(15,50);snakes.push(b);
   }
   for(let i=0;i<50;i++){const a=rand(0,TAU),r=rand(30,200);spawnFood(WCX+Math.cos(a)*r,WCY+Math.sin(a)*r,1);}
   camera.x=WCX;camera.y=WCY;camera.zoom=1;
-  state='playing';totalGames++;playTime=0;coinsAtStart=coins;saveStats();
+  state='playing';totalGames++;playTime=0;runTimeLimit=_modeCfg.timeLimit;coinsAtStart=coins;saveStats();
   lastBotStageMin=BOT_STAGES[0].min;
   hitPauseTimer=0;deathCamTimer=0;
   // Reset zone colours to ZONES[0] so a fresh run doesn't trigger a "new
@@ -1112,6 +2024,9 @@ function startGame(){
   const z0=ZONES[0];
   zoneBg=z0.bg;targetZoneBg=z0.bg;
   zoneAccent=z0.accent;targetZoneAccent=z0.accent;
+  // Reset biome state so the first frame of a new run starts from zone 0
+  // without triggering a false zone-entry sweep.
+  zoneIdx=0;bgGrad=null;bgGradKey='';
   resetTouchState();
 }
 
@@ -1122,11 +2037,15 @@ function update(dt){
   if(shakeTimer>0)shakeTimer-=dt;
   if(killComboTimer>0){killComboTimer-=dt;if(killComboTimer<=0)killCombo=0;}
   if(unlockToast>0)unlockToast-=dt;
-  if(dailyToast>0&&!showTutorial)dailyToast-=dt;
   if(quitConfirmTimer>0)quitConfirmTimer-=dt;
   if(kingToast>0&&state==='playing')kingToast-=dt;
   if(bossToast>0&&state==='playing')bossToast-=dt;
   if(deathCamTimer>0)deathCamTimer-=dt;
+  // Living-eyes blink accumulator (Wave 3.2). Time-driven, shared across all
+  // snakes. Ticks every frame (cheap) so eyes blink on menu/death too. When the
+  // gap elapses, fire a blink and decay it over EYE_BLINK_DUR.
+  if(eyeBlinkP>0){eyeBlinkP-=dt/EYE_BLINK_DUR;if(eyeBlinkP<0)eyeBlinkP=0;}
+  else{eyeBlinkT+=dt;if(eyeBlinkT>=EYE_BLINK_GAP){eyeBlinkT=0;eyeBlinkP=1;}}
   updateToasts(dt);
   if(state!=='playing')return;
   // Hit-pause: render keeps running (camera shake / death flash stay
@@ -1134,7 +2053,18 @@ function update(dt){
   // player death, giving the moment a beat of weight.
   if(hitPauseTimer>0){hitPauseTimer-=dt;return;}
   playTime+=dt;
-  unlockCheckTimer-=dt;if(unlockCheckTimer<=0){unlockCheckTimer=1.5;checkUnlocks();checkBotStageTransition();}
+  // Rush (or any timed mode) timeout: end the run as if the player died,
+  // but via a 'time' cause so the death screen says TIME'S UP instead of
+  // a killer name. Classic (runTimeLimit===0) never enters this branch.
+  if(runTimeLimit>0&&playTime>=runTimeLimit&&player&&player.alive){
+    killSnake(player,null,'timeout');
+  }
+  unlockCheckTimer-=dt;if(unlockCheckTimer<=0){unlockCheckTimer=1.5;checkUnlocks();checkBotStageTransition();
+    // Live apex detection (classic only): the player has reached #1 if their
+    // running score already beats the current top classic record. Sticky for the
+    // run (folded into achApex at run-end). No allocation — reads topScores[0].
+    if(mode==='classic'&&!runReachedApex&&score>0&&score>=((topScores[0]&&topScores[0].s)||0)&&topScores.length>0)runReachedApex=true;
+  }
   // 1) AI decisions once per frame (full dt for stable timer accumulation)
   //    Entry-guard: skip whole call if bot's think timer hasn't elapsed —
   //    saves a function call per bot per frame (~720 calls/s saved at 12 bots * 60fps).
@@ -1164,7 +2094,11 @@ function update(dt){
     checkCollisions();
   }
   gdt=dt;
-  updateParticles(dt);updateScorePopups(dt);
+  // Eat-punch decay (Wave 3.2): ease the player's head-scale punch back to 0.
+  // Exponential-ish decay; clamped so it never lingers. Player-only state.
+  if(player&&player.headPunch>0){player.headPunch-=dt*5;if(player.headPunch<0)player.headPunch=0;}
+  updateParticles(dt);updateScorePopups(dt);updateShocks(dt);
+  emitPlayerTrail(dt);updateTrailParts(dt);
   foodSpawnTimer-=dt;if(foodSpawnTimer<=0){foodSpawnTimer=0.2;spawnFood();}
   puSpawnTimer-=dt;if(puSpawnTimer<=0){puSpawnTimer=5;spawnPowerup();}
   // Combo zones drift to a fresh pair every COMBO_ZONE_INTERVAL seconds.
@@ -1189,15 +2123,24 @@ function update(dt){
     kingToast=3.5;flashAlpha=0.35;flashColor='#ffd600';shakeTimer=0.3;shakeMag=6;postMsg({type:'HAPTIC',data:'heavy'});
   }
   // Boss (D1) — rarer, every 5k score, length 300+, +30% speed, big rewards.
-  if(!bossActive&&score>=nextBossScore){
+  // Boss Rush (Wave 3.1): bosses spawn back-to-back regardless of score — the
+  // gate is just !bossActive, and each wave (runWaves) is longer/tougher. The
+  // re-arm is automatic: killSnake clears bossActive on a boss death, so the
+  // next frame spawns the next wave's boss. classic/rush keep the score-gate.
+  const _bossWanted=mode==='bossrush'?!bossActive:(!bossActive&&score>=nextBossScore);
+  if(_bossWanted){
     bossActive=true;sndKingSlain(); // dramatic chord, reused
     const bsp=pickSafeBotSpawn(700);
-    const b=createSnake(false,bsp.x,bsp.y);b.name='BOSS';b.isBoss=true;b.length=300+Math.floor(score/120);
+    const b=createSnake(false,bsp.x,bsp.y);b.name='BOSS';b.isBoss=true;
+    // Boss Rush length escalates per wave (waves cleared so far); classic/rush
+    // keep the existing score-driven length so they're byte-for-byte unchanged.
+    b.length=mode==='bossrush'?(260+runWaves*55):(300+Math.floor(score/120));
     b.personality='aggressive';b.skin=BOSS_SKIN_IDX;b.skill=1.0; // Blood skin, max skill
     snakes.push(b);
     bossToast=4;flashAlpha=0.45;flashColor='#ff1744';shakeTimer=0.45;shakeMag=9;
     postMsg({type:'HAPTIC',data:'heavy'});
-    showToast(isTR?'⚠ BOSS GELDİ!':'⚠ BOSS INCOMING!','error');
+    if(mode==='bossrush')showToast(isTR?'⚠ DALGA '+(runWaves+1)+'!':'⚠ WAVE '+(runWaves+1)+'!','error');
+    else showToast(isTR?'⚠ BOSS GELDİ!':'⚠ BOSS INCOMING!','error');
   }
   // Camera
   if(player&&player.alive){
@@ -1220,7 +2163,12 @@ const liveBotsBuf=[];           // reused each frame for snake z-ordering
 const byLength=(a,b)=>a.length-b.length;
 function render(){
   ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.fillStyle=zoneBg;ctx.fillRect(0,0,W,H);
+  // ─── Biome cached gradient background ───────────────────────────────────────
+  // Quantise zoneBg to 4-bit per channel so the gradient isn't rebuilt on every
+  // lerp micro-step — only when the colour shifts a visible amount (~1/16 step).
+  const _bgQKey=(parseInt(zoneBg.slice(1,3),16)>>4)+'|'+(parseInt(zoneBg.slice(3,5),16)>>4)+'|'+(parseInt(zoneBg.slice(5,7),16)>>4);
+  if(!bgGrad||bgGradKey!==_bgQKey||bgGradW!==W||bgGradH!==H){buildBgGrad();bgGradKey=_bgQKey;}
+  ctx.fillStyle=bgGrad;ctx.fillRect(0,0,W,H);
   if(state==='playing'||state==='dead'||state==='paused'){
     // Death cam: while the timer is running, ease the zoom up to ~1.25× over
     // the window so the moment of death feels heavier before the death screen
@@ -1237,21 +2185,33 @@ function render(){
     // Z-sort snakes: smaller bots first, bigger bots above; player always on top.
     // Reuse a module buffer (like hudLeaderboard) instead of allocating a fresh
     // filtered+sorted array + comparator closure every frame.
+    // Cosmetic trail (base / non-additive styles) sits UNDER the snakes so the
+    // body rides on top of its own trail.
+    drawTrailPartsBase();
     liveBotsBuf.length=0;
     for(let i=0;i<snakes.length;i++){const s=snakes[i];if(s.alive&&!s.isPlayer)liveBotsBuf.push(s);}
     liveBotsBuf.sort(byLength);
     for(const s of liveBotsBuf)drawSnake(s);
     if(player&&player.alive)drawSnake(player);
-    drawParticles();drawScorePopups();ctx.restore();
+    // Additive trail (neon/rainbow) in the effects layer alongside particles/shocks.
+    drawTrailPartsAdditive();
+    drawParticles();drawScorePopups();drawShocks();ctx.restore();
+    // Boundary danger glow (Wave 3.2): screen-space red edge vignette that
+    // intensifies as the player's head nears the arena rim. Drawn AFTER the
+    // world transform is popped (it hugs the screen edges, not the world).
+    if(state==='playing')drawBoundaryDanger();
     drawHUD();drawMinimap();
     if(joystick.active&&state==='playing')drawJoystick();
     if(state==='playing'){drawBoostFuel();drawPauseBtn();}
   }
-  if(state==='menu'){drawMenu();if(!showTutorial&&!showSettings&&dailyToast>0)drawDailyToast();if(showSettings)drawSettingsOverlay();}
+  if(state==='menu'){drawMenu();if(showSettings)drawSettingsOverlay();if(!showTutorial&&showDailyModal)drawDailyModal();if(!showTutorial&&!showDailyModal&&showMissionsPanel)drawMissionsPanel();}
   if(state==='dead')drawDeathScreen();
   if(state==='paused')drawPauseScreen();
   if(state==='skinselect')drawSkinSelect();
+  if(state==='trailselect')drawTrailSelect();
   if(state==='leaderboard')drawLeaderboard();
+  if(state==='achievements')drawAchievements();
+  if(state==='modeselect')drawModeSelect();
   // Tutorial overlay renders on top of menu / pause / playing only — never
   // over the death screen, where it would just confuse the player.
   if(showTutorial&&state!=='dead')drawTutorial();
@@ -1270,7 +2230,10 @@ function render(){
 
 // ═══ DRAW HELPERS ═══
 function drawGrid(){
-  ctx.strokeStyle='rgba(255,255,255,0.025)';ctx.lineWidth=1;
+  // Accent-tinted grid: parse zoneAccent and use it at very low alpha so each
+  // biome's grid reads differently (e.g. cyan lines in zone 0, teal in zone 1).
+  const _gr=parseInt(zoneAccent.slice(1,3),16),_gg=parseInt(zoneAccent.slice(3,5),16),_gb=parseInt(zoneAccent.slice(5,7),16);
+  ctx.strokeStyle='rgba('+_gr+','+_gg+','+_gb+',0.035)';ctx.lineWidth=1;
   const gs=100;
   const x1=Math.floor((camera.x-W/2/camera.zoom)/gs)*gs,x2=Math.ceil((camera.x+W/2/camera.zoom)/gs)*gs;
   const y1=Math.floor((camera.y-H/2/camera.zoom)/gs)*gs,y2=Math.ceil((camera.y+H/2/camera.zoom)/gs)*gs;
@@ -1316,9 +2279,43 @@ function drawStars(){
   ctx.globalAlpha=1;
 }
 function drawBoundary(){
+  // Inner hard stroke: accent-tinted (keeps the "danger zone" feel but reads
+  // as part of the current biome rather than a generic red ring).
+  const _br=parseInt(zoneAccent.slice(1,3),16),_bg2=parseInt(zoneAccent.slice(3,5),16),_bb=parseInt(zoneAccent.slice(5,7),16);
   ctx.beginPath();ctx.arc(WCX,WCY,WR,0,TAU);
-  ctx.strokeStyle='rgba(255,50,50,0.15)';ctx.lineWidth=4;ctx.stroke();
-  ctx.strokeStyle='rgba(255,50,50,0.06)';ctx.lineWidth=20;ctx.stroke();
+  ctx.strokeStyle='rgba('+_br+','+_bg2+','+_bb+',0.25)';ctx.lineWidth=4;ctx.stroke();
+  // Outer soft glow halo: wider, very transparent accent colour
+  ctx.strokeStyle='rgba('+_br+','+_bg2+','+_bb+',0.07)';ctx.lineWidth=24;ctx.stroke();
+}
+// BOUNDARY DANGER GLOW (Wave 3.2) — screen-space red vignette that fades in as
+// the player's head approaches the arena rim (within ~220px of WR). Additive,
+// fully save()/restore()-bounded, and gated behind !reducedMotion so motion-
+// sensitive players never see it. No allocation in the hot path (gradient is
+// only built on the frames the player is actually near the rim).
+const BOUNDARY_DANGER_RANGE = 220;
+function drawBoundaryDanger(){
+  if(reducedMotion)return;
+  if(!player||!player.alive)return;
+  const head=player.segments[0];
+  const dfc=dist(head,{x:WCX,y:WCY});
+  const near=WR-dfc;                       // distance from the rim, +ve inside
+  if(near>BOUNDARY_DANGER_RANGE)return;     // too far from the edge — nothing to draw
+  // Proximity 0 (at range) → 1 (at the rim). Square it so it ramps gently then
+  // bites hard right at the edge.
+  let prox=1-Math.max(0,near)/BOUNDARY_DANGER_RANGE;
+  prox=prox*prox;
+  const a=prox*0.55;
+  ctx.save();
+  ctx.globalCompositeOperation='lighter';
+  // Radial gradient: transparent in the centre, red toward the screen edges.
+  const cx=W/2,cy=H/2,inner=Math.min(W,H)*0.32,outer=Math.max(W,H)*0.72;
+  const grd=ctx.createRadialGradient(cx,cy,inner,cx,cy,outer);
+  grd.addColorStop(0,'rgba(255,23,68,0)');
+  grd.addColorStop(0.7,'rgba(255,23,68,'+(a*0.45)+')');
+  grd.addColorStop(1,'rgba(255,40,60,'+a+')');
+  ctx.fillStyle=grd;
+  ctx.fillRect(0,0,W,H);
+  ctx.restore(); // globalCompositeOperation reset to 'source-over'
 }
 function drawFood(){
   // Dropped per-food shadowBlur (was 6 with on/off per pellet × ~600 visible
@@ -1368,10 +2365,14 @@ function drawSnake(s){
     const r=halfW*(0.55+t*0.45)+1.2;
     ctx.beginPath();ctx.arc(seg.x,seg.y,r,0,TAU);ctx.fill();
   }
+  // Eat-punch (Wave 3.2): head fill swells by headPunch then eases back to 1
+  // (decayed in update). Player-only state; 1 for everyone else.
+  const headScale=1+(s.headPunch||0);
   // Fill pass with skin colours.
   for(let i=segLen-1;i>=0;i--){
     const seg=segs[i];const t=1-i/denom;
-    const r=halfW*(0.55+t*0.45);let color;
+    let r=halfW*(0.55+t*0.45);let color;
+    if(i===0&&headScale!==1)r*=headScale;
     if(skin.p==='rainbow')color=hsl((i*8+frameCount*2)%360,80,60);
     else if(skin.p==='striped')color=((i/3)|0)%2===0?skin.c[0]:skin.c[1];
     else color=lerpColor(skin.c[1],skin.c[0],t);
@@ -1385,14 +2386,47 @@ function drawSnake(s){
   if(s.powerups.shield>0){ctx.strokeStyle='rgba(64,196,255,0.4)';ctx.lineWidth=3;ctx.shadowColor='#40c4ff';ctx.shadowBlur=10;ctx.beginPath();ctx.arc(s.segments[0].x,s.segments[0].y,w/2+6,0,TAU);ctx.stroke();ctx.shadowBlur=0;}
   // Magnet range (player only — hint)
   if(s.isPlayer&&s.powerups.magnet>0){ctx.strokeStyle='rgba(118,255,3,0.18)';ctx.lineWidth=1;ctx.setLineDash([6,6]);ctx.beginPath();ctx.arc(s.segments[0].x,s.segments[0].y,200,0,TAU);ctx.stroke();ctx.setLineDash([]);}
-  // Eyes
-  const head=s.segments[0];const eyeD=w/4,eyeR=w/6;
+  // Eyes — LIVING EYES (Wave 3.2). Eye sockets ride the head scale-punch; pupils
+  // track the gaze direction (heading by default, nearest threat for the player);
+  // a shared time-driven blink squashes both eyes vertically in sync. All cheap,
+  // no per-frame allocation (gaze scan reuses snakes[] in place).
+  const head=s.segments[0];const eyeD=w/4*headScale,eyeR=w/6*headScale;
+  // Gaze: default to heading. For the player, glance toward the nearest other
+  // snake head if one is reasonably close (a wary "watching the threat" feel).
+  let gazeA=s.angle;
+  if(s.isPlayer){
+    let _nd=520*520,_nx=0,_ny=0,_found=false;
+    for(let qi=0;qi<snakes.length;qi++){
+      const o=snakes[qi];
+      if(o===s||!o.alive)continue;
+      const oh=o.segments[0];const ddx=oh.x-head.x,ddy=oh.y-head.y;const dd=ddx*ddx+ddy*ddy;
+      if(dd<_nd){_nd=dd;_nx=ddx;_ny=ddy;_found=true;}
+    }
+    if(_found)gazeA=Math.atan2(_ny,_nx);
+  }
+  // Blink: eyeBlinkP 1→0 maps to a brief eye squash via a sine hump (0 at the
+  // ends, full squash mid-blink). Eyes never fully vanish — scaleY floors at ~0.12.
+  const blinkSq=eyeBlinkP>0?Math.sin(eyeBlinkP*PI):0;   // 0..1, peaks mid-blink
+  const eyeSY=1-blinkSq*0.88;                           // vertical scale 1 → 0.12
   const ex1=head.x+Math.cos(s.angle-0.4)*eyeD,ey1=head.y+Math.sin(s.angle-0.4)*eyeD;
   const ex2=head.x+Math.cos(s.angle+0.4)*eyeD,ey2=head.y+Math.sin(s.angle+0.4)*eyeD;
-  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(ex1,ey1,eyeR,0,TAU);ctx.fill();ctx.beginPath();ctx.arc(ex2,ey2,eyeR,0,TAU);ctx.fill();
-  ctx.fillStyle='#111';
-  ctx.beginPath();ctx.arc(ex1+Math.cos(s.angle)*eyeR*0.4,ey1+Math.sin(s.angle)*eyeR*0.4,eyeR*0.5,0,TAU);ctx.fill();
-  ctx.beginPath();ctx.arc(ex2+Math.cos(s.angle)*eyeR*0.4,ey2+Math.sin(s.angle)*eyeR*0.4,eyeR*0.5,0,TAU);ctx.fill();
+  // Pupil offset toward gaze (clamped inside the sclera).
+  const pdx=Math.cos(gazeA)*eyeR*0.42,pdy=Math.sin(gazeA)*eyeR*0.42;
+  if(eyeSY>=0.999){
+    // Fast path — no blink this frame, draw round eyes directly (no save/scale).
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(ex1,ey1,eyeR,0,TAU);ctx.fill();ctx.beginPath();ctx.arc(ex2,ey2,eyeR,0,TAU);ctx.fill();
+    ctx.fillStyle='#111';
+    ctx.beginPath();ctx.arc(ex1+pdx,ey1+pdy,eyeR*0.5,0,TAU);ctx.fill();
+    ctx.beginPath();ctx.arc(ex2+pdx,ey2+pdy,eyeR*0.5,0,TAU);ctx.fill();
+  }else{
+    // Blinking — squash each eye vertically about its own center.
+    ctx.fillStyle='#fff';
+    ctx.save();ctx.translate(ex1,ey1);ctx.scale(1,eyeSY);
+    ctx.beginPath();ctx.arc(0,0,eyeR,0,TAU);ctx.fill();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(pdx,pdy,eyeR*0.5,0,TAU);ctx.fill();ctx.restore();
+    ctx.fillStyle='#fff';
+    ctx.save();ctx.translate(ex2,ey2);ctx.scale(1,eyeSY);
+    ctx.beginPath();ctx.arc(0,0,eyeR,0,TAU);ctx.fill();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(pdx,pdy,eyeR*0.5,0,TAU);ctx.fill();ctx.restore();
+  }
   // King crown
   if(s.isKing){ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=10;const cx=head.x,cy=head.y-w/2-2;ctx.beginPath();ctx.moveTo(cx-6,cy+4);ctx.lineTo(cx-6,cy-2);ctx.lineTo(cx-3,cy+1);ctx.lineTo(cx,cy-4);ctx.lineTo(cx+3,cy+1);ctx.lineTo(cx+6,cy-2);ctx.lineTo(cx+6,cy+4);ctx.closePath();ctx.fill();ctx.shadowBlur=0;}
   // Boss aura: pulsating red halo + skull mark above the head.
@@ -1413,6 +2447,57 @@ function drawSnake(s){
   ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='600 8px Rajdhani';
   ctx.fillText(s.length,head.x,head.y-w/2-18);
   ctx.globalAlpha=1;ctx.textAlign='left';
+  // ═══ BOOST VFX (player only, additive, save/restore-bounded, no per-frame alloc) ═══
+  // reducedMotion gates the entire heavy additive pass (glow + speed-lines + trail sheen).
+  if(s.isPlayer&&s.boosting&&!reducedMotion){
+    const bRgb=_parseHex(skin.c[0]);
+    const br=bRgb.r,bg=bRgb.g,bb=bRgb.b;
+    ctx.save();
+    ctx.globalCompositeOperation='lighter';
+    // — Brighter multi-segment trail: additive sheen over the first 12 body segments —
+    const trailMax=Math.min(12,segLen-1);
+    for(let i=1;i<=trailMax;i++){
+      const seg=segs[i];
+      const tf=1-(i/trailMax);           // 1 near head → 0 at tail edge
+      const tr=halfW*(0.55+(1-i/denom)*0.45)*1.1;
+      const ta=tf*0.28;
+      ctx.beginPath();ctx.arc(seg.x,seg.y,tr,0,TAU);
+      ctx.fillStyle='rgba('+br+','+bg+','+bb+','+ta+')';
+      ctx.fill();
+    }
+    // — Head glow pulse: soft radial gradient centered on head, pulsing gently —
+    const pulse=0.65+0.35*Math.sin(frameCount*0.18);
+    const glowR=w*2.2;
+    const glowA=pulse*0.45;
+    const hgrd=ctx.createRadialGradient(head.x,head.y,w*0.3,head.x,head.y,glowR);
+    hgrd.addColorStop(0,'rgba('+br+','+bg+','+bb+','+glowA+')');
+    hgrd.addColorStop(0.5,'rgba('+br+','+bg+','+bb+','+(glowA*0.3)+')');
+    hgrd.addColorStop(1,'rgba('+br+','+bg+','+bb+',0)');
+    ctx.beginPath();ctx.arc(head.x,head.y,glowR,0,TAU);
+    ctx.fillStyle=hgrd;ctx.fill();
+    // — Speed-lines: 5 tapered streaks behind the head opposite heading —
+    const backA=s.angle+Math.PI;   // direction directly behind
+    const slLen=w*2.8;             // base streak length
+    const slSpread=0.38;           // fan half-angle (radians)
+    for(let k=0;k<5;k++){
+      // fan angle: evenly spaced from -spread to +spread
+      const fa=backA+slSpread*(k/4-0.5)*2;
+      const startD=w*0.6;          // start behind the head circle
+      const endD=startD+slLen*(0.7+0.3*((k+1)%3===0?1:0.6));
+      const sx0=head.x+Math.cos(fa)*startD;
+      const sy0=head.y+Math.sin(fa)*startD;
+      const sx1=head.x+Math.cos(fa)*endD;
+      const sy1=head.y+Math.sin(fa)*endD;
+      const slA=k===2?0.55:0.35;   // center streak slightly brighter
+      const slW=k===2?2.2:1.2;
+      const slGrd=ctx.createLinearGradient(sx0,sy0,sx1,sy1);
+      slGrd.addColorStop(0,'rgba('+br+','+bg+','+bb+','+slA+')');
+      slGrd.addColorStop(1,'rgba('+br+','+bg+','+bb+',0)');
+      ctx.beginPath();ctx.moveTo(sx0,sy0);ctx.lineTo(sx1,sy1);
+      ctx.strokeStyle=slGrd;ctx.lineWidth=slW;ctx.stroke();
+    }
+    ctx.restore();
+  }
 }
 
 // ═══ HUD ═══
@@ -1441,8 +2526,10 @@ function drawBrandTitle(cx,cy,scale){
 
 function drawHUD(){
   const m=sat+10;
+  // Boss Rush headline = "Wave N" (the run's score proxy); classic/rush show score.
   ctx.fillStyle=zoneAccent;ctx.font='900 28px Orbitron';ctx.textAlign='left';
-  ctx.shadowColor=zoneAccent;ctx.shadowBlur=10;ctx.fillText(score,15,m+30);ctx.shadowBlur=0;
+  ctx.shadowColor=zoneAccent;ctx.shadowBlur=10;
+  ctx.fillText(mode==='bossrush'?(L.wave+' '+(runWaves+1)):(''+score),15,m+30);ctx.shadowBlur=0;
   ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='700 14px Rajdhani';
   ctx.fillText(L.length+': '+(player?player.length:0),15,m+50);
   ctx.fillText(L.kills+': '+(player?player.killCount:0),15,m+66);
@@ -1451,6 +2538,24 @@ function drawHUD(){
   const stg=currentBotStage();
   ctx.fillStyle='rgba(255,255,255,0.45)';ctx.font='700 11px Rajdhani';
   ctx.fillText('AI: '+stg.name,15,m+98);
+  // Rush (timed mode) countdown — top-center, turns red/urgent under 10s.
+  // Classic (runTimeLimit===0) shows nothing here — path unchanged.
+  if(runTimeLimit>0){
+    const rem=Math.max(0,runTimeLimit-playTime);
+    const remSec=Math.ceil(rem);
+    const urgent=rem<=10;
+    const mm=Math.floor(rem/60),ss=Math.floor(rem%60);
+    const timerTxt=mm>0?mm+':'+(ss<10?'0':'')+ss:(remSec>0?remSec+'s':'0s');
+    const tcol=urgent?'#ff1744':'#ffab00';
+    ctx.textAlign='center';
+    ctx.fillStyle=tcol;ctx.shadowColor=tcol;ctx.shadowBlur=urgent?16:8;
+    ctx.font='900 '+(urgent?30:24)+'px Orbitron';
+    ctx.fillText(timerTxt,W/2,m+30);
+    ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='600 10px Rajdhani';
+    ctx.fillText('⏱',W/2,m+46);
+    ctx.textAlign='left';
+  }
   if(kingToast>0){
     const a=Math.min(kingToast,1);ctx.textAlign='center';ctx.globalAlpha=a;
     ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=20;
@@ -1584,14 +2689,15 @@ function drawPauseScreen(){
   ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=12;rr(bx,ry,bw,bh,bh/2);ctx.fill();ctx.shadowBlur=0;
   const txtY=ry+bh*0.65;
   ctx.fillStyle='#0a0a1a';ctx.font='900 17px Orbitron';ctx.fillText('▶ '+L.resume,W/2,txtY);
-  // Settings row: 3 toggle pills (Sound / Music / Vibration)
+  // Settings row: 4 toggle pills (Sound / Music / Vibration / Motion)
   ry=oy+uh*0.34;
-  const pillW=Math.floor(bw/3)-6,pillH=bh,pillGap=9;
-  const totalPills=pillW*3+pillGap*2,pillsX=W/2-totalPills/2;
+  const pillW=Math.floor(bw/4)-6,pillH=bh,pillGap=9;
+  const totalPills=pillW*4+pillGap*3,pillsX=W/2-totalPills/2;
   const pills=[
-    {x:pillsX,                  on:soundOn,    icon:soundOn?'🔊':'🔇', label:isTR?'Ses':'Sound'},
-    {x:pillsX+pillW+pillGap,    on:musicOn,    icon:musicOn?'🎵':'🔕', label:isTR?'Müzik':'Music'},
-    {x:pillsX+2*(pillW+pillGap),on:vibrationOn,icon:vibrationOn?'📳':'📴',label:isTR?'Titreşim':'Vibe'},
+    {x:pillsX,                  on:soundOn,        icon:soundOn?'🔊':'🔇',   label:isTR?'Ses':'Sound'},
+    {x:pillsX+pillW+pillGap,    on:musicOn,        icon:musicOn?'🎵':'🔕',   label:isTR?'Müzik':'Music'},
+    {x:pillsX+2*(pillW+pillGap),on:vibrationOn,    icon:vibrationOn?'📳':'📴',label:isTR?'Titreşim':'Vibe'},
+    {x:pillsX+3*(pillW+pillGap),on:!reducedMotion, icon:reducedMotion?'🐢':'✨',label:L.motion},
   ];
   for(const p of pills){
     if(p.on){ctx.fillStyle='rgba(0,229,255,0.15)';rr(p.x,ry,pillW,pillH,pillH/2);ctx.fill();}
@@ -1650,12 +2756,13 @@ function drawSettingsOverlay(){
   // Pill row (reused layout from pause)
   const bw=Math.min(280,W-40),bh=Math.min(60,Math.floor(uh*0.09));
   const ry=oy+uh*0.36;
-  const pillW=Math.floor(bw/3)-6,pillGap=9;
-  const totalPills=pillW*3+pillGap*2,pillsX=W/2-totalPills/2;
+  const pillW=Math.floor(bw/4)-6,pillGap=9;
+  const totalPills=pillW*4+pillGap*3,pillsX=W/2-totalPills/2;
   const pills=[
-    {x:pillsX,                  on:soundOn,    icon:soundOn?'🔊':'🔇', label:isTR?'Ses':'Sound'},
-    {x:pillsX+pillW+pillGap,    on:musicOn,    icon:musicOn?'🎵':'🔕', label:isTR?'Müzik':'Music'},
-    {x:pillsX+2*(pillW+pillGap),on:vibrationOn,icon:vibrationOn?'📳':'📴',label:isTR?'Titreşim':'Vibe'},
+    {x:pillsX,                  on:soundOn,        icon:soundOn?'🔊':'🔇',   label:isTR?'Ses':'Sound'},
+    {x:pillsX+pillW+pillGap,    on:musicOn,        icon:musicOn?'🎵':'🔕',   label:isTR?'Müzik':'Music'},
+    {x:pillsX+2*(pillW+pillGap),on:vibrationOn,    icon:vibrationOn?'📳':'📴',label:isTR?'Titreşim':'Vibe'},
+    {x:pillsX+3*(pillW+pillGap),on:!reducedMotion, icon:reducedMotion?'🐢':'✨',label:L.motion},
   ];
   for(const p of pills){
     if(p.on){ctx.fillStyle='rgba(0,229,255,0.15)';rr(p.x,ry,pillW,bh,bh/2);ctx.fill();}
@@ -1671,18 +2778,201 @@ function drawSettingsOverlay(){
   ctx.fillText(isTR?'TAMAM':'DONE',W/2,dy+bh*0.65);
   ctx.textAlign='left';
 }
-function drawDailyToast(){
-  const a=Math.min(dailyToast,1),uh=H-sat-sab,oy=sat,ty=oy+uh*0.08;
-  const tw=Math.min(300,W-32);
-  ctx.globalAlpha=a;ctx.textAlign='center';
-  ctx.fillStyle='rgba(0,0,0,0.85)';rr(W/2-tw/2,ty,tw,70,14);ctx.fill();
-  ctx.strokeStyle='#ffd600';ctx.lineWidth=2;rr(W/2-tw/2,ty,tw,70,14);ctx.stroke();
+
+// ─── DAILY REWARD MODAL (Wave 2.3) ───────────────────────────────────────────
+function drawDailyModal(){
+  // Full-screen dim backdrop
+  ctx.fillStyle='rgba(0,0,0,0.82)';ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';
+  const uh=H-sat-sab,oy=sat;
+  const mw=Math.min(320,W-28),mh=Math.min(440,uh*0.88);
+  const mx=W/2-mw/2,my=oy+(uh-mh)/2;
+  // Modal card
+  ctx.fillStyle='#0e0e22';rr(mx,my,mw,mh,20);ctx.fill();
+  ctx.strokeStyle='#ffd600';ctx.lineWidth=2;ctx.shadowColor='#ffd600';ctx.shadowBlur=16;
+  rr(mx,my,mw,mh,20);ctx.stroke();ctx.shadowBlur=0;
+  // Title
   ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=12;
-  ctx.font='900 16px Orbitron';ctx.fillText(L.dailyBonus,W/2,ty+22);ctx.shadowBlur=0;
-  ctx.fillStyle='#fff';ctx.font='900 22px Orbitron';ctx.fillText('+'+dailyAmount+' 🪙',W/2,ty+46);
-  ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='600 12px Rajdhani';
-  ctx.fillText(L.streak+': '+dailyStreakVal,W/2,ty+62);
-  ctx.globalAlpha=1;ctx.textAlign='left';
+  ctx.font='900 18px Orbitron';ctx.fillText(L.dailyReward,W/2,my+34);ctx.shadowBlur=0;
+  // Streak line
+  ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='600 13px Rajdhani';
+  ctx.fillText(L.streak+': '+loginStreak,W/2,my+54);
+  // 7-day strip
+  const stripY=my+68,stripH=mh-68-130; // leave room for buttons at bottom
+  const cellW=Math.floor((mw-20)/7),cellH=Math.min(74,Math.floor(stripH*0.9));
+  const stripX=mx+10+(mw-20-cellW*7)/2;
+  for(let d=0;d<7;d++){
+    const cx=stripX+d*cellW,cy=stripY;
+    const isPast=(d<dailyClaimIdx);
+    const isToday=(d===dailyClaimIdx&&dailyAvailable);
+    const isFuture=(d>dailyClaimIdx)||(d===dailyClaimIdx&&!dailyAvailable);
+    const isClaimed=(d===dailyClaimIdx&&!dailyAvailable&&d>=0);
+    // Cell background
+    if(isToday){ctx.fillStyle='rgba(255,214,0,0.18)';}
+    else if(isPast||isClaimed){ctx.fillStyle='rgba(0,230,118,0.10)';}
+    else{ctx.fillStyle='rgba(255,255,255,0.04)';}
+    rr(cx+2,cy,cellW-4,cellH,8);ctx.fill();
+    ctx.strokeStyle=isToday?'#ffd600':(isPast||isClaimed?'rgba(0,230,118,0.5)':'rgba(255,255,255,0.12)');
+    ctx.lineWidth=isToday?2:1;rr(cx+2,cy,cellW-4,cellH,8);ctx.stroke();
+    // Day label
+    ctx.fillStyle=isToday?'#ffd600':(isPast||isClaimed?'rgba(0,230,118,0.8)':'rgba(255,255,255,0.4)');
+    ctx.font='600 10px Rajdhani';ctx.fillText(L.day+' '+(d+1),cx+cellW/2,cy+14);
+    // Coins or checkmark
+    if(isPast||isClaimed){
+      ctx.fillStyle='#00e676';ctx.font='900 18px Orbitron';ctx.fillText('✓',cx+cellW/2,cy+40);
+    }else if(isFuture){
+      ctx.fillStyle='rgba(255,255,255,0.25)';ctx.font='700 10px Orbitron';ctx.fillText('🔒',cx+cellW/2,cy+40);
+    }else{
+      ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=6;
+      ctx.font='700 13px Orbitron';ctx.fillText('+'+DAILY_REWARDS[d],cx+cellW/2,cy+38);ctx.shadowBlur=0;
+    }
+    // Today indicator
+    if(isToday){ctx.fillStyle='#ffd600';ctx.font='600 8px Rajdhani';ctx.fillText('▲',cx+cellW/2,cy+cellH-2);}
+  }
+  // Streak-save button (only shown if a break was detected and not yet saved)
+  let btnY=stripY+cellH+16;
+  if(dailyStreakSaveOffered&&dailyStreakPreBreak>1){
+    const sbw=mw-32,sbh=44;
+    const adOk=adReady.rewarded;
+    ctx.globalAlpha=adOk?1:0.5;
+    ctx.strokeStyle='#ff9100';ctx.lineWidth=2;ctx.shadowColor='#ff9100';ctx.shadowBlur=adOk?8:0;
+    rr(mx+16,btnY,sbw,sbh,22);ctx.stroke();ctx.shadowBlur=0;
+    ctx.fillStyle='#ff9100';ctx.font='700 12px Orbitron';
+    ctx.fillText('📺 '+L.streakSave+' ('+dailyStreakPreBreak+'→'+(dailyStreakPreBreak+1)+')',W/2,btnY+sbh*0.62);
+    ctx.globalAlpha=1;
+    btnY+=sbh+10;
+  }
+  // CLAIM button
+  if(dailyAvailable){
+    const cbw=mw-32,cbh=52;
+    ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=14;
+    rr(mx+16,btnY,cbw,cbh,26);ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle='#0a0a1a';ctx.font='900 20px Orbitron';
+    ctx.fillText(L.claim+' +'+DAILY_REWARDS[dailyClaimIdx]+' 🪙',W/2,btnY+cbh*0.64);
+    btnY+=cbh+10;
+  }
+  // Close / Back chip
+  const closeBw=mw-32;const closeBh=38;
+  ctx.fillStyle='rgba(255,255,255,0.07)';rr(mx+16,btnY,closeBw,closeBh,19);ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=1;rr(mx+16,btnY,closeBw,closeBh,19);ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='700 14px Rajdhani';
+  ctx.fillText(L.back,W/2,btnY+closeBh*0.64);
+  ctx.textAlign='left';
+}
+function handleDailyModalTap(x,y){
+  const uh=H-sat-sab,oy=sat;
+  const mw=Math.min(320,W-28),mh=Math.min(440,uh*0.88);
+  const mx=W/2-mw/2,my=oy+(uh-mh)/2;
+  const stripY=my+68;
+  const cellW=Math.floor((mw-20)/7),cellH=Math.min(74,Math.floor((mh-68-130)*0.9));
+  let btnY=stripY+cellH+16;
+  if(dailyStreakSaveOffered&&dailyStreakPreBreak>1){
+    const sbw=mw-32,sbh=44;
+    if(x>mx+16&&x<mx+16+sbw&&y>btnY&&y<btnY+sbh){
+      if(!adReady.rewarded){showToast(L.adNotAvailable,'error');postMsg({type:'CHECK_AD_READY'});return;}
+      postMsg({type:'SHOW_REWARDED_AD',data:{reward:'streak'}});
+      return;
+    }
+    btnY+=sbh+10;
+  }
+  if(dailyAvailable){
+    const cbw=mw-32,cbh=52;
+    if(x>mx+16&&x<mx+16+cbw&&y>btnY&&y<btnY+cbh){
+      // Grant reward — commit the pending streak value (may be >7 for long runs)
+      // and advance lastLoginDate HERE (not at arming time) so an interrupted
+      // pre-claim session re-computes the same pending streak idempotently.
+      loginStreak=dailyPendingStreak;
+      lastLoginDate=todayKey();
+      saveLogin();
+      coins+=DAILY_REWARDS[dailyClaimIdx];saveCoins();
+      saveBlob('daily',{claimedDay:todayKey()});
+      sndPowerup();
+      showToast('+'+DAILY_REWARDS[dailyClaimIdx]+' 🪙 · '+L.streak+': '+loginStreak,'success');
+      dailyAvailable=false;
+      showDailyModal=false;
+      return;
+    }
+    btnY+=cbh+10;
+  }
+  // Close button
+  const closeBh=38;
+  if(x>mx+16&&x<W/2+mw/2-16&&y>btnY&&y<btnY+closeBh){
+    showDailyModal=false;sndMenu();return;
+  }
+  // Tap outside modal also closes
+  if(x<mx||x>mx+mw||y<my||y>my+mh){showDailyModal=false;sndMenu();}
+}
+
+// ─── DAILY MISSIONS PANEL ─────────────────────────────────────────────────────
+// Openable overlay listing today's 3 deterministic missions + the all-3 bonus.
+// Pure presentation: missions[] and their run-end evaluation are unchanged.
+// Geometry mirrored by handleMissionsPanelTap.
+function drawMissionsPanel(){
+  ctx.fillStyle='rgba(0,0,0,0.82)';ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';
+  const uh=H-sat-sab,oy=sat;
+  const mw=Math.min(330,W-28),mh=Math.min(420,uh*0.86);
+  const mx=W/2-mw/2,my=oy+(uh-mh)/2;
+  // Card
+  ctx.fillStyle='#0e0e22';rr(mx,my,mw,mh,20);ctx.fill();
+  ctx.strokeStyle='#00e5ff';ctx.lineWidth=2;ctx.shadowColor='#00e5ff';ctx.shadowBlur=16;
+  rr(mx,my,mw,mh,20);ctx.stroke();ctx.shadowBlur=0;
+  // Title
+  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=12;
+  ctx.font='900 18px Orbitron';
+  ctx.fillText(isTR?'GÜNLÜK GÖREVLER':'DAILY MISSIONS',W/2,my+34);ctx.shadowBlur=0;
+  const doneN=missions.reduce(function(a,m){return a+(m.done?1:0);},0);
+  ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='600 12px Rajdhani';
+  ctx.fillText((isTR?'İlerleme: ':'Progress: ')+doneN+'/3',W/2,my+54);
+  // Mission rows
+  const rowsY=my+70,rowH=Math.min(64,Math.floor((mh-70-120)/3)),rowGap=8;
+  const rowW=mw-32,rowX=mx+16;
+  for(let i=0;i<missions.length;i++){
+    const mv=missions[i];
+    const ry=rowsY+i*(rowH+rowGap);
+    ctx.fillStyle=mv.done?'rgba(0,230,118,0.12)':'rgba(255,255,255,0.05)';
+    rr(rowX,ry,rowW,rowH,12);ctx.fill();
+    ctx.strokeStyle=mv.done?'rgba(0,230,118,0.5)':'rgba(255,255,255,0.14)';
+    ctx.lineWidth=1.5;rr(rowX,ry,rowW,rowH,12);ctx.stroke();
+    // Status dot
+    const dotX=rowX+24,dotY=ry+rowH/2;
+    ctx.fillStyle=mv.done?'#00e676':'rgba(255,255,255,0.12)';
+    ctx.beginPath();ctx.arc(dotX,dotY,13,0,TAU);ctx.fill();
+    ctx.fillStyle=mv.done?'#0a0a1a':'rgba(255,255,255,0.5)';
+    ctx.font='900 14px Orbitron';ctx.textBaseline='middle';
+    ctx.fillText(mv.done?'✓':(i+1),dotX,dotY+1);ctx.textBaseline='alphabetic';
+    // Label + reward
+    ctx.textAlign='left';
+    ctx.fillStyle=mv.done?'#00e676':'rgba(255,255,255,0.85)';
+    ctx.font='700 14px Rajdhani';
+    ctx.fillText(mv.label,rowX+46,ry+rowH*0.42);
+    ctx.fillStyle='rgba(255,214,0,0.7)';ctx.font='600 11px Rajdhani';
+    ctx.fillText('+150 🪙 · +80 XP',rowX+46,ry+rowH*0.74);
+    ctx.textAlign='center';
+  }
+  // All-3 bonus line
+  const allDoneM=doneN===3;
+  const bonusY=rowsY+3*(rowH+rowGap)+6;
+  ctx.fillStyle=allDoneM?'#ffd600':'rgba(255,214,0,0.45)';
+  ctx.font='700 12px Rajdhani';
+  ctx.fillText((allDoneM?'★ ':'')+(isTR?'Tüm görevler: +300 🪙':'All missions: +300 🪙'),W/2,bonusY);
+  // Close / Back chip
+  const closeBw=mw-32,closeBh=38,closeY=my+mh-closeBh-16;
+  ctx.fillStyle='rgba(255,255,255,0.07)';rr(mx+16,closeY,closeBw,closeBh,19);ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=1;rr(mx+16,closeY,closeBw,closeBh,19);ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='700 14px Rajdhani';
+  ctx.fillText(L.back,W/2,closeY+closeBh*0.64);
+  ctx.textAlign='left';
+}
+function handleMissionsPanelTap(x,y){
+  const uh=H-sat-sab,oy=sat;
+  const mw=Math.min(330,W-28),mh=Math.min(420,uh*0.86);
+  const mx=W/2-mw/2,my=oy+(uh-mh)/2;
+  const closeBw=mw-32,closeBh=38,closeY=my+mh-closeBh-16;
+  // Close chip
+  if(x>mx+16&&x<mx+16+closeBw&&y>closeY&&y<closeY+closeBh){showMissionsPanel=false;sndMenu();return;}
+  // Tap outside panel also closes
+  if(x<mx||x>mx+mw||y<my||y>my+mh){showMissionsPanel=false;sndMenu();}
 }
 
 // ═══ TUTORIAL ═══
@@ -1747,19 +3037,35 @@ function drawLeaderboard(){
   ctx.fillStyle='rgba(0,229,255,0.12)';rr(12,oy+12,84,40,20);ctx.fill();
   ctx.fillStyle='#00e5ff';ctx.font='900 16px Rajdhani';ctx.textAlign='center';ctx.shadowColor='#00e5ff';ctx.shadowBlur=4;
   ctx.fillText(L.back,54,oy+38);ctx.shadowBlur=0;
+  // Achievements chip — top-right (entry point into the achievements view).
+  {const r=achChipRect();
+  ctx.fillStyle='rgba(255,214,0,0.14)';rr(r.x,r.y,r.w,r.h,20);ctx.fill();
+  ctx.strokeStyle='rgba(255,214,0,0.55)';ctx.lineWidth=1;rr(r.x,r.y,r.w,r.h,20);ctx.stroke();
+  ctx.fillStyle='#ffd600';ctx.font='900 14px Rajdhani';ctx.textAlign='center';ctx.shadowColor='#ffd600';ctx.shadowBlur=4;
+  ctx.fillText('🏆 '+achUnlocked.length+'/'+ACHIEVEMENTS.length,r.x+r.w/2,r.y+26);ctx.shadowBlur=0;}
   // Title — own row, centred, dynamic font size
   const titleSize=Math.min(32,Math.floor(W*0.078));
   ctx.fillStyle='#ffd600';ctx.font='900 '+titleSize+'px Orbitron';ctx.shadowColor='#ffd600';ctx.shadowBlur=15;
   ctx.fillText(L.leaderboard,W/2,oy+88);ctx.shadowBlur=0;
+  // Mode badge — shows that topScores list is Classic-mode records.
+  // Per-mode bests for each mode are displayed separately below.
+  ctx.fillStyle='rgba(0,229,255,0.15)';rr(W/2-58,oy+96,116,22,11);ctx.fill();
+  ctx.strokeStyle='rgba(0,229,255,0.5)';ctx.lineWidth=1;rr(W/2-58,oy+96,116,22,11);ctx.stroke();
+  ctx.fillStyle='rgba(0,229,255,0.9)';ctx.font='600 11px Rajdhani';
+  ctx.fillText(L.classicMode,W/2,oy+111);
+  // Per-mode bests row (shown for all defined modes)
+  {const mbY=oy+132;ctx.fillStyle='rgba(255,255,255,0.35)';ctx.font='600 11px Rajdhani';
+  const parts=[];for(let i=0;i<MODES.length;i++){const mid=MODES[i].id;const b=bestByMode[mid]||0;parts.push((L[mid]||mid)+': '+(b>0?formatModeBest(mid,b):'-'));}
+  ctx.fillText(parts.join('   ·   '),W/2,mbY);}
   // Stats line
   ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='600 13px Rajdhani';
-  ctx.fillText(L.games+': '+totalGames+'  ·  '+L.kills+': '+totalKills+'  ·  '+L.deaths+': '+deathCount,W/2,oy+114);
+  ctx.fillText(L.games+': '+totalGames+'  ·  '+L.kills+': '+totalKills+'  ·  '+L.deaths+': '+deathCount,W/2,oy+150);
   // Score list
   if(!topScores.length){
     ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='600 18px Rajdhani';
     ctx.fillText(L.noScores,W/2,oy+uh*0.5);
   }else{
-    const sy=oy+150,rh=40,now=Date.now();
+    const sy=oy+170,rh=40,now=Date.now();
     for(let i=0;i<topScores.length;i++){
       const y=sy+i*rh;if(y>H-sab-20)break;
       ctx.fillStyle=i===0?'#ffd600':(i===1?'#c0c0c0':(i===2?'#cd7f32':'rgba(255,255,255,0.6)'));
@@ -1774,6 +3080,112 @@ function drawLeaderboard(){
         ctx.fillText(t,W-30,y+16);
       }
     }
+  }
+  ctx.textAlign='left';
+}
+
+// ═══ ACHIEVEMENTS VIEW ═══
+// Shared geometry for the leaderboard→achievements chip (drawn on the
+// leaderboard, hit-tested in handleLeaderboardTap). Top-right, mirrors back chip.
+function achChipRect(){const w=78;return{x:W-w-12,y:sat+12,w:w,h:40};}
+// Scrollable list of every achievement: earned rows show a ✓ badge + name;
+// locked rows are dimmed with the unlock-condition description. Pure render off
+// ACHIEVEMENTS + achUnlocked — no allocation in the row loop beyond the L lookups.
+function drawAchievements(){
+  ctx.fillStyle='#0a0a1a';ctx.fillRect(0,0,W,H);
+  const oy=sat;
+  // Back chip (mirrors drawLeaderboard / drawModeSelect)
+  ctx.fillStyle='rgba(0,229,255,0.12)';rr(12,oy+12,84,40,20);ctx.fill();
+  ctx.fillStyle='#00e5ff';ctx.font='900 16px Rajdhani';ctx.textAlign='center';ctx.shadowColor='#00e5ff';ctx.shadowBlur=4;
+  ctx.fillText(L.back,54,oy+38);ctx.shadowBlur=0;
+  // Title
+  const titleSize=Math.min(30,Math.floor(W*0.072));
+  ctx.fillStyle='#ffd600';ctx.font='900 '+titleSize+'px Orbitron';ctx.shadowColor='#ffd600';ctx.shadowBlur=15;
+  ctx.fillText(L.achievements,W/2,oy+82);ctx.shadowBlur=0;
+  // Unlocked count subtitle
+  ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='600 13px Rajdhani';
+  ctx.fillText(L.achProgress+': '+achUnlocked.length+'/'+ACHIEVEMENTS.length,W/2,oy+106);
+  // Clipped, scrollable list region.
+  const listTop=oy+124,listBot=H-sab-12,rh=64,rowW=Math.min(320,W-32),rowX=W/2-rowW/2;
+  const contentH=ACHIEVEMENTS.length*rh,viewH=listBot-listTop;
+  const maxScroll=Math.max(0,contentH-viewH);
+  if(achScroll<0)achScroll=0;if(achScroll>maxScroll)achScroll=maxScroll;
+  ctx.save();
+  ctx.beginPath();ctx.rect(0,listTop,W,viewH);ctx.clip();
+  for(let i=0;i<ACHIEVEMENTS.length;i++){
+    const a=ACHIEVEMENTS[i];
+    const ry=listTop+i*rh-achScroll;
+    if(ry+rh-8<listTop||ry>listBot)continue; // cull off-screen rows
+    const earned=achIsUnlocked(a.id);
+    // Card
+    ctx.fillStyle=earned?'rgba(255,214,0,0.10)':'rgba(255,255,255,0.04)';
+    rr(rowX,ry,rowW,rh-8,14);ctx.fill();
+    ctx.strokeStyle=earned?'rgba(255,214,0,0.5)':'rgba(255,255,255,0.14)';
+    ctx.lineWidth=earned?1.5:1;rr(rowX,ry,rowW,rh-8,14);ctx.stroke();
+    // Badge circle (left)
+    const br=18,bx=rowX+br+14,by=ry+(rh-8)/2;
+    ctx.fillStyle=earned?'#ffd600':'rgba(255,255,255,0.10)';
+    ctx.beginPath();ctx.arc(bx,by,br,0,TAU);ctx.fill();
+    ctx.fillStyle=earned?'#0a0a1a':'rgba(255,255,255,0.45)';
+    ctx.font='900 18px Orbitron';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(earned?'✓':'🔒',bx,by+1);ctx.textBaseline='alphabetic';
+    // Name + desc (right)
+    ctx.textAlign='left';
+    ctx.fillStyle=earned?'#ffd600':'rgba(255,255,255,0.75)';ctx.font='900 15px Orbitron';
+    ctx.fillText(L[a.name],bx+br+18,ry+(rh-8)*0.42);
+    ctx.fillStyle=earned?'rgba(255,255,255,0.6)':'rgba(255,255,255,0.45)';ctx.font='600 12px Rajdhani';
+    ctx.fillText(earned?('✓ '+L.achProgress):L[a.desc],bx+br+18,ry+(rh-8)*0.74);
+  }
+  ctx.restore();
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';
+}
+
+// ═══ MODE SELECT ═══
+function drawModeSelect(){
+  ctx.fillStyle='#0a0a1a';ctx.fillRect(0,0,W,H);
+  const oy=sat;
+  // Back chip (mirrors drawLeaderboard / drawSkinSelect pattern)
+  ctx.fillStyle='rgba(0,229,255,0.12)';rr(12,oy+12,84,40,20);ctx.fill();
+  ctx.fillStyle='#00e5ff';ctx.font='900 16px Rajdhani';ctx.textAlign='center';ctx.shadowColor='#00e5ff';ctx.shadowBlur=4;
+  ctx.fillText(L.back,54,oy+38);ctx.shadowBlur=0;
+  // Title
+  const titleSize=Math.min(32,Math.floor(W*0.078));
+  ctx.fillStyle='#fff';ctx.font='900 '+titleSize+'px Orbitron';
+  ctx.fillText(L.selectMode,W/2,oy+88);
+  // Mode cards
+  const cardW=Math.min(300,W-40),cardH=100,cardX=W/2-cardW/2;
+  const startY=oy+116;
+  const modeIcons={classic:'∞',rush:'⏱',bossrush:'☠'};
+  const modeAccents={classic:'#00e5ff',rush:'#ffab00',bossrush:'#ff1744'};
+  const modeDescs={classic:L.classicDesc,rush:L.rushDesc,bossrush:L.bossrushDesc};
+  for(let i=0;i<MODES.length;i++){
+    const m=MODES[i],cy=startY+i*(cardH+14);
+    const accent=modeAccents[m.id]||'#00e5ff';
+    const isActive=mode===m.id;
+    // Card bg
+    ctx.fillStyle=isActive?'rgba(0,229,255,0.10)':'rgba(255,255,255,0.04)';
+    rr(cardX,cy,cardW,cardH,16);ctx.fill();
+    ctx.strokeStyle=isActive?accent:'rgba(255,255,255,0.18)';
+    ctx.lineWidth=isActive?2:1.5;
+    rr(cardX,cy,cardW,cardH,16);ctx.stroke();
+    // Icon circle
+    const iconR=28,ix=cardX+iconR+18,iy=cy+cardH/2;
+    ctx.fillStyle=accent;ctx.shadowColor=accent;ctx.shadowBlur=isActive?14:6;
+    ctx.beginPath();ctx.arc(ix,iy,iconR,0,TAU);ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle='#0a0a1a';ctx.font='900 20px Orbitron';
+    ctx.textBaseline='middle';ctx.fillText(modeIcons[m.id]||'?',ix,iy+1);ctx.textBaseline='alphabetic';
+    // Name + desc
+    ctx.textAlign='left';
+    ctx.fillStyle=isActive?accent:'#fff';ctx.font='900 18px Orbitron';
+    ctx.fillText(L[m.id]||m.id,cardX+iconR*2+30,cy+cardH*0.42);
+    ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='600 13px Rajdhani';
+    ctx.fillText(modeDescs[m.id]||'',cardX+iconR*2+30,cy+cardH*0.68);
+    if(m.timeLimit>0){
+      ctx.fillStyle=accent;ctx.font='700 11px Rajdhani';
+      ctx.fillText('⏱ '+m.timeLimit+'s',cardX+iconR*2+30,cy+cardH*0.90);
+    }
+    // Active checkmark
+    if(isActive){ctx.fillStyle=accent;ctx.font='900 20px Orbitron';ctx.textAlign='right';ctx.fillText('✓',cardX+cardW-14,cy+cardH/2+7);}
   }
   ctx.textAlign='left';
 }
@@ -1835,10 +3247,32 @@ function drawMenu(){
   ctx.textAlign='center';
   const uh=H-sat-sab,oy=sat;
   drawBrandTitle(W/2,oy+uh*0.22);
-  if(highScore>0){ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='600 18px Rajdhani';ctx.fillText(L.best+': '+highScore,W/2,oy+uh*0.32);}
+  // Show best for the currently selected mode. Classic falls back to highScore
+  // so existing leaderboard integration is unchanged. Other modes use bestByMode.
+  {const menuBest=mode==='classic'?highScore:(bestByMode[mode]||0);
+  if(menuBest>0){ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='600 18px Rajdhani';ctx.fillText(L.best+': '+formatModeBest(mode,menuBest),W/2,oy+uh*0.32);}}
   // Coin counter (top)
   ctx.fillStyle='#ffd600';ctx.font='900 22px Orbitron';ctx.shadowColor='#ffd600';ctx.shadowBlur=10;
   ctx.fillText('🪙 '+coins,W/2,oy+36);ctx.shadowBlur=0;
+  // XP / Level bar (below coin counter)
+  {const xbw=160,xbh=8,xbx=W/2-xbw/2,xby=oy+48;
+  const xpCur=xpInLevel(xp),xpSpan=xpForLevel(plevel+1)-xpForLevel(plevel);
+  const xpFrac=xpSpan>0?Math.min(1,xpCur/xpSpan):1;
+  ctx.fillStyle='rgba(255,255,255,0.12)';rr(xbx,xby,xbw,xbh,4);ctx.fill();
+  if(xpFrac>0){ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=6;rr(xbx,xby,Math.max(8,xbw*xpFrac),xbh,4);ctx.fill();ctx.shadowBlur=0;}
+  ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='600 11px Rajdhani';ctx.textAlign='center';
+  ctx.fillText('LV '+plevel,W/2,xby+xbh+13);ctx.textAlign='center';}
+  // Tier badge — compact colored pill derived from CLASSIC best (highScore).
+  // Centered, below the LV label; narrow enough to clear the corner gift/
+  // settings chips and well above the centered missions chip.
+  {const tr=tierForScore(highScore);
+  const tnm=tierName(tr);
+  ctx.font='700 11px Rajdhani';
+  const tw=ctx.measureText(tnm).width+30,tbh=18,tbx=W/2-tw/2,tby=oy+74;
+  ctx.fillStyle='rgba(0,0,0,0.30)';rr(tbx,tby,tw,tbh,9);ctx.fill();
+  ctx.strokeStyle=tr.color;ctx.lineWidth=1.2;rr(tbx,tby,tw,tbh,9);ctx.stroke();
+  ctx.fillStyle=tr.color;ctx.beginPath();ctx.arc(tbx+11,tby+tbh/2,3.2,0,TAU);ctx.fill();
+  ctx.fillStyle=tr.color;ctx.textAlign='left';ctx.fillText(tnm,tbx+18,tby+tbh*0.68);ctx.textAlign='center';}
   // Help button (top-right)
   ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=2;
   ctx.beginPath();ctx.arc(W-35,sat+35,18,0,TAU);ctx.stroke();
@@ -1847,30 +3281,69 @@ function drawMenu(){
   ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=2;
   ctx.beginPath();ctx.arc(35,sat+35,18,0,TAU);ctx.stroke();
   ctx.fillStyle='rgba(255,255,255,0.75)';ctx.font='700 20px Rajdhani';ctx.fillText('⚙',35,sat+43);
+  // Daily reward badge (top-right, below help button) — glows if unclaimed
+  {const dby=sat+66,dbx=W-35;
+  const dbPulse=0.55+0.35*Math.sin(menuPulseT*4);
+  const dbColor=dailyAvailable?'#ffd600':'rgba(255,214,0,0.35)';
+  ctx.strokeStyle=dbColor;ctx.lineWidth=dailyAvailable?2:1;
+  if(dailyAvailable){ctx.shadowColor='#ffd600';ctx.shadowBlur=10*dbPulse;}
+  ctx.beginPath();ctx.arc(dbx,dby,14,0,TAU);ctx.stroke();ctx.shadowBlur=0;
+  ctx.fillStyle=dbColor;ctx.font='700 11px Rajdhani';
+  ctx.fillText('🎁',dbx,dby+4);}
+  // Daily Missions summary chip — single compact tappable row that opens the
+  // missions panel. Geometry mirrored by handleMenuTap (MISSIONS_CHIP).
+  if(missions&&missions.length===3){
+    const doneN=missions.reduce(function(a,m){return a+(m.done?1:0);},0);
+    const allDoneM=doneN===3;
+    const mcw=220,mch=MISSIONS_CHIP_H,mcx=W/2-mcw/2,mcy=oy+uh*MISSIONS_CHIP_FY;
+    ctx.fillStyle=allDoneM?'rgba(0,230,118,0.14)':'rgba(255,255,255,0.05)';
+    rr(mcx,mcy,mcw,mch,9);ctx.fill();
+    ctx.strokeStyle=allDoneM?'rgba(0,230,118,0.55)':'rgba(255,255,255,0.18)';
+    ctx.lineWidth=1.5;rr(mcx,mcy,mcw,mch,9);ctx.stroke();
+    // Label (left)
+    ctx.fillStyle=allDoneM?'#00e676':'rgba(255,255,255,0.75)';
+    ctx.font='700 13px Rajdhani';ctx.textAlign='left';
+    ctx.fillText('🎯 '+(isTR?'Günlük Görevler':'Daily Missions'),mcx+12,mcy+mch*0.62);
+    // Progress (right)
+    ctx.textAlign='right';
+    ctx.fillStyle=allDoneM?'#00e676':'rgba(255,255,255,0.5)';
+    ctx.font='700 13px Rajdhani';
+    ctx.fillText(allDoneM?(doneN+'/3 ✓'):(doneN+'/3'),mcx+mcw-12,mcy+mch*0.62);
+    ctx.textAlign='center';
+  }
   const bw=220,bh=58,bx=W/2-bw/2,by=oy+uh*0.42;
   ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=15+7*Math.sin(menuPulseT*3.6);rr(bx,by,bw,bh,28);ctx.fill();ctx.shadowBlur=0;
   ctx.fillStyle='#0a0a1a';ctx.font='900 24px Orbitron';ctx.fillText(L.play,W/2,by+38);
   const sy=oy+uh*0.54;
   ctx.fillStyle='#7c4dff';ctx.shadowColor='#7c4dff';ctx.shadowBlur=10;rr(bx+20,sy,bw-40,44,22);ctx.fill();ctx.shadowBlur=0;
-  ctx.fillStyle='#fff';ctx.font='700 18px Orbitron';ctx.fillText(L.skins,W/2,sy+29);
+  // Labeled COSMETICS (not SKINS) so players know this entry point also holds trails.
+  ctx.fillStyle='#fff';ctx.font='700 18px Orbitron';ctx.fillText(L.cosmetics,W/2,sy+29);
   // Leaderboard button
   const ly=oy+uh*0.63;
   ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=10;rr(bx+20,ly,bw-40,42,21);ctx.fill();ctx.shadowBlur=0;
   ctx.fillStyle='#0a0a1a';ctx.font='700 16px Orbitron';ctx.fillText(L.leaderboard,W/2,ly+27);
+  // Modes button
+  const my=oy+uh*0.72;
+  const modeAccentCol=mode==='rush'?'#ffab00':'#00bfa5';
+  ctx.fillStyle=modeAccentCol;ctx.shadowColor=modeAccentCol;ctx.shadowBlur=10;rr(bx+20,my,bw-40,42,21);ctx.fill();ctx.shadowBlur=0;
+  ctx.fillStyle='#0a0a1a';ctx.font='700 16px Orbitron';ctx.fillText(L.modes+' · '+(L[mode]||mode.toUpperCase()),W/2,my+27);
   // Watch ad for coins (greyed out if no ad ready)
-  const ay=oy+uh*0.72;
+  const ay=oy+uh*0.81;
   const adOk=adReady.rewarded;
   ctx.globalAlpha=adOk?1:0.4;
   ctx.strokeStyle='#00e676';ctx.lineWidth=2;ctx.shadowColor='#00e676';ctx.shadowBlur=adOk?8:0;rr(bx+20,ay,bw-40,42,21);ctx.stroke();ctx.shadowBlur=0;
   ctx.fillStyle='#00e676';ctx.font='700 14px Orbitron';ctx.fillText(L.watchForCoins,W/2,ay+27);
   ctx.globalAlpha=1;
+  // Next-skin hint: cheapest locked coins-rail skin
+  {let cheapPrice=Infinity;for(let si=0;si<SKINS.length;si++){const sk=SKINS[si];if(skinRail(sk)==='coins'&&!unlockedSkins.includes(si)){const p=skinPrice(sk);if(p<cheapPrice)cheapPrice=p;}}
+  if(cheapPrice!==Infinity&&coins<cheapPrice){const need=cheapPrice-coins;ctx.fillStyle='rgba(255,214,0,0.65)';ctx.font='600 11px Rajdhani';ctx.fillText(L.nextSkinHint+need+' 🪙'+L.toGo,W/2,ay+44);}}
   // Preview
-  const py=oy+uh*0.86;const skin=SKINS[currentSkin];
+  const py=oy+uh*0.92;const skin=SKINS[currentSkin];
   for(let i=0;i<15;i++){const a=(i/15)*TAU+frameCount*0.02;const px=W/2+Math.cos(a)*30,ppy=py+Math.sin(a)*30;const t=i/15;ctx.fillStyle=lerpColor(skin.c[1],skin.c[0],t);ctx.beginPath();ctx.arc(px,ppy,5-t*2,0,TAU);ctx.fill();}
   ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='600 12px Rajdhani';ctx.fillText(skin.name,W/2,py+50);
   // Version stamp (bottom)
   ctx.fillStyle='rgba(255,255,255,0.18)';ctx.font='600 10px Rajdhani';ctx.textAlign='center';
-  ctx.fillText('v1.2.1',W/2,H-sab-8);
+  ctx.fillText('v1.3.0',W/2,H-sab-8);
   ctx.textAlign='left';
 }
 
@@ -1883,14 +3356,26 @@ function drawDeathScreen(){
   ctx.globalAlpha=Math.max(0,Math.min(1,fade));
   ctx.fillStyle='rgba(0,0,0,0.78)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';
   const uh=H-sat-sab,oy=sat;
-  // Title
-  ctx.fillStyle='#ff1744';ctx.font='900 38px Orbitron';ctx.shadowColor='#ff1744';ctx.shadowBlur=20;
-  ctx.fillText(L.eliminated,W/2,oy+uh*0.13);ctx.shadowBlur=0;
-  // Big score
-  ctx.fillStyle='#fff';ctx.font='900 52px Orbitron';ctx.shadowColor=zoneAccent;ctx.shadowBlur=14;
-  ctx.fillText(score,W/2,oy+uh*0.235);ctx.shadowBlur=0;
+  // Mode badge — small pill at very top so each mode's result is visibly distinct.
+  const modeAccentDs=mode==='rush'?'#ffab00':(mode==='bossrush'?'#ff1744':'#00e5ff');
+  const modeLabelDs=mode==='rush'?L.rushMode:(mode==='bossrush'?L.bossrushMode:L.classicMode);
+  ctx.fillStyle='rgba(0,0,0,0.45)';rr(W/2-60,oy+10,120,26,13);ctx.fill();
+  ctx.strokeStyle=modeAccentDs;ctx.lineWidth=1.5;rr(W/2-60,oy+10,120,26,13);ctx.stroke();
+  ctx.fillStyle=modeAccentDs;ctx.font='700 12px Rajdhani';ctx.fillText(modeLabelDs,W/2,oy+27);
+  // Title: TIME'S UP for timeout, ELIMINATED for collisions.
+  const isTimeout=(killerName==='time');
+  const titleCol=isTimeout?'#ffab00':'#ff1744';
+  const titleTxt=isTimeout?L.timeUp:L.eliminated;
+  ctx.fillStyle=titleCol;ctx.font='900 38px Orbitron';ctx.shadowColor=titleCol;ctx.shadowBlur=20;
+  ctx.fillText(titleTxt,W/2,oy+uh*0.13);ctx.shadowBlur=0;
+  // Big headline number — Boss Rush shows waves cleared (its score proxy) with
+  // a WAVE label/badge; every other mode shows the raw score unchanged.
+  const bigNum=mode==='bossrush'?runWaves:score;
+  const bigLabel=mode==='bossrush'?L.wave.toUpperCase():L.score.toUpperCase();
+  ctx.fillStyle='#fff';ctx.font='900 52px Orbitron';ctx.shadowColor=mode==='bossrush'?'#ff1744':zoneAccent;ctx.shadowBlur=14;
+  ctx.fillText(bigNum,W/2,oy+uh*0.235);ctx.shadowBlur=0;
   ctx.fillStyle='rgba(255,255,255,0.45)';ctx.font='600 13px Rajdhani';
-  ctx.fillText(L.score.toUpperCase(),W/2,oy+uh*0.265);
+  ctx.fillText(bigLabel,W/2,oy+uh*0.265);
   // Compact stats line
   ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font='700 15px Rajdhani';
   const mn=Math.floor(playTime/60),sc=Math.floor(playTime%60);
@@ -1899,20 +3384,40 @@ function drawDeathScreen(){
   const stats2=L.time+': '+mn+':'+(sc<10?'0':'')+sc;
   ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='600 13px Rajdhani';
   ctx.fillText(stats2,W/2,oy+uh*0.385);
-  // Coins earned + killer
+  // Coins earned + killer/timeout line
   const earned=Math.max(0,coins-coinsAtStart);
   if(earned>0){ctx.fillStyle='#ffd600';ctx.font='700 15px Rajdhani';ctx.fillText('🪙 +'+earned,W/2,oy+uh*0.43);}
-  ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='600 13px Rajdhani';
-  ctx.fillText(L.eliminatedBy+' '+killerName,W/2,oy+uh*0.465);
-  // Rank/best badge
-  if(score>=highScore&&score>0){
+  if(!isTimeout){
+    ctx.fillStyle='rgba(255,255,255,0.4)';ctx.font='600 13px Rajdhani';
+    ctx.fillText(L.eliminatedBy+' '+killerName,W/2,oy+uh*0.465);
+  }
+  // Rank/best badge — use per-mode best for the new-best check. Boss Rush's
+  // metric is waves-cleared (runWaves); every other mode uses score.
+  const currentModeBest=bestByMode[mode]||0;
+  const runMetricDs=mode==='bossrush'?runWaves:score;
+  // bestByMode was already updated in killSnake before drawDeathScreen runs,
+  // so currentModeBest IS the new best if the run beat the previous best. We
+  // detect that by checking runMetric === currentModeBest (this run set it).
+  const isNewModeBest=(runMetricDs>0&&runMetricDs===currentModeBest);
+  // For classic, also check highScore path for the existing top-rank display.
+  if(isNewModeBest){
     ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=10;ctx.font='900 20px Orbitron';
     ctx.fillText('★ '+L.newBest+' ★',W/2,oy+uh*0.51);ctx.shadowBlur=0;
-  }else if(currentRank>0&&currentRank<=10){
+  }else if(mode==='classic'&&currentRank>0&&currentRank<=10){
     const col=currentRank===1?'#ffd600':(currentRank<=3?'#c0c0c0':'#00e5ff');
     ctx.fillStyle=col;ctx.shadowColor=col;ctx.shadowBlur=8;ctx.font='900 18px Orbitron';
     ctx.fillText('TOP '+currentRank,W/2,oy+uh*0.51);ctx.shadowBlur=0;
+  }else if(currentModeBest>0){
+    ctx.fillStyle='rgba(255,255,255,0.45)';ctx.font='600 13px Rajdhani';
+    ctx.fillText(L.modeBest+': '+formatModeBest(mode,currentModeBest),W/2,oy+uh*0.51);
   }
+  // Tier line — current named tier (derived from CLASSIC best highScore) plus,
+  // if not yet Master, the "Next: {tier} at {min}" nudge. Read-only, no persist.
+  {const tr=tierForScore(highScore),nt=nextTier(highScore);
+  ctx.fillStyle=tr.color;ctx.font='700 13px Rajdhani';ctx.textAlign='center';
+  ctx.fillText(L.tier+': '+tierName(tr),W/2,oy+uh*0.54);
+  if(nt){ctx.fillStyle='rgba(255,255,255,0.45)';ctx.font='600 11px Rajdhani';
+    ctx.fillText(L.nextTier+': '+tierName(nt)+' @ '+nt.min,W/2,oy+uh*0.562);}}
   // Buttons
   const bw=Math.min(260,W-40),bh=50;
   const canRevive=!hasRevived;
@@ -1944,12 +3449,22 @@ function drawDeathScreen(){
     ctx.font='600 13px Rajdhani';
     ctx.fillText(L.adNotAvailable,W/2,ry+bh+16);
   }
+  // ─── Double your coins button ─────────────────────────────────────────────
+  const showDouble=lastRunEarned>0&&!doubleClaimed;
+  if(showDouble){
+    const dby=oy+uh*(canRevive?0.675:0.595);
+    const dbOk=adReady.rewarded;
+    ctx.globalAlpha=dbOk?1:0.4;
+    ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=dbOk?10:0;rr(W/2-bw/2,dby,bw,44,22);ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle='#0a0a1a';ctx.font='900 14px Orbitron';ctx.fillText(L.doubleCoins+' +'+lastRunEarned+' 🪙',W/2,dby+28);
+    ctx.globalAlpha=1;
+  }
   // Play Again
-  const ry2=oy+uh*(canRevive?0.71:0.62);
+  const ry2=oy+uh*(canRevive?(showDouble?0.775:0.71):(showDouble?0.685:0.62));
   ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=10;rr(W/2-bw/2,ry2,bw,bh,25);ctx.fill();ctx.shadowBlur=0;
   ctx.fillStyle='#0a0a1a';ctx.font='900 17px Orbitron';ctx.fillText('▶ '+L.playAgain,W/2,ry2+32);
   // Main Menu
-  const ry3=oy+uh*(canRevive?0.84:0.75);
+  const ry3=oy+uh*(canRevive?(showDouble?0.895:0.84):(showDouble?0.81:0.75));
   ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=2;rr(W/2-bw/2,ry3,bw,44,22);ctx.stroke();
   ctx.fillStyle='rgba(255,255,255,0.85)';ctx.font='700 15px Rajdhani';
   ctx.fillText('⌂ '+L.mainMenu,W/2,ry3+28);
@@ -1958,6 +3473,10 @@ function drawDeathScreen(){
 }
 
 // ═══ SKIN SELECT ═══
+// Shared geometry for the SKINS↔TRAILS tab pill (drawn on the skinselect
+// header, also reachable on trailselect as a SKINS tab). One source of truth so
+// the draw and both input switchboards can never drift.
+function cosmTabRect(){const w=110,h=30;return{x:W-w-12,y:sat+58,w:w,h:h};}
 function drawSkinSelect(){
   ctx.fillStyle='#0a0a1a';ctx.fillRect(0,0,W,H);
   const oy=sat;
@@ -1973,6 +3492,10 @@ function drawSkinSelect(){
   // Title — own row, dynamic
   const titleSize=Math.min(28,Math.floor(W*0.07));
   ctx.fillStyle='#fff';ctx.font='900 '+titleSize+'px Orbitron';ctx.fillText(L.skins,W/2,oy+86);
+  // TRAILS tab — switches to the cosmetic-trail screen (geometry via cosmTabRect).
+  {const r=cosmTabRect();ctx.fillStyle='rgba(124,77,255,0.14)';rr(r.x,r.y,r.w,r.h,r.h/2);ctx.fill();
+   ctx.strokeStyle='rgba(124,77,255,0.6)';ctx.lineWidth=1.4;rr(r.x,r.y,r.w,r.h,r.h/2);ctx.stroke();
+   ctx.fillStyle='#b39dff';ctx.font='900 13px Rajdhani';ctx.textAlign='center';ctx.fillText(L.trails+' →',r.x+r.w/2,r.y+r.h*0.66);}
   if(buyFailedMsg>0){buyFailedMsg-=gdt;ctx.fillStyle='rgba(255,100,100,'+Math.min(buyFailedMsg,1)+')';ctx.font='700 13px Rajdhani';ctx.fillText(L.notEnough,W/2,oy+108);}
   const cols=5,cellW=W/cols,cellH=70,startY=oy+118-skinScroll;
   for(let i=0;i<SKINS.length;i++){
@@ -1986,18 +3509,37 @@ function drawSkinSelect(){
       for(let j=0;j<5;j++){const t=j/5;let c;if(skin.p==='rainbow')c=hsl((j*60+frameCount*2)%360,80,60);else c=lerpColor(skin.c[1],skin.c[0],t);ctx.fillStyle=c;ctx.beginPath();ctx.arc(cx-10+j*5,cy-5,5-t*2,0,TAU);ctx.fill();}
       ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='600 10px Rajdhani';ctx.fillText(skin.name,cx,cy+18);
     }else{
+      // Locked skin — branch on rail: 'earn' shows goal only, 'coins' shows price + buy cue
       ctx.fillStyle='rgba(255,255,255,0.1)';ctx.beginPath();ctx.arc(cx,cy-5,12,0,TAU);ctx.fill();
       ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='bold 12px Rajdhani';ctx.fillText('?',cx,cy);
-      const u=SKINS[i].u,t=u[0],v=parseInt(u.slice(1));let hint='';
-      if(t==='s')hint=L.scoreReq+' '+v;if(t==='k')hint=v+' '+L.killsReq;if(t==='l')hint=L.lengthReq+' '+v;if(t==='g')hint=v+' '+L.gamesReq;
-      ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='600 8px Rajdhani';ctx.fillText(hint,cx,cy+14);
-      const p=skinPrice(SKINS[i]);
-      ctx.fillStyle=coins>=p?'#ffd600':'rgba(255,214,0,0.3)';ctx.font='bold 9px Rajdhani';ctx.fillText('🪙'+p,cx,cy+24);
+      const skL=SKINS[i],uL=skL.u,tL=uL[0],vL=parseInt(uL.slice(1));
+      const railL=skinRail(skL);
+      if(railL==='earn'){
+        // Score-threshold: show GOAL text, no buy affordance
+        const hint=L.scoreReq+' '+vL;
+        ctx.fillStyle='rgba(100,220,255,0.55)';ctx.font='600 8px Rajdhani';ctx.fillText(hint,cx,cy+14);
+        ctx.fillStyle='rgba(100,220,255,0.35)';ctx.font='600 7px Rajdhani';ctx.fillText('▲ EARN',cx,cy+24);
+      }else{
+        // Coins-only: show price + Buy cue. Featured skin → discounted price.
+        const p=featuredSkinPrice(i);
+        ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='600 8px Rajdhani';
+        const hintC=tL==='k'?vL+' '+L.killsReq:(tL==='l'?L.lengthReq+' '+vL:vL+' '+L.gamesReq);
+        ctx.fillText(hintC,cx,cy+14);
+        ctx.fillStyle=coins>=p?'#ffd600':'rgba(255,214,0,0.3)';ctx.font='bold 9px Rajdhani';ctx.fillText('🪙'+p,cx,cy+24);
+      }
+    }
+    // FEATURED highlight badge on this week's featured skin cell (any state).
+    if(isFeaturedSkin(i)){
+      const pulse=reducedMotion?0:0.18+0.12*Math.sin(frameCount*0.12);
+      ctx.strokeStyle='rgba(255,214,0,'+(0.55+pulse)+')';ctx.lineWidth=2;
+      rr(cx-cellW/2+4,cy-cellH/2+4,cellW-8,cellH-8,8);ctx.stroke();
+      ctx.fillStyle='#ffd600';ctx.font='900 7px Rajdhani';ctx.textAlign='center';
+      ctx.fillText('★ '+L.featured,cx,cy-cellH/2+13);ctx.textAlign='center';
     }
   }
   // Buy confirm modal
   if(pendingSkinBuy>=0){
-    const idx=pendingSkinBuy,sk=SKINS[idx],p=skinPrice(sk);
+    const idx=pendingSkinBuy,sk=SKINS[idx],p=featuredSkinPrice(idx);
     ctx.fillStyle='rgba(0,0,0,0.92)';ctx.fillRect(0,0,W,H);
     const mw=Math.min(320,W-40),mh=Math.min(240,H-sat-sab-40);
     const mx=W/2-mw/2,my=Math.max(sat+20,(H-mh)/2);
@@ -2030,6 +3572,131 @@ function drawSkinSelect(){
   ctx.textAlign='left';
 }
 
+// ═══ TRAIL SELECT (cosmetic axis #2) ═══
+// One source of truth for each trail row's hit-rect (draw + tap share it).
+function trailRowRect(i){
+  const oy=sat,rowH=Math.min(64,Math.floor((H-sat-sab-150)/TRAILS.length));
+  const rw=Math.min(320,W-32),rx=W/2-rw/2,ry=oy+136+i*(rowH+8);
+  return{x:rx,y:ry,w:rw,h:rowH};
+}
+// Static preview dots representing a trail style (no pooled state — pure paint).
+function drawTrailPreview(td,cx,cy){
+  const id=td.id;
+  if(id==='none'){ctx.fillStyle='rgba(255,255,255,0.25)';ctx.font='600 11px Rajdhani';ctx.textAlign='center';ctx.fillText('—',cx,cy+3);return;}
+  for(let j=0;j<6;j++){
+    const px=cx-18+j*7,t=j/6;let c;
+    if(id==='rainbow'){const rc=_hslToRgb((j*55+frameCount*4)%360,0.85,0.6);c='rgb('+rc.r+','+rc.g+','+rc.b+')';}
+    else if(id==='embers'){c='rgb(255,'+(90+j*14)+',0)';}
+    else c=td.col;
+    ctx.fillStyle=c;ctx.globalAlpha=0.4+t*0.6;
+    ctx.beginPath();ctx.arc(px,cy+Math.sin(frameCount*0.1+j)*2,3.4-t*1.6,0,TAU);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+function drawTrailSelect(){
+  ctx.fillStyle='#0a0a1a';ctx.fillRect(0,0,W,H);
+  const oy=sat;
+  // Back chip
+  ctx.fillStyle='rgba(0,229,255,0.12)';rr(12,oy+12,84,40,20);ctx.fill();
+  ctx.fillStyle='#00e5ff';ctx.font='900 16px Rajdhani';ctx.textAlign='center';ctx.shadowColor='#00e5ff';ctx.shadowBlur=4;
+  ctx.fillText(L.back,54,oy+38);ctx.shadowBlur=0;
+  // Coin pill
+  const coinTxt='🪙 '+coins;ctx.font='900 16px Orbitron';
+  const cw=Math.max(80,ctx.measureText(coinTxt).width+24);
+  ctx.fillStyle='rgba(255,214,0,0.12)';rr(W-cw-12,oy+12,cw,40,20);ctx.fill();
+  ctx.fillStyle='#ffd600';ctx.font='900 16px Orbitron';ctx.textAlign='center';ctx.fillText(coinTxt,W-cw/2-12,oy+38);
+  // Title
+  const titleSize=Math.min(28,Math.floor(W*0.07));
+  ctx.fillStyle='#fff';ctx.font='900 '+titleSize+'px Orbitron';ctx.fillText(L.trails,W/2,oy+86);
+  // SKINS tab → back to the skin screen (shared cosmTabRect geometry).
+  {const r=cosmTabRect();ctx.fillStyle='rgba(124,77,255,0.14)';rr(r.x,r.y,r.w,r.h,r.h/2);ctx.fill();
+   ctx.strokeStyle='rgba(124,77,255,0.6)';ctx.lineWidth=1.4;rr(r.x,r.y,r.w,r.h,r.h/2);ctx.stroke();
+   ctx.fillStyle='#b39dff';ctx.font='900 13px Rajdhani';ctx.textAlign='center';ctx.fillText('← '+L.skins,r.x+r.w/2,r.y+r.h*0.66);}
+  if(buyFailedMsg>0){buyFailedMsg-=gdt;ctx.fillStyle='rgba(255,100,100,'+Math.min(buyFailedMsg,1)+')';ctx.font='700 13px Rajdhani';ctx.fillText(L.notEnough,W/2,oy+108);}
+  // Rows
+  for(let i=0;i<TRAILS.length;i++){
+    const td=TRAILS[i],r=trailRowRect(i);
+    const owned=unlockedTrails.indexOf(i)>=0,equipped=i===currentTrail;
+    ctx.fillStyle=equipped?'rgba(124,77,255,0.18)':'rgba(255,255,255,0.05)';
+    rr(r.x,r.y,r.w,r.h,10);ctx.fill();
+    ctx.strokeStyle=equipped?'#b39dff':(owned?'rgba(255,255,255,0.18)':'rgba(255,255,255,0.10)');
+    ctx.lineWidth=equipped?2:1.2;rr(r.x,r.y,r.w,r.h,10);ctx.stroke();
+    // Preview swatch (left)
+    drawTrailPreview(td,r.x+44,r.y+r.h/2);
+    // FEATURED highlight on this week's featured trail row (gold pulse + badge).
+    if(isFeaturedTrail(i)){
+      const pulse=reducedMotion?0:0.18+0.12*Math.sin(frameCount*0.12);
+      ctx.strokeStyle='rgba(255,214,0,'+(0.55+pulse)+')';ctx.lineWidth=2;rr(r.x,r.y,r.w,r.h,10);ctx.stroke();
+      ctx.textAlign='left';ctx.fillStyle='#ffd600';ctx.font='900 9px Rajdhani';
+      ctx.fillText('★ '+L.featured,r.x+86,r.y+13);
+    }
+    // Name (center-left)
+    ctx.textAlign='left';ctx.fillStyle=owned?'#fff':'rgba(255,255,255,0.55)';ctx.font='700 15px Rajdhani';
+    ctx.fillText(trailName(td),r.x+86,r.y+r.h/2+5);
+    // Right side: EQUIPPED / price / SELECT
+    ctx.textAlign='right';
+    if(equipped){ctx.fillStyle='#b39dff';ctx.font='900 12px Rajdhani';ctx.fillText('✓ '+L.trailEquipped,r.x+r.w-16,r.y+r.h/2+4);}
+    else if(owned){ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='700 13px Rajdhani';ctx.fillText(L.trailSelect,r.x+r.w-16,r.y+r.h/2+4);}
+    else{const tp=featuredTrailPrice(i);ctx.fillStyle=coins>=tp?'#ffd600':'rgba(255,214,0,0.35)';ctx.font='900 14px Orbitron';ctx.fillText('🪙'+tp,r.x+r.w-16,r.y+r.h/2+4);}
+    ctx.textAlign='left';
+  }
+  // Buy confirm modal (mirrors skinselect)
+  if(pendingTrailBuy>=0){
+    const idx=pendingTrailBuy,td=TRAILS[idx],p=featuredTrailPrice(idx);
+    ctx.fillStyle='rgba(0,0,0,0.92)';ctx.fillRect(0,0,W,H);
+    const mw=Math.min(320,W-40),mh=Math.min(240,H-sat-sab-40);
+    const mx=W/2-mw/2,my=Math.max(sat+20,(H-mh)/2);
+    ctx.fillStyle='#10102a';rr(mx,my,mw,mh,16);ctx.fill();
+    ctx.strokeStyle='#7c4dff';ctx.lineWidth=2;rr(mx,my,mw,mh,16);ctx.stroke();
+    ctx.textAlign='center';
+    drawTrailPreview(td,W/2,my+44);
+    ctx.fillStyle='#fff';ctx.font='900 22px Orbitron';ctx.fillText(trailName(td),W/2,my+86);
+    ctx.fillStyle='#ffd600';ctx.font='900 26px Orbitron';ctx.shadowColor='#ffd600';ctx.shadowBlur=10;
+    ctx.fillText('🪙 '+p,W/2,my+126);ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='600 13px Rajdhani';ctx.fillText(L.buyTrail,W/2,my+150);
+    const cbw=120,cbh=48,cyB=my+mh-cbh-20;
+    ctx.fillStyle='#00e676';rr(mx+20,cyB,cbw,cbh,24);ctx.fill();
+    ctx.fillStyle='#0a0a1a';ctx.font='900 16px Orbitron';ctx.fillText(isTR?'AL':'BUY',mx+20+cbw/2,cyB+30);
+    ctx.fillStyle='rgba(255,255,255,0.15)';ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=2;rr(mx+mw-cbw-20,cyB,cbw,cbh,24);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#fff';ctx.fillText(isTR?'İPTAL':'CANCEL',mx+mw-cbw-20+cbw/2,cyB+30);
+    ctx.textAlign='left';
+  }
+  ctx.textAlign='left';
+}
+function handleTrailTap(x,y){
+  // Buy-confirm modal swallows taps (Yes left / No right).
+  if(pendingTrailBuy>=0){
+    const mw=Math.min(320,W-40),mh=Math.min(240,H-sat-sab-40);
+    const mx=W/2-mw/2,my=Math.max(sat+20,(H-mh)/2);
+    const cbw=120,cbh=48,cyB=my+mh-cbh-20;
+    if(x>mx+20&&x<mx+20+cbw&&y>cyB&&y<cyB+cbh){
+      const idx=pendingTrailBuy,td=TRAILS[idx],tp=featuredTrailPrice(idx); // discounted if featured — same number shown in modal
+      if(td&&tp>0&&unlockedTrails.indexOf(idx)<0&&coins>=tp){
+        coins-=tp;unlockedTrails.push(idx);currentTrail=idx;saveCoins();saveTrails();sndPowerup();showToast(trailName(td)+' ✓','success');
+      }else{buyFailedMsg=2;showToast(L.notEnough,'error');sndDeath();}
+      pendingTrailBuy=-1;return;
+    }
+    pendingTrailBuy=-1;sndMenu();return;
+  }
+  // Back chip
+  if(x>=12&&x<=12+84&&y>=sat+12&&y<=sat+12+40){state='menu';resetTouchState();sndMenu();return;}
+  // SKINS tab → back to the skin screen.
+  {const r=cosmTabRect();if(x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h){state='skinselect';skinScroll=0;sndMenu();return;}}
+  // Rows
+  for(let i=0;i<TRAILS.length;i++){
+    const r=trailRowRect(i);
+    if(x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h){
+      const td=TRAILS[i];
+      if(unlockedTrails.indexOf(i)>=0){currentTrail=i;trailSpawnAcc=0;saveTrails();sndMenu();return;}
+      // Locked → coins-only buy: guard affordance, open confirm (discounted if featured).
+      const tp=featuredTrailPrice(i);
+      if(tp<=0)return;
+      if(coins<tp){buyFailedMsg=2;sndDeath();showToast(L.notEnough,'error');return;}
+      pendingTrailBuy=i;sndMenu();return;
+    }
+  }
+}
+
 // ═══ INPUT ═══
 // touches: { [identifier:number]: 'joy' | 'joyboost' } — ONLY numeric identifiers,
 // never any other keys. Keep that invariant so iteration doesn't need a guard.
@@ -2038,6 +3705,7 @@ let touches={};
 // the touches map (used to be touches._lastY which made every iteration need
 // a `k !== '_lastY'` filter).
 let skinScrollLastY=null;
+let achScrollLastY=null;
 let lastTapEndAt=0,lastTapX=0,lastTapY=0;
 const DOUBLE_TAP_MS=320,DOUBLE_TAP_DIST=100;
 $.addEventListener('touchstart',function(e){
@@ -2050,7 +3718,10 @@ $.addEventListener('touchstart',function(e){
   if(state==='dead'){handleDeathTap(t.clientX,t.clientY);return;}
   if(state==='paused'){handlePauseTap(t.clientX,t.clientY);return;}
   if(state==='leaderboard'){handleLeaderboardTap(t.clientX,t.clientY);return;}
+  if(state==='achievements'){handleAchievementsTap(t.clientX,t.clientY);achScrollLastY=t.clientY;return;}
   if(state==='skinselect'){handleSkinTap(t.clientX,t.clientY);skinScrollLastY=t.clientY;return;}
+  if(state==='trailselect'){handleTrailTap(t.clientX,t.clientY);return;}
+  if(state==='modeselect'){handleModeselectTap(t.clientX,t.clientY);return;}
   if(state==='playing'){
     // Pause button (bottom-left) — only remaining HUD button
     if(dist({x:t.clientX,y:t.clientY},{x:50,y:H-sab-60})<46){state='paused';if(player)player.boosting=false;joystick.active=false;sndMenu();return;}
@@ -2070,6 +3741,7 @@ $.addEventListener('touchstart',function(e){
 $.addEventListener('touchmove',function(e){
   e.preventDefault();
   if(state==='skinselect'){const t=e.changedTouches[0];skinScroll-=t.clientY-(skinScrollLastY!=null?skinScrollLastY:t.clientY);skinScroll=Math.max(0,Math.min(skinScroll,Math.max(0,Math.ceil(SKINS.length/5)*70-H+sat+sab+128)));skinScrollLastY=t.clientY;return;}
+  if(state==='achievements'){const t=e.changedTouches[0];achScroll-=t.clientY-(achScrollLastY!=null?achScrollLastY:t.clientY);achScroll=Math.max(0,Math.min(achScroll,Math.max(0,ACHIEVEMENTS.length*64-(H-sat-sab-136))));achScrollLastY=t.clientY;return;}
   for(let i=0;i<e.changedTouches.length;i++){
     const t=e.changedTouches[i];
     const kind=touches[t.identifier];
@@ -2102,7 +3774,7 @@ $.addEventListener('touchend',function(e){
   }
   // (joystick anchor is updated in touchstart; on transfer, the stick keeps
   //  its previous direction until the surviving finger moves and re-anchors.)
-  skinScrollLastY=null;
+  skinScrollLastY=null;achScrollLastY=null;
 },{passive:false});
 
 // Mouse
@@ -2113,7 +3785,10 @@ $.addEventListener('mousedown',function(e){
   if(state==='dead'){handleDeathTap(e.clientX,e.clientY);return;}
   if(state==='paused'){handlePauseTap(e.clientX,e.clientY);return;}
   if(state==='leaderboard'){handleLeaderboardTap(e.clientX,e.clientY);return;}
+  if(state==='achievements'){handleAchievementsTap(e.clientX,e.clientY);return;}
   if(state==='skinselect'){handleSkinTap(e.clientX,e.clientY);return;}
+  if(state==='trailselect'){handleTrailTap(e.clientX,e.clientY);return;}
+  if(state==='modeselect'){handleModeselectTap(e.clientX,e.clientY);return;}
   if(state==='playing'&&dist({x:e.clientX,y:e.clientY},{x:50,y:H-sab-60})<42){state='paused';if(player)player.boosting=false;sndMenu();return;}
   if(e.button===2&&player){player.boosting=true;sndBoost();}
 });
@@ -2131,6 +3806,10 @@ window.addEventListener('keydown',function(e){
 window.addEventListener('keyup',function(e){if(e.code==='Space'&&player)player.boosting=false;});
 
 function handleMenuTap(x,y){
+  // Daily reward modal swallows taps when open.
+  if(showDailyModal){handleDailyModalTap(x,y);return;}
+  // Missions panel swallows taps when open.
+  if(showMissionsPanel){handleMissionsPanelTap(x,y);return;}
   // Settings overlay swallows taps when open.
   if(showSettings){
     const uh=H-sat-sab,oy=sat;
@@ -2138,12 +3817,13 @@ function handleMenuTap(x,y){
     // Pill row
     const ry=oy+uh*0.36;
     if(y>ry&&y<ry+bh){
-      const pillW=Math.floor(bw/3)-6,pillGap=9;
-      const totalPills=pillW*3+pillGap*2,pillsX=W/2-totalPills/2;
-      const p2X=pillsX+pillW+pillGap,p3X=pillsX+2*(pillW+pillGap);
+      const pillW=Math.floor(bw/4)-6,pillGap=9;
+      const totalPills=pillW*4+pillGap*3,pillsX=W/2-totalPills/2;
+      const p2X=pillsX+pillW+pillGap,p3X=pillsX+2*(pillW+pillGap),p4X=pillsX+3*(pillW+pillGap);
       if(x>pillsX&&x<pillsX+pillW){soundOn=!soundOn;saveSettings();sndMenu();return;}
       if(x>p2X&&x<p2X+pillW){musicOn=!musicOn;saveSettings();if(musicOn)startMusic();else stopMusic();sndMenu();return;}
       if(x>p3X&&x<p3X+pillW){vibrationOn=!vibrationOn;saveSettings();sndMenu();return;}
+      if(x>p4X&&x<p4X+pillW){reducedMotion=!reducedMotion;saveSettings();sndMenu();return;}
     }
     // Done button
     const dy=oy+uh*0.55;
@@ -2155,11 +3835,19 @@ function handleMenuTap(x,y){
   if(x<60&&x>10&&y>sat+10&&y<sat+60){showSettings=true;sndMenu();return;}
   // Help button (top-right corner)
   if(x>W-60&&x<W-10&&y>sat+10&&y<sat+60){showTutorial=true;sndMenu();return;}
+  // Daily reward badge (below help, top-right) — re-opens modal
+  if(x>W-56&&x<W-12&&y>sat+48&&y<sat+88){showDailyModal=true;sndMenu();return;}
+  // Daily missions summary chip — opens the missions panel (geometry mirrors drawMenu).
+  if(missions&&missions.length===3){
+    const uhM=H-sat-sab,oyM=sat,mcw=220,mcx=W/2-mcw/2,mcy=oyM+uhM*MISSIONS_CHIP_FY;
+    if(x>mcx&&x<mcx+mcw&&y>mcy&&y<mcy+MISSIONS_CHIP_H){showMissionsPanel=true;sndMenu();return;}
+  }
   sndMenu();const uh=H-sat-sab,oy=sat,bw=220,bh=58,bx=W/2-bw/2,by=oy+uh*0.42;
-  if(x>bx&&x<bx+bw&&y>by&&y<by+bh){startGame();return;}
+  if(x>bx&&x<bx+bw&&y>by&&y<by+bh){startGame(mode);return;}
   const sy=oy+uh*0.54;if(x>bx+20&&x<bx+bw-20&&y>sy&&y<sy+44){state='skinselect';skinScroll=0;return;}
   const ly=oy+uh*0.63;if(x>bx+20&&x<bx+bw-20&&y>ly&&y<ly+42){state='leaderboard';return;}
-  const ay=oy+uh*0.72;if(x>bx+20&&x<bx+bw-20&&y>ay&&y<ay+42){
+  const mmy=oy+uh*0.72;if(x>bx+20&&x<bx+bw-20&&y>mmy&&y<mmy+42){state='modeselect';resetTouchState();return;}
+  const ay=oy+uh*0.81;if(x>bx+20&&x<bx+bw-20&&y>ay&&y<ay+42){
     if(!adReady.rewarded){showToast(L.adNotAvailable,'error');postMsg({type:'CHECK_AD_READY'});return;}
     postMsg({type:'SHOW_REWARDED_AD',data:{reward:'coins'}});return;
   }
@@ -2182,15 +3870,17 @@ function handlePauseTap(x,y){
   if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){state='playing';if(player)player.invulnTimer=Math.max(player.invulnTimer,1.2);quitConfirmTimer=0;return;}
   // Settings pills row
   ry=oy+uh*0.34;
-  const pillW=Math.floor(bw/3)-6,pillGap=9;
-  const totalPills=pillW*3+pillGap*2,pillsX=W/2-totalPills/2;
+  const pillW=Math.floor(bw/4)-6,pillGap=9;
+  const totalPills=pillW*4+pillGap*3,pillsX=W/2-totalPills/2;
   if(y>ry&&y<ry+bh){
     const pillsXEnd=pillsX+pillW;
     const pill2X=pillsX+pillW+pillGap,pill2XEnd=pill2X+pillW;
     const pill3X=pillsX+2*(pillW+pillGap),pill3XEnd=pill3X+pillW;
+    const pill4X=pillsX+3*(pillW+pillGap),pill4XEnd=pill4X+pillW;
     if(x>pillsX&&x<pillsXEnd){soundOn=!soundOn;saveSettings();return;}
     if(x>pill2X&&x<pill2XEnd){musicOn=!musicOn;saveSettings();if(musicOn)startMusic();else stopMusic();return;}
     if(x>pill3X&&x<pill3XEnd){vibrationOn=!vibrationOn;saveSettings();return;}
+    if(x>pill4X&&x<pill4XEnd){reducedMotion=!reducedMotion;saveSettings();return;}
   }
   // How to play
   ry=oy+uh*0.50;
@@ -2200,7 +3890,31 @@ function handlePauseTap(x,y){
   if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){quitConfirmTimer=10;return;}
 }
 function handleLeaderboardTap(x,y){
-  if(x>=12&&x<=12+84&&y>=sat+12&&y<=sat+12+40){state='menu';resetTouchState();sndMenu();}
+  if(x>=12&&x<=12+84&&y>=sat+12&&y<=sat+12+40){state='menu';resetTouchState();sndMenu();return;}
+  // Achievements chip (top-right) → achievements view.
+  {const r=achChipRect();if(x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h){state='achievements';achScroll=0;resetTouchState();sndMenu();return;}}
+}
+function handleAchievementsTap(x,y){
+  // Back chip → leaderboard (the screen it was opened from).
+  if(x>=12&&x<=12+84&&y>=sat+12&&y<=sat+12+40){state='leaderboard';resetTouchState();sndMenu();return;}
+}
+function handleModeselectTap(x,y){
+  // Back chip
+  if(x>=12&&x<=12+84&&y>=sat+12&&y<=sat+12+40){state='menu';resetTouchState();sndMenu();return;}
+  // Mode cards (mirror drawModeSelect geometry)
+  const oy=sat;
+  const cardW=Math.min(300,W-40),cardH=100,cardX=W/2-cardW/2;
+  const startY=oy+116;
+  for(let i=0;i<MODES.length;i++){
+    const cy=startY+i*(cardH+14);
+    if(x>=cardX&&x<=cardX+cardW&&y>=cy&&y<=cy+cardH){
+      sndMenu();
+      mode=MODES[i].id;
+      saveBlob('opts',{mode:mode});
+      startGame(mode);
+      return;
+    }
+  }
 }
 function handleDeathTap(x,y){
   sndMenu();const uh=H-sat-sab,oy=sat;
@@ -2212,11 +3926,20 @@ function handleDeathTap(x,y){
     if(adReady.rewarded){postMsg({type:'SHOW_REWARDED_AD',data:{reward:'continue'}});return;}
     showToast(L.adNotAvailable,'error');postMsg({type:'CHECK_AD_READY'});return;
   }
+  // Double your coins (rewarded, once per death)
+  const showDouble=lastRunEarned>0&&!doubleClaimed;
+  if(showDouble){
+    const dby=oy+uh*(canRevive?0.675:0.595);
+    if(x>W/2-bw/2&&x<W/2+bw/2&&y>dby&&y<dby+44){
+      if(!adReady.rewarded){showToast(L.adNotAvailable,'error');postMsg({type:'CHECK_AD_READY'});return;}
+      postMsg({type:'SHOW_REWARDED_AD',data:{reward:'double'}});return;
+    }
+  }
   // Play Again
-  const ry2=oy+uh*(canRevive?0.71:0.62);
+  const ry2=oy+uh*(canRevive?(showDouble?0.775:0.71):(showDouble?0.685:0.62));
   if(x>W/2-bw/2&&x<W/2+bw/2&&y>ry2&&y<ry2+bh){startGame();return;}
   // Main Menu
-  const ry3=oy+uh*(canRevive?0.84:0.75);
+  const ry3=oy+uh*(canRevive?(showDouble?0.895:0.84):(showDouble?0.81:0.75));
   if(x>W/2-bw/2&&x<W/2+bw/2&&y>ry3&&y<ry3+44){state='menu';saveHS();saveStats();saveCoins();resetTouchState();return;}
 }
 function handleSkinTap(x,y){
@@ -2227,9 +3950,13 @@ function handleSkinTap(x,y){
     const cbw=120,cbh=48,cy=my+mh-cbh-20;
     // Yes (left)
     if(x>mx+20&&x<mx+20+cbw&&y>cy&&y<cy+cbh){
-      const idx=pendingSkinBuy,p=skinPrice(SKINS[idx]);
-      if(p>0&&coins>=p){coins-=p;unlockedSkins.push(idx);currentSkin=idx;saveCoins();saveSkins();saveStats();sndPowerup();showToast(SKINS[idx].name+' ✓','success');}
-      else{buyFailedMsg=2;showToast(L.notEnough,'error');sndDeath();}
+      const idx=pendingSkinBuy,p=featuredSkinPrice(idx); // discounted if featured — same number shown in modal
+      // Double-guard: only coins-rail skins can be purchased (earn-rail p===0).
+      // Also re-check ownership (mirrors the trail buy-confirm) so a stale/double
+      // confirm can never re-charge for an already-unlocked skin.
+      if(skinRail(SKINS[idx])==='coins'&&p>0&&!unlockedSkins.includes(idx)&&coins>=p){
+        coins-=p;unlockedSkins.push(idx);currentSkin=idx;saveCoins();saveSkins();saveStats();sndPowerup();showToast(SKINS[idx].name+' ✓','success');
+      }else{buyFailedMsg=2;showToast(L.notEnough,'error');sndDeath();}
       pendingSkinBuy=-1;return;
     }
     // No (right) — also acts as cancel for tap-outside
@@ -2237,14 +3964,19 @@ function handleSkinTap(x,y){
   }
   // Back chip
   if(x>=12&&x<=12+84&&y>=sat+12&&y<=sat+12+40){state='menu';resetTouchState();sndMenu();return;}
+  // TRAILS tab → switch to the cosmetic-trail screen.
+  {const r=cosmTabRect();if(x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h){state='trailselect';sndMenu();return;}}
   if(y<sat+118)return;
   const cols=5,cellW=W/cols,cellH=70,startY=sat+118-skinScroll;
   const col=Math.floor(x/cellW),row=Math.floor((y-startY)/cellH);
   const idx=row*cols+col;
   if(idx<0||idx>=SKINS.length)return;
   if(unlockedSkins.includes(idx)){currentSkin=idx;saveStats();sndMenu();return;}
-  const p=skinPrice(SKINS[idx]);
-  if(p<=0){return;}
+  // Earn-only skins (score-tier) are NOT purchasable — tapping does nothing
+  if(skinRail(SKINS[idx])==='earn'){return;}
+  // Coins-only skins: guard affordance then open buy confirm modal (discounted if featured)
+  const p=featuredSkinPrice(idx);
+  if(p<=0){return;} // safety: should never be 0 for a coins skin
   if(coins<p){buyFailedMsg=2;sndDeath();showToast(L.notEnough,'error');return;}
   // Open buy confirm modal
   pendingSkinBuy=idx;sndMenu();
