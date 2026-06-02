@@ -51,6 +51,7 @@ const L={
   lengthReq:isTR?'Uzunluk':'Length',gamesReq:isTR?'oyun':'games',
   paused:isTR?'DURAKLATILDI':'PAUSED',resume:isTR?'DEVAM ET':'RESUME',
   sound:isTR?'Ses':'Sound',on:isTR?'AÇIK':'ON',off:isTR?'KAPALI':'OFF',
+  motion:isTR?'Efekt':'Motion',
   camera:isTR?'Kamera':'Camera',zoomNormal:isTR?'Normal':'Normal',
   zoomClose:isTR?'Yakın':'Close',zoomFar:isTR?'Uzak':'Far',
   mainMenu:isTR?'ANA MENÜ':'MAIN MENU',coins:isTR?'Para':'Coins',
@@ -79,9 +80,10 @@ const L={
   missionBonus:isTR?'TÜM GÖREVLER TAMAMLANDI! +300 🪙':'ALL MISSIONS DONE! +300 🪙',
   protected:isTR?'KORUMALI':'PROTECTED',
   claim:isTR?'TALEP ET':'CLAIM',
-  streakSave:isTR?'SERANDE DEVAM ET':'KEEP STREAK',
+  streakSave:isTR?'SERİNE DEVAM ET':'KEEP STREAK',
   streakSaveDesc:isTR?'Serinizi koru — reklam izle':'Watch an ad to keep your streak',
   streakSaved:isTR?'Seri korundu!':'Streak saved!',
+  milestone:isTR?'ÖDÜL +':'MILESTONE +',
   dailyReward:isTR?'GÜNLÜK ÖDÜL':'DAILY REWARD',
   day:isTR?'Gün':'Day',
   today:isTR?'bugün':'today',
@@ -237,7 +239,6 @@ let runTimeLimit = 0;
 // Per-mode best scores: {classic: N, rush: N, …}. Persisted via saveBlob('bests',{}).
 let bestByMode = {};
 let lastLoginDate = '', loginStreak = 0;
-let dailyToast = 0, dailyAmount = 0, dailyStreakVal = 0;
 // ─── DAILY REWARD MODAL (Wave 2.3) ───────────────────────────────────────────
 // Escalating 7-day ladder: day index 0..6 cycles (day 7+ repeats at 6).
 const DAILY_REWARDS = [50, 80, 120, 180, 260, 380, 600];
@@ -259,6 +260,10 @@ const DEATH_CAM_S = 0.55;
 let pendingSkinBuy = -1;
 let scorePopups = [];
 let soundOn = true, musicOn = true, vibrationOn = true;
+// Reduced-motion: when true, gate the heaviest additive VFX (boost glow/speed-lines,
+// shockwave rings, zone-entry sweep) for motion-sensitive players + low-end devices.
+// Gameplay is identical; only cosmetic 'lighter'-composite effects are suppressed.
+let reducedMotion = false;
 let coins = 0, topScores = [];
 let shakeTimer = 0, shakeMag = 0;
 let kingActive = false, nextKingScore = 2000;
@@ -451,7 +456,7 @@ function grantLevelRewards(prevLevel,newLevel,suppressToast){
     if(MILESTONES[l]!==undefined){
       const reward=MILESTONES[l];
       coins+=reward;saveCoins();
-      showToast((isTR?'MİLESTONE +'+reward+' 🪙':'MILESTONE +'+reward+' 🪙'),'success');
+      showToast((L.milestone+reward+' 🪙'),'success');
     }
   }
 }
@@ -694,8 +699,8 @@ function reconcileLoadedCoins(localCoins,hadLocal,nativeCoins,firstLoad){
 // corrupt/half-flushed value must fall through to the native-backup branch
 // instead of locking in 0 and healing the backup down to 0.
 function loadCoins(){try{const raw=localStorage.getItem('growio_coins');const n=parseInt(raw,10);coinsHadLocal=Number.isFinite(n);coins=Number.isFinite(n)?n:0;}catch(e){}postMsg({type:'LOAD_COINS'});}
-function saveSettings(){try{localStorage.setItem('growio_settings',JSON.stringify({s:soundOn,m:musicOn,v:vibrationOn}));}catch(e){}}
-function loadSettings(){try{const d=localStorage.getItem('growio_settings');if(d){const s=JSON.parse(d);soundOn=s.s!==false;musicOn=s.m!==false;vibrationOn=s.v!==false;}}catch(e){}}
+function saveSettings(){try{localStorage.setItem('growio_settings',JSON.stringify({s:soundOn,m:musicOn,v:vibrationOn,r:reducedMotion}));}catch(e){}}
+function loadSettings(){try{const d=localStorage.getItem('growio_settings');if(d){const s=JSON.parse(d);soundOn=s.s!==false;musicOn=s.m!==false;vibrationOn=s.v!==false;reducedMotion=s.r===true;}}catch(e){}}
 function saveTopScores(){try{localStorage.setItem('growio_top',JSON.stringify(topScores));}catch(e){}}
 function loadTopScores(){try{const d=localStorage.getItem('growio_top');if(d)topScores=JSON.parse(d)||[];}catch(e){}}
 function loadTutorialSeen(){try{showTutorial=!localStorage.getItem('growio_tutorial');}catch(e){showTutorial=true;}}
@@ -918,6 +923,8 @@ function _parseHex(c){
   return{r:parseInt(h.slice(0,2),16)||255,g:parseInt(h.slice(2,4),16)||255,b:parseInt(h.slice(4,6),16)||255};
 }
 function spawnShock(x,y,color,big){
+  // reducedMotion: suppress shockwave rings entirely (cosmetic only — no gameplay state here).
+  if(reducedMotion)return;
   // Grab next pool slot (ring-buffer: overwrites oldest, O(1), no alloc).
   const slot=shockwaves[shkHead];
   shkHead=(shkHead+1)%SHK_MAX;
@@ -1523,7 +1530,10 @@ function updateZone(){
     // ~600 world units over 0.8 s, so the player clearly sees a biome boundary
     // crossing.  We patch maxR/dur on the slot right after spawnShock fills it
     // (cursor has already advanced; last written slot = (shkHead-1+SHK_MAX)%SHK_MAX).
-    if(zi>zoneIdx){
+    // reducedMotion gates the zone-entry sweep ring (cosmetic). Guard the slot
+    // patch behind the same flag so we never mutate a stale slot when spawnShock
+    // no-ops (shkHead would not have advanced).
+    if(zi>zoneIdx&&!reducedMotion){
       spawnShock(WCX,WCY,z.accent,true);
       const _sweepSlot=shockwaves[(shkHead-1+SHK_MAX)%SHK_MAX];
       _sweepSlot.maxR=600;_sweepSlot.dur=0.85;
@@ -1602,7 +1612,6 @@ function update(dt){
   if(shakeTimer>0)shakeTimer-=dt;
   if(killComboTimer>0){killComboTimer-=dt;if(killComboTimer<=0)killCombo=0;}
   if(unlockToast>0)unlockToast-=dt;
-  if(dailyToast>0&&!showTutorial)dailyToast-=dt;
   if(quitConfirmTimer>0)quitConfirmTimer-=dt;
   if(kingToast>0&&state==='playing')kingToast-=dt;
   if(bossToast>0&&state==='playing')bossToast-=dt;
@@ -1738,7 +1747,7 @@ function render(){
     if(joystick.active&&state==='playing')drawJoystick();
     if(state==='playing'){drawBoostFuel();drawPauseBtn();}
   }
-  if(state==='menu'){drawMenu();if(!showTutorial&&!showSettings&&!showDailyModal&&!showMissionsPanel&&dailyToast>0)drawDailyToast();if(showSettings)drawSettingsOverlay();if(!showTutorial&&showDailyModal)drawDailyModal();if(!showTutorial&&!showDailyModal&&showMissionsPanel)drawMissionsPanel();}
+  if(state==='menu'){drawMenu();if(showSettings)drawSettingsOverlay();if(!showTutorial&&showDailyModal)drawDailyModal();if(!showTutorial&&!showDailyModal&&showMissionsPanel)drawMissionsPanel();}
   if(state==='dead')drawDeathScreen();
   if(state==='paused')drawPauseScreen();
   if(state==='skinselect')drawSkinSelect();
@@ -1913,7 +1922,8 @@ function drawSnake(s){
   ctx.fillText(s.length,head.x,head.y-w/2-18);
   ctx.globalAlpha=1;ctx.textAlign='left';
   // ═══ BOOST VFX (player only, additive, save/restore-bounded, no per-frame alloc) ═══
-  if(s.isPlayer&&s.boosting){
+  // reducedMotion gates the entire heavy additive pass (glow + speed-lines + trail sheen).
+  if(s.isPlayer&&s.boosting&&!reducedMotion){
     const bRgb=_parseHex(skin.c[0]);
     const br=bRgb.r,bg=bRgb.g,bb=bRgb.b;
     ctx.save();
@@ -2151,14 +2161,15 @@ function drawPauseScreen(){
   ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=12;rr(bx,ry,bw,bh,bh/2);ctx.fill();ctx.shadowBlur=0;
   const txtY=ry+bh*0.65;
   ctx.fillStyle='#0a0a1a';ctx.font='900 17px Orbitron';ctx.fillText('▶ '+L.resume,W/2,txtY);
-  // Settings row: 3 toggle pills (Sound / Music / Vibration)
+  // Settings row: 4 toggle pills (Sound / Music / Vibration / Motion)
   ry=oy+uh*0.34;
-  const pillW=Math.floor(bw/3)-6,pillH=bh,pillGap=9;
-  const totalPills=pillW*3+pillGap*2,pillsX=W/2-totalPills/2;
+  const pillW=Math.floor(bw/4)-6,pillH=bh,pillGap=9;
+  const totalPills=pillW*4+pillGap*3,pillsX=W/2-totalPills/2;
   const pills=[
-    {x:pillsX,                  on:soundOn,    icon:soundOn?'🔊':'🔇', label:isTR?'Ses':'Sound'},
-    {x:pillsX+pillW+pillGap,    on:musicOn,    icon:musicOn?'🎵':'🔕', label:isTR?'Müzik':'Music'},
-    {x:pillsX+2*(pillW+pillGap),on:vibrationOn,icon:vibrationOn?'📳':'📴',label:isTR?'Titreşim':'Vibe'},
+    {x:pillsX,                  on:soundOn,        icon:soundOn?'🔊':'🔇',   label:isTR?'Ses':'Sound'},
+    {x:pillsX+pillW+pillGap,    on:musicOn,        icon:musicOn?'🎵':'🔕',   label:isTR?'Müzik':'Music'},
+    {x:pillsX+2*(pillW+pillGap),on:vibrationOn,    icon:vibrationOn?'📳':'📴',label:isTR?'Titreşim':'Vibe'},
+    {x:pillsX+3*(pillW+pillGap),on:!reducedMotion, icon:reducedMotion?'🐢':'✨',label:L.motion},
   ];
   for(const p of pills){
     if(p.on){ctx.fillStyle='rgba(0,229,255,0.15)';rr(p.x,ry,pillW,pillH,pillH/2);ctx.fill();}
@@ -2217,12 +2228,13 @@ function drawSettingsOverlay(){
   // Pill row (reused layout from pause)
   const bw=Math.min(280,W-40),bh=Math.min(60,Math.floor(uh*0.09));
   const ry=oy+uh*0.36;
-  const pillW=Math.floor(bw/3)-6,pillGap=9;
-  const totalPills=pillW*3+pillGap*2,pillsX=W/2-totalPills/2;
+  const pillW=Math.floor(bw/4)-6,pillGap=9;
+  const totalPills=pillW*4+pillGap*3,pillsX=W/2-totalPills/2;
   const pills=[
-    {x:pillsX,                  on:soundOn,    icon:soundOn?'🔊':'🔇', label:isTR?'Ses':'Sound'},
-    {x:pillsX+pillW+pillGap,    on:musicOn,    icon:musicOn?'🎵':'🔕', label:isTR?'Müzik':'Music'},
-    {x:pillsX+2*(pillW+pillGap),on:vibrationOn,icon:vibrationOn?'📳':'📴',label:isTR?'Titreşim':'Vibe'},
+    {x:pillsX,                  on:soundOn,        icon:soundOn?'🔊':'🔇',   label:isTR?'Ses':'Sound'},
+    {x:pillsX+pillW+pillGap,    on:musicOn,        icon:musicOn?'🎵':'🔕',   label:isTR?'Müzik':'Music'},
+    {x:pillsX+2*(pillW+pillGap),on:vibrationOn,    icon:vibrationOn?'📳':'📴',label:isTR?'Titreşim':'Vibe'},
+    {x:pillsX+3*(pillW+pillGap),on:!reducedMotion, icon:reducedMotion?'🐢':'✨',label:L.motion},
   ];
   for(const p of pills){
     if(p.on){ctx.fillStyle='rgba(0,229,255,0.15)';rr(p.x,ry,pillW,bh,bh/2);ctx.fill();}
@@ -2237,19 +2249,6 @@ function drawSettingsOverlay(){
   ctx.fillStyle='#0a0a1a';ctx.font='900 17px Orbitron';
   ctx.fillText(isTR?'TAMAM':'DONE',W/2,dy+bh*0.65);
   ctx.textAlign='left';
-}
-function drawDailyToast(){
-  const a=Math.min(dailyToast,1),uh=H-sat-sab,oy=sat,ty=oy+uh*0.08;
-  const tw=Math.min(300,W-32);
-  ctx.globalAlpha=a;ctx.textAlign='center';
-  ctx.fillStyle='rgba(0,0,0,0.85)';rr(W/2-tw/2,ty,tw,70,14);ctx.fill();
-  ctx.strokeStyle='#ffd600';ctx.lineWidth=2;rr(W/2-tw/2,ty,tw,70,14);ctx.stroke();
-  ctx.fillStyle='#ffd600';ctx.shadowColor='#ffd600';ctx.shadowBlur=12;
-  ctx.font='900 16px Orbitron';ctx.fillText(L.dailyBonus,W/2,ty+22);ctx.shadowBlur=0;
-  ctx.fillStyle='#fff';ctx.font='900 22px Orbitron';ctx.fillText('+'+dailyAmount+' 🪙',W/2,ty+46);
-  ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='600 12px Rajdhani';
-  ctx.fillText(L.streak+': '+dailyStreakVal,W/2,ty+62);
-  ctx.globalAlpha=1;ctx.textAlign='left';
 }
 
 // ─── DAILY REWARD MODAL (Wave 2.3) ───────────────────────────────────────────
@@ -2311,7 +2310,7 @@ function drawDailyModal(){
     ctx.strokeStyle='#ff9100';ctx.lineWidth=2;ctx.shadowColor='#ff9100';ctx.shadowBlur=adOk?8:0;
     rr(mx+16,btnY,sbw,sbh,22);ctx.stroke();ctx.shadowBlur=0;
     ctx.fillStyle='#ff9100';ctx.font='700 12px Orbitron';
-    ctx.fillText('📺 '+L.streakSave+' ('+dailyStreakPreBreak+'→'+dailyStreakPreBreak+')',W/2,btnY+sbh*0.62);
+    ctx.fillText('📺 '+L.streakSave+' ('+dailyStreakPreBreak+'→'+(dailyStreakPreBreak+1)+')',W/2,btnY+sbh*0.62);
     ctx.globalAlpha=1;
     btnY+=sbh+10;
   }
@@ -2742,7 +2741,7 @@ function drawMenu(){
   ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='600 12px Rajdhani';ctx.fillText(skin.name,W/2,py+50);
   // Version stamp (bottom)
   ctx.fillStyle='rgba(255,255,255,0.18)';ctx.font='600 10px Rajdhani';ctx.textAlign='center';
-  ctx.fillText('v1.2.1',W/2,H-sab-8);
+  ctx.fillText('v1.3.0',W/2,H-sab-8);
   ctx.textAlign='left';
 }
 
@@ -3059,12 +3058,13 @@ function handleMenuTap(x,y){
     // Pill row
     const ry=oy+uh*0.36;
     if(y>ry&&y<ry+bh){
-      const pillW=Math.floor(bw/3)-6,pillGap=9;
-      const totalPills=pillW*3+pillGap*2,pillsX=W/2-totalPills/2;
-      const p2X=pillsX+pillW+pillGap,p3X=pillsX+2*(pillW+pillGap);
+      const pillW=Math.floor(bw/4)-6,pillGap=9;
+      const totalPills=pillW*4+pillGap*3,pillsX=W/2-totalPills/2;
+      const p2X=pillsX+pillW+pillGap,p3X=pillsX+2*(pillW+pillGap),p4X=pillsX+3*(pillW+pillGap);
       if(x>pillsX&&x<pillsX+pillW){soundOn=!soundOn;saveSettings();sndMenu();return;}
       if(x>p2X&&x<p2X+pillW){musicOn=!musicOn;saveSettings();if(musicOn)startMusic();else stopMusic();sndMenu();return;}
       if(x>p3X&&x<p3X+pillW){vibrationOn=!vibrationOn;saveSettings();sndMenu();return;}
+      if(x>p4X&&x<p4X+pillW){reducedMotion=!reducedMotion;saveSettings();sndMenu();return;}
     }
     // Done button
     const dy=oy+uh*0.55;
@@ -3111,15 +3111,17 @@ function handlePauseTap(x,y){
   if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){state='playing';if(player)player.invulnTimer=Math.max(player.invulnTimer,1.2);quitConfirmTimer=0;return;}
   // Settings pills row
   ry=oy+uh*0.34;
-  const pillW=Math.floor(bw/3)-6,pillGap=9;
-  const totalPills=pillW*3+pillGap*2,pillsX=W/2-totalPills/2;
+  const pillW=Math.floor(bw/4)-6,pillGap=9;
+  const totalPills=pillW*4+pillGap*3,pillsX=W/2-totalPills/2;
   if(y>ry&&y<ry+bh){
     const pillsXEnd=pillsX+pillW;
     const pill2X=pillsX+pillW+pillGap,pill2XEnd=pill2X+pillW;
     const pill3X=pillsX+2*(pillW+pillGap),pill3XEnd=pill3X+pillW;
+    const pill4X=pillsX+3*(pillW+pillGap),pill4XEnd=pill4X+pillW;
     if(x>pillsX&&x<pillsXEnd){soundOn=!soundOn;saveSettings();return;}
     if(x>pill2X&&x<pill2XEnd){musicOn=!musicOn;saveSettings();if(musicOn)startMusic();else stopMusic();return;}
     if(x>pill3X&&x<pill3XEnd){vibrationOn=!vibrationOn;saveSettings();return;}
+    if(x>pill4X&&x<pill4XEnd){reducedMotion=!reducedMotion;saveSettings();return;}
   }
   // How to play
   ry=oy+uh*0.50;

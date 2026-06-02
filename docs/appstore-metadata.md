@@ -133,7 +133,7 @@ snake,io,slither,grow,arena,worm,multiplayer,neon,battle,survival
 
 ## 6. Build / Version
 
-- **Version**: `1.2.1`
+- **Version**: `1.3.0`
 - **Build**: (from EAS — `appVersionSource: remote`, auto-incremented)
 - **Minimum iOS**: 13.0
 - **Device Support**: iPhone + iPad
