@@ -81,6 +81,10 @@ Grow your snake, dominate the arena! Start small, eat food to grow, and slice th
 Grow your snake, dominate the arena! Start small, eat food to grow, and eliminate other players by cutting across their path. How long can you survive?
 
 FEATURES
+• 3 game modes: Classic (endless), Rush (90-second score sprint), and Boss Rush (back-to-back boss waves)
+• 10 achievements to chase across every mode
+• Earn named rank tiers as you climb: Bronze → Silver → Gold → Platinum → Diamond → Master
+• Unlockable Trails that leave a glowing wake behind your snake
 • Smooth joystick controls for precise movement
 • Massive 3000×3000 battle arena with up to 12 rival snakes
 • 4 powerful power-ups: Speed Boost, Shield, Magnet, Ghost
@@ -106,6 +110,60 @@ Built with love by AKIS Games in İstanbul.
 ### Keywords (100 chars max, comma-separated, NO spaces)
 ```
 snake,io,slither,grow,arena,worm,multiplayer,neon,battle,survival
+```
+
+---
+
+## 4b. What's New in 1.3 (Version Release Notes — REQUIRED for updates)
+
+> App Store Connect requires the **What's New** field on every update. Paste the matching language into the version's "What's New in This Version" box.
+
+### What's New — English (U.S.)
+```
+Version 1.3 is our biggest update yet!
+
+• 3 GAME MODES — play Classic endless, sprint for a high score in Rush (90 seconds), or survive back-to-back boss waves in Boss Rush.
+• 10 ACHIEVEMENTS — new challenges to chase across every mode.
+• UNLOCKABLE TRAILS — leave a glowing wake behind your snake.
+• RANK TIERS — climb from Bronze all the way to Master.
+• DAILY MISSIONS — fresh objectives every day for bonus coins.
+• 7-DAY DAILY REWARD — log in to claim escalating rewards all week.
+• FEATURED SHOP ITEM — a new spotlight cosmetic rotates in every week.
+• CALMER AMBIENT MUSIC and richer visuals for a smoother vibe.
+
+Thanks for playing — grow on!
+```
+
+### What's New — Turkish (Türkçe)
+```
+Sürüm 1.3, şimdiye kadarki en büyük güncellememiz!
+
+• 3 OYUN MODU — Klasik sonsuz modu oyna, Hızlı modda 90 saniyede yüksek skor peşinde koş ya da Boss Akını'nda art arda boss dalgalarında hayatta kal.
+• 10 BAŞARIM — her modda kovalanacak yeni meydan okumalar.
+• AÇILABİLİR İZLER — yılanının ardında parlayan bir iz bırak.
+• RÜTBE KADEMELERİ — Bronz'dan Usta'ya kadar yüksel.
+• GÜNLÜK GÖREVLER — bonus altın için her gün yeni hedefler.
+• 7 GÜNLÜK GÜNLÜK ÖDÜL — giriş yap, hafta boyunca artan ödülleri topla.
+• ÖNE ÇIKAN MAĞAZA ÜRÜNÜ — her hafta yeni bir vitrin kozmetiği gelir.
+• DAHA SAKİN ORTAM MÜZİĞİ ve daha zengin görseller ile daha akıcı bir his.
+
+Oynadığın için teşekkürler — büyümeye devam!
+```
+
+---
+
+## 4c. Localization — Turkish (Türkçe) reference
+
+> The app is bilingual (EN/TR). Provide a Turkish localization in App Store Connect alongside English.
+
+### Promotional Text — TR (170 chars max)
+```
+Yılanını büyüt, arenaya hükmet! Küçük başla, yem yiyerek büyü ve diğer oyuncuların yolunu keserek onları ele. Neon savaş arenasında ne kadar dayanabilirsin?
+```
+
+### Description FEATURES — TR (özet)
+```
+3 oyun modu (Klasik, Hızlı 90sn, Boss Akını), 10 başarım, açılabilir İzler, Bronz→Usta rütbe kademeleri, günlük görevler, 7 günlük ödül ve haftalık öne çıkan mağaza ürünü. Sürükle-bırak joystick kontrolü, 3000×3000 arena, 12 rakip yılan, 4 güçlendirme, 20 kostüm, mini harita ve neon görseller.
 ```
 
 ---
@@ -207,5 +265,5 @@ But to be safe, provide:
 - [ ] Pricing set to Free
 - [ ] Availability: All countries
 - [ ] Demo video (optional) up to 30s
-- [ ] Version notes filled (for updates)
+- [x] Version notes filled (for updates) — see "4b. What's New in 1.3"
 - [ ] **Submit for Review**
