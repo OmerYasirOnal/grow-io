@@ -17,6 +17,26 @@ users on the App Store. Prefer small, surgical, well-verified changes.
   for App Store releases.
 - `src/storage.ts` — AsyncStorage persistence. Native keys are `grow-io_*`.
 
+## Running locally (dev)
+
+A **Debug** build (Xcode ▶ Run on a simulator/device) does **not** embed the JS bundle — it loads
+from the **Metro** dev server (`AppDelegate.swift` returns the packager URL under `#if DEBUG`, and
+the "Bundle React Native code and images" phase sets `SKIP_BUNDLING=1` in Debug). So start Metro
+first:
+
+```bash
+npx expo start            # serves Metro on :8081
+```
+
+then **Reload (⌘R)** in the simulator. If Metro isn't running you'll see the RN red box
+`No script URL provided … unsanitizedScriptURLString = (null)` — that is the missing dev server,
+**not a bug**. **Release / store builds embed the bundle** (`react-native-xcode.sh` runs
+`export:embed`), so EAS production builds and Xcode Archives load standalone with no packager.
+
+**AdMob is iOS-only.** The `react-native-google-mobile-ads` plugin in `app.json` sets only
+`iosAppId`; the recurring `No 'androidAppId' was provided …` log is **benign** (Android is never
+built). Add an `androidAppId` only if/when an Android build is introduced.
+
 ## Gotchas (read before editing the game)
 
 - **No module system.** The game is one classic script. Top-level `function` decls are on
