@@ -437,22 +437,30 @@ let xp=0, plevel=1;
 function levelForXp(x){let l=1;while(x>=XP_BASE*l*(l+1)/2)l++;return l;}
 function xpForLevel(L){return XP_BASE*(L-1)*L/2;}   // cumulative XP needed to REACH level L
 function xpInLevel(x){return x-xpForLevel(plevel);}  // XP earned inside current level
-function awardXp(runScore,runKills){
-  const gain=Math.floor(runScore/XP_PER_SCORE)+runKills*XP_PER_KILL;
-  if(gain<=0)return;
-  const prevLevel=plevel;
-  xp+=gain;
-  plevel=levelForXp(xp);
-  // Fire milestone + level-up toast for every newly crossed level (handles multi-level jumps).
-  for(let l=prevLevel+1;l<=plevel;l++){
-    showToast((isTR?'SEVİYE '+l+'!':'LEVEL '+l+'!'),'success');
-    sndPowerup();
+// Grant rewards for every level crossed in (prevLevel, newLevel]: a per-level
+// toast (unless suppressed) plus any MILESTONES coin payout. The coin payout is
+// NEVER suppressed — both awardXp and the mission XP path route through here so
+// mission-driven level-ups still pay out milestones.
+function grantLevelRewards(prevLevel,newLevel,suppressToast){
+  for(let l=prevLevel+1;l<=newLevel;l++){
+    if(!suppressToast){
+      showToast((isTR?'SEVİYE '+l+'!':'LEVEL '+l+'!'),'success');
+      sndPowerup();
+    }
     if(MILESTONES[l]!==undefined){
       const reward=MILESTONES[l];
       coins+=reward;saveCoins();
       showToast((isTR?'MİLESTONE +'+reward+' 🪙':'MILESTONE +'+reward+' 🪙'),'success');
     }
   }
+}
+function awardXp(runScore,runKills){
+  const gain=Math.floor(runScore/XP_PER_SCORE)+runKills*XP_PER_KILL;
+  if(gain<=0)return;
+  const prevLevel=plevel;
+  xp+=gain;
+  plevel=levelForXp(xp);
+  grantLevelRewards(prevLevel,plevel,false);
   saveBlob('prog',{xp:xp,lvl:plevel});
 }
 
@@ -533,9 +541,14 @@ function evaluateMissions(stats){
     const mp=MISSION_POOL.find(function(p){return p.type===m.type;});
     if(mp&&mp.check(m.target,stats)){
       m.done=true;anyNew=true;
-      // Per-mission reward: 150 coins + 80 XP (added directly, no level toast spam now).
+      // Per-mission reward: 150 coins + 80 XP. Route the level-up through
+      // grantLevelRewards (toast suppressed to avoid spam) so any crossed
+      // milestone STILL pays out its coin reward.
       coins+=150;saveCoins();
-      xp+=80;plevel=levelForXp(xp);saveBlob('prog',{xp:xp,lvl:plevel});
+      const prevLevel=plevel;
+      xp+=80;plevel=levelForXp(xp);
+      grantLevelRewards(prevLevel,plevel,true);
+      saveBlob('prog',{xp:xp,lvl:plevel});
       showToast('✓ '+m.label,'success');
     }
   }
@@ -601,11 +614,18 @@ window.addEventListener('message',function(e){
       if(typeof s.totalGames==='number')totalGames=Math.max(totalGames,s.totalGames);
       if(typeof s.totalDeaths==='number')deathCount=Math.max(deathCount,s.totalDeaths);
       // Adopt native blob namespaces only where local lacks them (first-load floor — never overwrite).
-      if(m.data.blob&&typeof m.data.blob==='object'){for(const ns in m.data.blob){if(!(ns in gBlobs))gBlobs[ns]=m.data.blob[ns];}}
+      let adoptedBlob=false;
+      if(m.data.blob&&typeof m.data.blob==='object'){for(const ns in m.data.blob){if(!(ns in gBlobs)){gBlobs[ns]=m.data.blob[ns];adoptedBlob=true;}}}
+      // Floor-merge complete: native backup has been read, so future saveStats
+      // pushes are safe. Give any adopted namespaces a durable local home.
+      statsReconciled=true;
+      if(adoptedBlob)persistBlobs();
     }
     if(m.type==='SKIN_STATE_LOADED'&&m.data){
       const s=m.data;
-      if(Array.isArray(s.unlocked))for(const idx of s.unlocked)if(typeof idx==='number'&&!unlockedSkins.includes(idx))unlockedSkins.push(idx);
+      // Range-guard idx (matches loadSkins migration) so a future SKINS reorder
+      // can't slip a stale native index through.
+      if(Array.isArray(s.unlocked))for(const idx of s.unlocked)if(typeof idx==='number'&&idx>=0&&idx<SKINS.length&&!unlockedSkins.includes(idx))unlockedSkins.push(idx);
       if(typeof s.current==='number'&&unlockedSkins.includes(s.current))currentSkin=s.current;
     }
   }catch(e){}
@@ -618,7 +638,12 @@ window.addEventListener('message',function(e){
 const V13_KEY='growio_v13', V13_VER=1;
 function loadBlobs(){try{const d=localStorage.getItem(V13_KEY);if(d){const o=JSON.parse(d);if(o&&typeof o==='object')gBlobs=o;}}catch(e){}if(typeof gBlobs!=='object'||!gBlobs)gBlobs={};gBlobs.v=V13_VER;}
 function persistBlobs(){try{localStorage.setItem(V13_KEY,JSON.stringify(gBlobs));}catch(e){}saveStats();}
-function loadBlob(ns,defaults){const cur=(gBlobs&&typeof gBlobs[ns]==='object')?gBlobs[ns]:null;const out={};for(const k in defaults)out[k]=(cur&&k in cur)?cur[k]:defaults[k];return out;}
+function loadBlob(ns,defaults){const cur=(gBlobs&&typeof gBlobs[ns]==='object')?gBlobs[ns]:null;const out={};
+  // No defaults (or empty object) → whole-object mode: return a copy of every
+  // stored key in the namespace (supports dynamic-key namespaces like bests/ach/cos).
+  let hasDefault=false;for(const k in defaults){hasDefault=true;break;}
+  if(!hasDefault){if(cur)for(const k in cur)out[k]=cur[k];return out;}
+  for(const k in defaults)out[k]=(cur&&k in cur)?cur[k]:defaults[k];return out;}
 function saveBlob(ns,obj){gBlobs[ns]=obj;persistBlobs();}
 function saveHS(){if(score>highScore){highScore=score;try{localStorage.setItem('growio_hs',String(highScore));}catch(e){}postMsg({type:'SAVE_HIGH_SCORE',data:highScore});}}
 function loadHSLocal(){try{const v=parseInt(localStorage.getItem('growio_hs'));if(!isNaN(v)&&v>highScore)highScore=v;}catch(e){}}
@@ -630,9 +655,14 @@ function loadSkins(){
   for(let i=0;i<5;i++)if(!unlockedSkins.includes(i))unlockedSkins.push(i);
   if(currentSkin<0||currentSkin>=SKINS.length)currentSkin=0;
 }
-function saveStats(){try{localStorage.setItem('growio_stats',JSON.stringify({tk:totalKills,tg:totalGames,cs:currentSkin,td:deathCount}));}catch(e){}postMsg({type:'SAVE_STATS',data:{totalKills:totalKills,totalGames:totalGames,totalDeaths:deathCount,blob:gBlobs}});postMsg({type:'SAVE_SKIN_STATE',data:{current:currentSkin,unlocked:unlockedSkins.slice()}});}
+function saveStats(){try{localStorage.setItem('growio_stats',JSON.stringify({tk:totalKills,tg:totalGames,cs:currentSkin,td:deathCount}));}catch(e){}if(statsReconciled)postMsg({type:'SAVE_STATS',data:{totalKills:totalKills,totalGames:totalGames,totalDeaths:deathCount,blob:gBlobs}});postMsg({type:'SAVE_SKIN_STATE',data:{current:currentSkin,unlocked:unlockedSkins.slice()}});}
 function loadStats(){try{const d=localStorage.getItem('growio_stats');if(d){const s=JSON.parse(d);totalKills=s.tk||0;totalGames=s.tg||0;currentSkin=s.cs||0;deathCount=s.td||0;}}catch(e){}}
 let coinsHadLocal=false,coinsReconciled=false;
+// Hold the native SAVE_STATS push (xp/level/bests/daily/missions blob) until the
+// STATS_LOADED floor-merge has run, so a boot-time saveStats (e.g. loadMissions's
+// _saveMissions) can't clobber the native backup BEFORE the native copy is read.
+// localStorage stays authoritative and is written unconditionally below.
+let statsReconciled=false;
 // Hold the native SAVE_COINS push until the first reconcile completes, so a
 // boot-time save (e.g. the daily bonus) can't overwrite the native backup
 // BEFORE reconcileLoadedCoins has read it. localStorage is written immediately
@@ -689,8 +719,10 @@ function checkDailyBonus(){
   // Day-index into ladder: 0-based, cycle at 6.
   dailyClaimIdx=Math.min(6,Math.max(0,dailyPendingStreak-1));
   dailyAvailable=true;
-  lastLoginDate=today;
-  saveLogin();
+  // NOTE: lastLoginDate is intentionally NOT advanced here. It commits only on a
+  // successful CLAIM, so a force-quit before claiming lets the next same-day
+  // re-entry recompute the IDENTICAL pending streak (idempotent) instead of
+  // demoting the player to day-1.
   showDailyModal=true; // auto-open on first menu entry
 }
 function markTutorialSeen(){try{localStorage.setItem('growio_tutorial','1');}catch(e){}showTutorial=false;}
@@ -2316,7 +2348,10 @@ function handleDailyModalTap(x,y){
     const cbw=mw-32,cbh=52;
     if(x>mx+16&&x<mx+16+cbw&&y>btnY&&y<btnY+cbh){
       // Grant reward — commit the pending streak value (may be >7 for long runs)
+      // and advance lastLoginDate HERE (not at arming time) so an interrupted
+      // pre-claim session re-computes the same pending streak idempotently.
       loginStreak=dailyPendingStreak;
+      lastLoginDate=todayKey();
       saveLogin();
       coins+=DAILY_REWARDS[dailyClaimIdx];saveCoins();
       saveBlob('daily',{claimedDay:todayKey()});
