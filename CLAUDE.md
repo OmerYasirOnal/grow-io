@@ -98,6 +98,12 @@ built). Add an `androidAppId` only if/when an Android build is introduced.
   `expo-build-properties` `useFrameworks: "static"` (v27+ is SPM-only and needs dynamic frameworks; don't
   bump casually). `GoogleService-Info.plist` sits at the repo root. Game `TRACK` messages go to
   Analytics through `src/analytics.ts` (`trackEvent`, names sanitised to Firebase rules).
+- **Chapters** (`mode==='chapter'`): data in `CHAPTERS`; goals are eggs/gems/length/kills/king, progress in
+  the `chap` blob. Bots race the player for nests and gems (`updateBot`, `botAte`). `MODE_CARDS` excludes
+  the chapter mode; the chapter card is drawn separately in `drawModeSelect`.
+- **No unbounded layout loops:** edge badges go through `placePointer` (capped slides). A restart-scan loop
+  there froze the whole game in 1.4 testing. The main loop catches frame errors and `webviewWatchdog.ts`
+  remounts a dead WebView, but neither should be relied on to hide a bug.
 - **Test devices:** `TEST_DEVICE_IDS` in `src/adService.ts` makes the owner's phones get Google test
   ads even in store builds. Take the hash from the `<Google> To get test ads on this device` console
   line; it changes if the app is deleted and reinstalled.
