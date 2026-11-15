@@ -77,7 +77,22 @@ built). Add an `androidAppId` only if/when an Android build is introduced.
   scrolls, so its taps fire on touch END (`shopTouch`); every other screen still taps on touch start.
 - **Interstitial cadence** is `interstitialEligible(sessionRuns, runsSinceAd, ...)`: every second run
   or one long run; any full-screen ad resets `runsSinceAd`. Never reward an interstitial (AdMob policy).
-- **Coin glyph:** draw text containing the coin with `coinText()` (inline vector coin), not `fillText`.
+- **Glyphs in text:** draw any text containing 🪙 ▶ ✓ ★ ♛ ☠ ☂ with `glyphText()` (vector glyphs), never
+  `fillText`: iOS WebKit mis-measures these symbols and shifts centred labels off their buttons.
+- **Full bleed:** `App.tsx` must not wrap the WebView in a SafeAreaView; the game reads
+  `env(safe-area-inset-*)` itself.
+- **Hero skins** (`r:'hero'`, `power:`) are appended at the end of `SKINS`; bots must pick skins
+  below `HERO_FIRST`. Powers live in `HERO_POWERS` / `updateHero()` and work for the player only.
+- **Shared tuning tables:** `GROWTH_STEPS` (growth per pellet by size), `moveSpeed()` / `turnRate()`
+  (size-based movement), `ZONE_TYPES` (bonus zones), `PAD_FX` (floor pads), `TREASURE_COIN`.
+  `snakeWidth()` is used by drawing AND collisions: change it in one place only.
+- **iOS WebKit canvas quirks:** never combine `shadowBlur` with a gradient fill (the shadow is drawn
+  offset on device): draw a solid-colour glow pass first, then the gradient without a shadow. Add the
+  text-presentation selector `\ufe0e` after ▶ ↗ ⚙ ★ ✓ ☠ or iOS draws them as grey emoji.
+- **iOS 27 SDK:** the app must adopt UIScene; `plugins/withSceneDelegate.js` does it on every prebuild.
+  Without it the app traps at launch (`_UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption`).
+- **Dev on a real phone:** Debug builds load JS from Metro over the LAN; every save of
+  `game/index.html` hot-reloads the phone and wipes the run in progress.
 - **Fonts are embedded** as base64 `@font-face` (offline-safe). Do not reintroduce network fonts.
 - **Frame-rate independence.** Per-frame timers/animations scale by the global `gdt`
   (frame delta), not fixed `+=` constants. Follow that pattern in the loop/draw code.

@@ -157,7 +157,10 @@ describe('v1.4 structural guards', () => {
     const off = settingsLayout(375, 812, 47, 34, { privacyOptions: false });
     const on = settingsLayout(375, 812, 47, 34, { privacyOptions: true });
     expect(off.privacy).toBeNull();
-    expect(off.pills).toHaveLength(4);
+    // Two volume sliders, two toggles, language and DONE, stacked top to bottom.
+    expect(off.sfx.y).toBeLessThan(off.music.y);
+    expect(off.music.y).toBeLessThan(off.vib.y);
+    expect(off.lang.y).toBeLessThan(off.done.y);
     expect(on.privacy.y).toBeGreaterThan(on.done.y + on.done.h);
     expect(on.privacy.y + on.privacy.h).toBeLessThan(812 - 34);
     // Small phone (iPhone SE 1st gen): the row must still fit on screen.

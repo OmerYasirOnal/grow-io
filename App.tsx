@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import GameWebView from './src/GameWebView';
 import { initAds } from './src/adService';
 
@@ -16,9 +16,12 @@ export default function App() {
     <SafeAreaProvider>
       <View style={styles.container}>
         <StatusBar style="light" hidden translucent />
-        <SafeAreaView style={styles.safe}>
+        {/* Full bleed: the game draws behind the notch / home indicator and
+            keeps its UI clear of them itself (env(safe-area-inset-*) in
+            game/index.html). A SafeAreaView here left flat black bands. */}
+        <View style={styles.safe}>
           <GameWebView />
-        </SafeAreaView>
+        </View>
       </View>
     </SafeAreaProvider>
   );

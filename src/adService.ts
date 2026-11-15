@@ -506,8 +506,8 @@ async function requestATT(): Promise<void> {
     await new Promise<void>((resolve) => {
       privacyResolve = resolve;
       setTimeout(() => {
-        // Never put the system alert on top of a live run.
-        if (uiState === 'playing') privacyDeferred = true;
+        // Never put the system alert on top of a live run or the how-to-play guide.
+        if (uiState === 'playing' || uiState === 'tutorial') privacyDeferred = true;
         else resolve();
       }, AD_CONFIG.privacyFallbackMs);
     });
@@ -658,7 +658,7 @@ export function showRewarded(
 // The game reports its screen so an app-open ad never lands on a live run.
 export function setUiState(state: string): void {
   uiState = state;
-  if (privacyDeferred && state !== 'playing') {
+  if (privacyDeferred && state !== 'playing' && state !== 'tutorial') {
     privacyDeferred = false;
     privacyResolve?.();
   }

@@ -120,34 +120,36 @@ snake,io,slither,grow,arena,worm,multiplayer,neon,battle,survival
 
 ### What's New — English (U.S.)
 ```
-Version 1.4: smoother, fairer, cleaner.
+Version 1.4: our biggest update yet.
 
-• NEW HOME SCREEN: a cleaner menu with your snake front and center.
-• NEW SHOP: see every skin before you buy it, with clear rarities and prices.
-• 4 NEW SKINS: Candy, Toxic, Aurora and Midas.
-• FAIRER RUNS: reviving now carries your score, rewards and boss fights over correctly.
-• BETTER CONTROLS: two-finger boost no longer pulls your steering, and stray touches are ignored.
-• CLEARER SCREENS: a tidier results screen, and banners no longer cover your score or the minimap.
-• WORKS OFFLINE: the game looks the same with or without a connection.
-• Daily missions and rewards now refresh at midnight without restarting the app.
-• Many bug fixes and smoother camera on all devices.
+• HERO SKINS: Samurai, Orbit, Kraken and Jet, each with a small power (a blade that slices tails, orbs that block a hit, claws that grab rivals, a jet that saves boost fuel).
+• SMARTER RIVALS: bots with player-style names now try to cut you off, besiege you when you curl up and race you for power-ups. Giants roam the arena, and the King and Boss grow with you.
+• NEW ON THE MAP: treasure to grab, food rain, arrow pads that boost you (only in their direction), mud and brake pads. Edge arrows show where the action is.
+• COMBO METER: keep eating and hunting to fill it and grow up to twice as fast.
+• FAIR BONUS ZONES: x1.2 to x2.5; the richer the zone, the smaller and shorter it is, and it always has food inside.
+• NEW SHOP: see every skin before you buy it, with clear rarities and prices. 4 new skins too.
+• HOW TO PLAY: a new illustrated guide, a new home screen and a clearer results screen.
+• SMOOTHER: a continuous snake body, smooth tail growth, a calmer camera and better performance.
+• SETTINGS: volume sliders for sound and music, and a language choice (Turkish / English).
+• Many bug fixes. Works offline.
 
 Thanks for playing. Grow on!
 ```
 
 ### What's New — Turkish (Türkçe)
 ```
-Sürüm 1.4: daha akıcı, daha adil, daha derli toplu.
+Sürüm 1.4: şimdiye kadarki en büyük güncelleme.
 
-• YENİ ANA EKRAN: yılanın ortada, daha sade bir menü.
-• YENİ MAĞAZA: her görünümü almadan önce gör; nadirlikler ve fiyatlar artık net.
-• 4 YENİ GÖRÜNÜM: Candy, Toxic, Aurora ve Midas.
-• DAHA ADİL OYUNLAR: dirilince skorun, ödüllerin ve boss savaşların doğru şekilde devam ediyor.
-• DAHA İYİ KONTROL: iki parmakla hızlanma artık yönünü bozmuyor, yanlışlıkla dokunmalar yok sayılıyor.
-• DAHA NET EKRANLAR: daha düzenli sonuç ekranı; uyarılar artık skorunu ve mini haritayı kapatmıyor.
-• ÇEVRİMDIŞI ÇALIŞIR: bağlantı olsun olmasın oyun aynı görünür.
-• Günlük görevler ve ödüller artık uygulamayı yeniden başlatmadan gece yarısı yenileniyor.
-• Birçok hata düzeltmesi ve tüm cihazlarda daha akıcı kamera.
+• KAHRAMAN GÖRÜNÜMLER: Samurai, Orbit, Kraken ve Jet; her birinin küçük bir gücü var (kuyruk kesen kılıç, çarpmayı engelleyen küreler, rakibi yakalayan pençeler, hız yakıtını koruyan jet).
+• DAHA AKILLI RAKİPLER: oyuncu isimli botlar artık önünü kesmeye çalışıyor, kıvrılınca seni kuşatıyor, güçler için seninle yarışıyor. Arenada dev yılanlar dolaşıyor, Kral ve Boss seninle birlikte büyüyor.
+• HARİTADA YENİ: kapılacak hazine, yem yağmuru, yalnızca ok yönünde hızlandıran pistler, çamur ve fren pistleri. Ekran kenarındaki oklar nerede ne olduğunu gösteriyor.
+• KOMBO ÇUBUĞU: yemeye ve avlanmaya devam et, iki kata kadar hızlı büyü.
+• ADİL BONUS BÖLGELERİ: x1.2 ile x2.5 arası; bölge ne kadar zenginse o kadar küçük ve kısa süreli, içinde hep yem var.
+• YENİ MAĞAZA: her görünümü almadan önce gör; nadirlikler ve fiyatlar net. 4 yeni görünüm de eklendi.
+• NASIL OYNANIR: yeni resimli rehber, yeni ana ekran ve daha net sonuç ekranı.
+• DAHA AKICI: kesintisiz yılan gövdesi, yumuşak kuyruk büyümesi, daha sakin kamera ve daha iyi performans.
+• AYARLAR: ses ve müzik için ses seviyesi, dil seçimi (Türkçe / İngilizce).
+• Birçok hata düzeltmesi. Çevrimdışı çalışır.
 
 Oynadığın için teşekkürler. Büyümeye devam!
 ```
