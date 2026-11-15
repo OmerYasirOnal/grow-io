@@ -73,3 +73,24 @@ export function retryDelayMs(retryCount: number): number {
   const n = Math.max(1, Math.min(retryCount, 6));
   return Math.min(60_000, 1000 * 2 ** n);
 }
+
+// ─── Ad units per platform ───────────────────────────────────────────────────
+// Android units do not exist yet: until the Android app is created in AdMob
+// they stay empty and Android falls back to Google's test units. Fill them in
+// before a Play release (a Jest test fails the release check while empty).
+export type AdUnits = { interstitial: string; rewarded: string; appOpen: string };
+export const AD_UNITS: { ios: AdUnits; android: AdUnits } = {
+  ios: {
+    interstitial: 'ca-app-pub-9920930529636149/5392741755',
+    rewarded: 'ca-app-pub-9920930529636149/5762833880',
+    // AdMob unit "Growio_AppOpen". An empty string disables the format.
+    appOpen: 'ca-app-pub-9920930529636149/4414824391',
+  },
+  android: { interstitial: '', rewarded: '', appOpen: '' },
+};
+
+export function adUnitsFor(os: string, test: boolean, testUnits: AdUnits): AdUnits {
+  const prod = os === 'android' ? AD_UNITS.android : AD_UNITS.ios;
+  if (test || !prod.interstitial || !prod.rewarded) return testUnits;
+  return prod;
+}

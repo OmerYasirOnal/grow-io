@@ -35,9 +35,13 @@ then **Reload (⌘R)** in the simulator. If Metro isn't running you'll see the R
 **not a bug**. **Release / store builds embed the bundle** (`react-native-xcode.sh` runs
 `export:embed`), so EAS production builds and Xcode Archives load standalone with no packager.
 
-**AdMob is iOS-only.** The `react-native-google-mobile-ads` plugin in `app.json` sets only
-`iosAppId`; the recurring `No 'androidAppId' was provided …` log is **benign** (Android is never
-built). Add an `androidAppId` only if/when an Android build is introduced.
+**Android (work in progress, not on Play yet).** `npx expo prebuild --platform android` + `./gradlew
+assembleRelease` with `JAVA_HOME` = Homebrew `openjdk@17` and `ANDROID_HOME` =
+`/opt/homebrew/share/android-commandlinetools`. `androidAppId` in `app.json` is Google's sample ID and the
+Android ad units in `AD_UNITS` (`src/adPolicy.ts`) are empty, so Android shows test ads until the Android
+app exists in AdMob. `google-services.json` is the Firebase Android config. Android back goes through the
+game (`handleBack`); only the bare menu answers `EXIT_APP`. Platform-specific native strings live under
+`ios`/`android` keys in `locales/*.json`.
 
 ## Gotchas (read before editing the game)
 

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "565949373962",
+    "project_id": "snake-grow-io-battle-arena",
+    "storage_bucket": "snake-grow-io-battle-arena.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:565949373962:android:81226919100629b78909f3",
+        "android_client_info": {
+          "package_name": "com.omeryasir.growio"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCTw1kyJbCWd6DuXKMjHmJZCq-Hb278O1s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

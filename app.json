@@ -212,7 +212,9 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0a0a1a"
       },
-      "package": "com.omeryasir.growio"
+      "package": "com.omeryasir.growio",
+      "versionCode": 1,
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -222,7 +224,8 @@
         "react-native-google-mobile-ads",
         {
           "iosAppId": "ca-app-pub-9920930529636149~3237351702",
-          "delayAppMeasurementInit": true
+          "delayAppMeasurementInit": true,
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713"
         }
       ],
       "expo-asset",

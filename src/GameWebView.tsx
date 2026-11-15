@@ -1,5 +1,5 @@
 import { useRef, useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Platform, Image, View, AppState } from 'react-native';
+import { StyleSheet, Platform, Image, View, AppState, BackHandler } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { Asset } from 'expo-asset';
 import * as Haptics from 'expo-haptics';
@@ -90,6 +90,17 @@ export default function GameWebView() {
     return () => sub.remove();
   }, [htmlUri, sendToGame]);
 
+  // Android back: the game decides (pause, close an overlay, go up a screen) and
+  // answers EXIT_APP only on the bare main menu.
+  useEffect(() => {
+    if (Platform.OS !== 'android' || !htmlUri) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      sendToGame({ type: 'BACK' });
+      return true;
+    });
+    return () => sub.remove();
+  }, [htmlUri, sendToGame]);
+
   // Watchdog: ping the page; remount it if it stops answering in the foreground.
   useEffect(() => {
     if (!htmlUri) return;
@@ -112,6 +123,9 @@ export default function GameWebView() {
       watchdog.current.lastPongAt = Date.now();
       switch (msg.type) {
         case 'PONG':
+          break;
+        case 'EXIT_APP':
+          if (Platform.OS === 'android') BackHandler.exitApp();
           break;
         case 'SHOW_INTERSTITIAL': {
           // SHOWN is followed by INTERSTITIAL_CLOSED once the ad is dismissed;

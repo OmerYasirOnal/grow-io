@@ -3,7 +3,7 @@ import {
   AdsConsentPrivacyOptionsRequirementStatus,
 } from 'react-native-google-mobile-ads';
 import { AppState, Platform, type AppStateStatus } from 'react-native';
-import { AD_CONFIG, appOpenAllowed, interstitialAllowed, isAdExpired, retryDelayMs } from './adPolicy';
+import { AD_CONFIG, adUnitsFor, appOpenAllowed, interstitialAllowed, isAdExpired, retryDelayMs } from './adPolicy';
 import { loadMeta, updateMeta } from './storage';
 
 // Set to true in a debug/TestFlight build to verify the ad flow with Google's
@@ -20,11 +20,11 @@ const useTest = __DEV__ || FORCE_TEST_ADS;
 export const TEST_DEVICE_IDS = [
   'a8de2a2d325231a8a214b761dc6a9861', // Omer's iPhone 11 (2026-11-15)
 ];
-const INTERSTITIAL_ID = useTest ? TestIds.INTERSTITIAL : 'ca-app-pub-9920930529636149/5392741755';
-const REWARDED_ID = useTest ? TestIds.REWARDED : 'ca-app-pub-9920930529636149/5762833880';
-// AdMob unit "Growio_AppOpen". An empty string disables the format.
-const APP_OPEN_PROD_ID = 'ca-app-pub-9920930529636149/4414824391';
-const APP_OPEN_ID = useTest ? TestIds.APP_OPEN : APP_OPEN_PROD_ID;
+const UNITS = adUnitsFor(Platform.OS, useTest,
+  { interstitial: TestIds.INTERSTITIAL, rewarded: TestIds.REWARDED, appOpen: TestIds.APP_OPEN });
+const INTERSTITIAL_ID = UNITS.interstitial;
+const REWARDED_ID = UNITS.rewarded;
+const APP_OPEN_ID = UNITS.appOpen;
 
 // Use the factory's return type for the instance type: the ad classes have
 // protected constructors, so `InstanceType<typeof X>` fails to type-check.

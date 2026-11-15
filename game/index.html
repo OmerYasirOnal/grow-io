@@ -1426,6 +1426,7 @@ window.addEventListener('message',function(e){
     }
     if(m.type==='INTERSTITIAL_SHOWN'){afterAdShown=true;runsSinceAd=0;}
     if(m.type==='INTERSTITIAL_FAILED'||m.type==='INTERSTITIAL_CLOSED'){finishAfterAd();}
+    if(m.type==='BACK'){handleBack();return;}
     if(m.type==='APP_STATE'&&m.data){if(m.data.active)resumeFromBackground();else autoPauseIfPlaying();}
     if(m.type==='HIGH_SCORE_LOADED'){highScore=Math.max(highScore,m.data||0);try{localStorage.setItem('growio_hs',String(highScore));}catch(e){}}
     if(m.type==='COINS_LOADED'){
@@ -5731,6 +5732,26 @@ $.addEventListener('touchcancel',onTouchEnd,{passive:false});
 
 // Pause / resume go through one place so touch state is always cleared and the
 // resume shield is rate-limited (pause-spamming must not grant invulnerability).
+// Android hardware/gesture back (host sends BACK). Mirrors the on-screen back
+// chips; only the bare main menu lets the app close (host gets EXIT_APP).
+function handleBack(){
+  if(adBlocksInput()||afterAdAction)return;
+  if(showTutorial){closeGuide();sndMenu();return;}
+  if(privacyPrimerOpen)return;
+  if(state==='menu'){
+    if(showSettings){showSettings=false;settingsDrag=null;sndMenu();return;}
+    if(showDailyModal){showDailyModal=false;sndMenu();return;}
+    if(showMissionsPanel){showMissionsPanel=false;sndMenu();return;}
+    postMsg({type:'EXIT_APP'});return;
+  }
+  if(state==='playing'){pauseGame();return;}
+  if(state==='paused'){if(quitConfirmTimer>0){quitConfirmTimer=0;sndMenu();return;}resumeGame();return;}
+  if(state==='dead'){if(deathInputLock<=0){sndMenu();leaveDeathScreen(goMenu);}return;}
+  if(state==='trailselect'&&pendingTrailBuy>=0){pendingTrailBuy=-1;sndMenu();return;}
+  if(state==='chapterwin'){state='chapters';resetTouchState();sndMenu();return;}
+  if(state==='chapters'){state='modeselect';resetTouchState();sndMenu();return;}
+  if(['skinselect','trailselect','leaderboard','achievements','modeselect'].indexOf(state)>=0){state='menu';resetTouchState();sndMenu();return;}
+}
 function pauseGame(){
   if(state!=='playing')return;
   state='paused';resetTouchState();quitConfirmTimer=0;sndMenu();

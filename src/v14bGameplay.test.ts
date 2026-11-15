@@ -137,3 +137,13 @@ describe('chapter competition', () => {
     expect(upd.indexOf('botAte(')).toBeLessThan(upd.indexOf('if(!player||!player.alive)return;'));
   });
 });
+
+describe('Android back', () => {
+  it('pauses a run, goes up a screen and only exits from the bare menu', () => {
+    const fn = extractFn(html, 'handleBack');
+    expect(fn).toContain("if(state==='playing'){pauseGame();return;}");
+    expect(fn).toContain("postMsg({type:'EXIT_APP'})");
+    expect(fn.indexOf('showSettings')).toBeLessThan(fn.indexOf("EXIT_APP"));
+    expect(html).toContain("if(m.type==='BACK'){handleBack();return;}");
+  });
+});

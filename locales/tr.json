@@ -1,3 +1,5 @@
 {
-  "NSUserTrackingUsageDescription": "Sana daha alakalı reklamlar göstermek için kullanılır."
+  "ios": {
+    "NSUserTrackingUsageDescription": "Sana daha alakalı reklamlar göstermek için kullanılır."
+  }
 }
