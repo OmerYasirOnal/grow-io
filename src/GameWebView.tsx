@@ -1,5 +1,5 @@
 import { useRef, useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Platform, ActivityIndicator, View } from 'react-native';
+import { StyleSheet, Platform, ActivityIndicator, View, AppState } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { Asset } from 'expo-asset';
 import * as Haptics from 'expo-haptics';
@@ -10,8 +10,10 @@ import {
 } from './storage';
 import {
   showInterstitial, showRewarded, getAdStatus,
-  setAdStatusListener,
+  setAdStatusListener, setAdLifecycleListener,
+  notifyPrivacyReady, setUiState, openAdInspector, showPrivacyOptions,
 } from './adService';
+import { requestStoreReview } from './review';
 
 const gameAsset = require('../game/index.html');
 
@@ -49,7 +51,22 @@ export default function GameWebView() {
   useEffect(() => {
     if (!htmlUri) return;
     setAdStatusListener((s) => sendToGame({ type: 'AD_STATUS', data: s }));
-    return () => setAdStatusListener(null);
+    // The game pauses and mutes itself while a full-screen ad is on screen.
+    setAdLifecycleListener((open) => sendToGame({ type: open ? 'AD_OPENED' : 'AD_CLOSED' }));
+    return () => {
+      setAdStatusListener(null);
+      setAdLifecycleListener(null);
+    };
+  }, [htmlUri, sendToGame]);
+
+  // Tell the game when the app leaves/returns to the foreground so it can
+  // pause a live run and stop audio instead of running blind in the background.
+  useEffect(() => {
+    if (!htmlUri) return;
+    const sub = AppState.addEventListener('change', (next) => {
+      sendToGame({ type: 'APP_STATE', data: { active: next === 'active' } });
+    });
+    return () => sub.remove();
   }, [htmlUri, sendToGame]);
 
   const onMessage = useCallback((event: WebViewMessageEvent) => {
@@ -57,13 +74,39 @@ export default function GameWebView() {
       const msg: GameMessage = JSON.parse(event.nativeEvent.data);
       switch (msg.type) {
         case 'SHOW_INTERSTITIAL': {
-          const shown = showInterstitial();
+          // SHOWN is followed by INTERSTITIAL_CLOSED once the ad is dismissed;
+          // FAILED means nothing was shown and the game continues right away.
+          const shown = showInterstitial(() => sendToGame({ type: 'INTERSTITIAL_CLOSED' }));
           sendToGame({ type: shown ? 'INTERSTITIAL_SHOWN' : 'INTERSTITIAL_FAILED' });
           break;
         }
+        case 'PRIVACY_READY':
+          notifyPrivacyReady();
+          break;
+        case 'OPEN_PRIVACY_OPTIONS':
+          showPrivacyOptions();
+          break;
+        case 'UI_STATE':
+          if (typeof msg.data === 'string') setUiState(msg.data);
+          break;
+        case 'REQUEST_REVIEW':
+          requestStoreReview();
+          break;
+        case 'TRACK':
+          // Analytics hook: forward to the analytics SDK once one is chosen.
+          if (__DEV__) console.log('[track]', msg.data?.event, msg.data?.props ?? '');
+          break;
+        case 'OPEN_AD_INSPECTOR':
+          openAdInspector();
+          break;
         case 'SHOW_REWARDED_AD': {
           const requestedReward = msg.data?.reward || 'continue';
-          const shown = showRewarded(requestedReward, (reward) => sendToGame({ type: 'AD_REWARD_EARNED', data: { reward } }));
+          const shown = showRewarded(
+            requestedReward,
+            (reward) => sendToGame({ type: 'AD_REWARD_EARNED', data: { reward } }),
+            // Accepted but never made it on screen: release the game's tap lock.
+            (reward) => sendToGame({ type: 'AD_FAILED', data: { reward } }),
+          );
           if (!shown) sendToGame({ type: 'AD_FAILED', data: { reward: requestedReward } });
           break;
         }

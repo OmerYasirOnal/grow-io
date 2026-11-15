@@ -114,6 +114,46 @@ snake,io,slither,grow,arena,worm,multiplayer,neon,battle,survival
 
 ---
 
+## 4a. What's New in 1.4 (current release notes)
+
+> Mirrors `fastlane/metadata/{en-US,tr}/release_notes.txt`. Draft written 2026-11-15; review before submitting.
+
+### What's New — English (U.S.)
+```
+Version 1.4: smoother, fairer, cleaner.
+
+• NEW HOME SCREEN: a cleaner menu with your snake front and center.
+• NEW SHOP: see every skin before you buy it, with clear rarities and prices.
+• 4 NEW SKINS: Candy, Toxic, Aurora and Midas.
+• FAIRER RUNS: reviving now carries your score, rewards and boss fights over correctly.
+• BETTER CONTROLS: two-finger boost no longer pulls your steering, and stray touches are ignored.
+• CLEARER SCREENS: a tidier results screen, and banners no longer cover your score or the minimap.
+• WORKS OFFLINE: the game looks the same with or without a connection.
+• Daily missions and rewards now refresh at midnight without restarting the app.
+• Many bug fixes and smoother camera on all devices.
+
+Thanks for playing. Grow on!
+```
+
+### What's New — Turkish (Türkçe)
+```
+Sürüm 1.4: daha akıcı, daha adil, daha derli toplu.
+
+• YENİ ANA EKRAN: yılanın ortada, daha sade bir menü.
+• YENİ MAĞAZA: her görünümü almadan önce gör; nadirlikler ve fiyatlar artık net.
+• 4 YENİ GÖRÜNÜM: Candy, Toxic, Aurora ve Midas.
+• DAHA ADİL OYUNLAR: dirilince skorun, ödüllerin ve boss savaşların doğru şekilde devam ediyor.
+• DAHA İYİ KONTROL: iki parmakla hızlanma artık yönünü bozmuyor, yanlışlıkla dokunmalar yok sayılıyor.
+• DAHA NET EKRANLAR: daha düzenli sonuç ekranı; uyarılar artık skorunu ve mini haritayı kapatmıyor.
+• ÇEVRİMDIŞI ÇALIŞIR: bağlantı olsun olmasın oyun aynı görünür.
+• Günlük görevler ve ödüller artık uygulamayı yeniden başlatmadan gece yarısı yenileniyor.
+• Birçok hata düzeltmesi ve tüm cihazlarda daha akıcı kamera.
+
+Oynadığın için teşekkürler. Büyümeye devam!
+```
+
+---
+
 ## 4b. What's New in 1.3 (Version Release Notes — REQUIRED for updates)
 
 > App Store Connect requires the **What's New** field on every update. Paste the matching language into the version's "What's New in This Version" box.
@@ -191,7 +231,7 @@ Yılanını büyüt, arenaya hükmet! Küçük başla, yem yiyerek büyü ve di�
 
 ## 6. Build / Version
 
-- **Version**: `1.3.0`
+- **Version**: `1.4.0`
 - **Build**: (from EAS — `appVersionSource: remote`, auto-incremented)
 - **Minimum iOS**: 13.0
 - **Device Support**: iPhone + iPad

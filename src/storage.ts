@@ -67,3 +67,41 @@ export async function loadSkinState(): Promise<SkinState> {
 export async function saveSkinState(state: SkinState): Promise<void> {
   try { await AsyncStorage.setItem(SKIN_STATE_KEY, JSON.stringify(state)); } catch {}
 }
+
+// App-level bookkeeping that is not game state: launch counter (new-player ad
+// grace), last app-open ad time, and which version already asked for a review.
+const META_KEY = 'grow-io_meta';
+
+export interface AppMeta { launchCount: number; lastAppOpenAt: number; reviewAskedVersion: string; }
+
+const DEFAULT_META: AppMeta = { launchCount: 0, lastAppOpenAt: 0, reviewAskedVersion: '' };
+
+export async function loadMeta(): Promise<AppMeta> {
+  try {
+    const raw = await AsyncStorage.getItem(META_KEY);
+    if (!raw) return { ...DEFAULT_META };
+    const p = JSON.parse(raw);
+    return {
+      launchCount: typeof p.launchCount === 'number' && p.launchCount >= 0 ? Math.floor(p.launchCount) : 0,
+      lastAppOpenAt: typeof p.lastAppOpenAt === 'number' && p.lastAppOpenAt >= 0 ? p.lastAppOpenAt : 0,
+      reviewAskedVersion: typeof p.reviewAskedVersion === 'string' ? p.reviewAskedVersion : '',
+    };
+  } catch {
+    return { ...DEFAULT_META };
+  }
+}
+
+// Serialised read-merge-write so two modules (ads, review) updating different
+// fields can never overwrite each other's value with a stale copy.
+let metaChain: Promise<unknown> = Promise.resolve();
+
+export function updateMeta(patch: Partial<AppMeta>): Promise<AppMeta> {
+  const run = async (): Promise<AppMeta> => {
+    const next = { ...(await loadMeta()), ...patch };
+    try { await AsyncStorage.setItem(META_KEY, JSON.stringify(next)); } catch {}
+    return next;
+  };
+  const p = metaChain.then(run, run);
+  metaChain = p;
+  return p;
+}

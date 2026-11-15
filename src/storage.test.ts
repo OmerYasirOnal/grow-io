@@ -4,6 +4,7 @@ import {
   loadCoins, saveCoins,
   loadStats, saveStats,
   loadSkinState, saveSkinState,
+  loadMeta, updateMeta,
 } from './storage';
 
 beforeEach(async () => {
@@ -113,5 +114,31 @@ describe('skin state', () => {
   it('round-trips via saveSkinState', async () => {
     await saveSkinState({ current: 3, unlocked: [0, 1, 3] });
     expect(await loadSkinState()).toEqual({ current: 3, unlocked: [0, 1, 3] });
+  });
+});
+
+describe('app meta', () => {
+  it('defaults to zeroed values', async () => {
+    expect(await loadMeta()).toEqual({ launchCount: 0, lastAppOpenAt: 0, reviewAskedVersion: '' });
+  });
+
+  it('merges a patch without touching the other fields', async () => {
+    await updateMeta({ launchCount: 3 });
+    await updateMeta({ reviewAskedVersion: '1.4.0' });
+    expect(await loadMeta()).toEqual({ launchCount: 3, lastAppOpenAt: 0, reviewAskedVersion: '1.4.0' });
+  });
+
+  it('keeps both fields when two updates are issued back to back', async () => {
+    const a = updateMeta({ launchCount: 7 });
+    const b = updateMeta({ lastAppOpenAt: 1234 });
+    await Promise.all([a, b]);
+    expect(await loadMeta()).toEqual({ launchCount: 7, lastAppOpenAt: 1234, reviewAskedVersion: '' });
+  });
+
+  it('falls back to defaults on corrupt or wrongly typed data', async () => {
+    await AsyncStorage.setItem('grow-io_meta', '{not json');
+    expect(await loadMeta()).toEqual({ launchCount: 0, lastAppOpenAt: 0, reviewAskedVersion: '' });
+    await AsyncStorage.setItem('grow-io_meta', JSON.stringify({ launchCount: 'x', lastAppOpenAt: -5, reviewAskedVersion: 9 }));
+    expect(await loadMeta()).toEqual({ launchCount: 0, lastAppOpenAt: 0, reviewAskedVersion: '' });
   });
 });

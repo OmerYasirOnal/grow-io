@@ -1,17 +1,13 @@
-Sürüm 1.3 — Dünyalar ve İlerleme
+Sürüm 1.4: daha akıcı, daha adil, daha derli toplu.
 
-YENİ
-• 3 Oyun Modu — Klasik, Rush (90 saniyelik sprint) ve Boss Rush
-• Kovalanacak 10 Başarım
-• İzler — skinlerin yanında açılabilen yepyeni bir kozmetik
-• Rütbe Kademeleri — Bronz'dan Master'a tırman
-• Günlük Görevler + dokunmatik 7 günlük Günlük Ödül
-• Haftalık Öne Çıkan mağaza fırsatı
+• YENİ ANA EKRAN: yılanın ortada, daha sade bir menü.
+• YENİ MAĞAZA: her görünümü almadan önce gör; nadirlikler ve fiyatlar artık net.
+• 4 YENİ GÖRÜNÜM: Candy, Toxic, Aurora ve Midas.
+• DAHA ADİL OYUNLAR: dirilince skorun, ödüllerin ve boss savaşların doğru şekilde devam ediyor.
+• DAHA İYİ KONTROL: iki parmakla hızlanma artık yönünü bozmuyor, yanlışlıkla dokunmalar yok sayılıyor.
+• DAHA NET EKRANLAR: daha düzenli sonuç ekranı; uyarılar artık skorunu ve mini haritayı kapatmıyor.
+• ÇEVRİMDIŞI ÇALIŞIR: bağlantı olsun olmasın oyun aynı görünür.
+• Günlük görevler ve ödüller artık uygulamayı yeniden başlatmadan gece yarısı yenileniyor.
+• Birçok hata düzeltmesi ve tüm cihazlarda daha akıcı kamera.
 
-İYİLEŞTİRMELER
-• Hesap XP'si ve seviyeler, dönüm noktası ödülleriyle
-• Daha sakin, daha akıcı arka plan müziği
-• Daha zengin efektler — öldürme patlamaları, boost izleri ve canlı arenalar
-• Ayarlar'da yeni Hareket Azaltma seçeneği
-
-Grow.io'yu oynadığın için teşekkürler! Oyunu beğendiysen App Store'da puanlamayı unutma, çok yardımcı oluyor.
+Oynadığın için teşekkürler. Büyümeye devam!

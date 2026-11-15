@@ -1,17 +1,13 @@
-Version 1.3 — Worlds & Progression
+Version 1.4: smoother, fairer, cleaner.
 
-NEW
-• 3 Game Modes — Classic, Rush (90-second sprint) and Boss Rush
-• 10 Achievements to chase
-• Trails — a brand-new cosmetic to unlock alongside skins
-• Rank Tiers — climb from Bronze to Master
-• Daily Missions + a tappable 7-day Daily Reward
-• A weekly Featured shop deal
+• NEW HOME SCREEN: a cleaner menu with your snake front and center.
+• NEW SHOP: see every skin before you buy it, with clear rarities and prices.
+• 4 NEW SKINS: Candy, Toxic, Aurora and Midas.
+• FAIRER RUNS: reviving now carries your score, rewards and boss fights over correctly.
+• BETTER CONTROLS: two-finger boost no longer pulls your steering, and stray touches are ignored.
+• CLEARER SCREENS: a tidier results screen, and banners no longer cover your score or the minimap.
+• WORKS OFFLINE: the game looks the same with or without a connection.
+• Daily missions and rewards now refresh at midnight without restarting the app.
+• Many bug fixes and smoother camera on all devices.
 
-IMPROVEMENTS
-• Account XP & levels with milestone rewards
-• Calmer, smoother background music
-• Richer effects — kill bursts, boost trails and living arenas
-• New Reduced-Motion option in Settings
-
-Thanks for playing Grow.io! If you enjoy the game, please rate it on the App Store — it helps a lot.
+Thanks for playing. Grow on!
