@@ -12,6 +12,14 @@ import { loadMeta, updateMeta } from './storage';
 const FORCE_TEST_ADS = false;
 
 const useTest = __DEV__ || FORCE_TEST_ADS;
+
+// Developer phones: the SDK serves Google test creatives to these devices even
+// in TestFlight / App Store builds, so the owner can never click a live ad.
+// The hashed ID comes from the SDK's "<Google> To get test ads on this device"
+// console line; it can change if the app is deleted and reinstalled.
+export const TEST_DEVICE_IDS = [
+  'a8de2a2d325231a8a214b761dc6a9861', // Omer's iPhone 11 (2026-11-15)
+];
 const INTERSTITIAL_ID = useTest ? TestIds.INTERSTITIAL : 'ca-app-pub-9920930529636149/5392741755';
 const REWARDED_ID = useTest ? TestIds.REWARDED : 'ca-app-pub-9920930529636149/5762833880';
 // AdMob unit "Growio_AppOpen". An empty string disables the format.
@@ -563,6 +571,9 @@ export async function initAds(): Promise<void> {
   await requestATT();
 
   try {
+    await MobileAds()
+      .setRequestConfiguration({ testDeviceIdentifiers: TEST_DEVICE_IDS })
+      .catch(() => {});
     const adapterStatuses = await MobileAds().initialize();
     sdkReady = true;
     if (__DEV__) console.log('[AdMob] SDK initialized. Adapter statuses:', JSON.stringify(adapterStatuses));

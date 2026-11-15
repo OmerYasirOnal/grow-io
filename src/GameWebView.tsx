@@ -14,6 +14,7 @@ import {
   notifyPrivacyReady, setUiState, openAdInspector, showPrivacyOptions,
 } from './adService';
 import { requestStoreReview } from './review';
+import { trackEvent } from './analytics';
 
 const gameAsset = require('../game/index.html');
 
@@ -93,8 +94,7 @@ export default function GameWebView() {
           requestStoreReview();
           break;
         case 'TRACK':
-          // Analytics hook: forward to the analytics SDK once one is chosen.
-          if (__DEV__) console.log('[track]', msg.data?.event, msg.data?.props ?? '');
+          if (typeof msg.data?.event === 'string') trackEvent(msg.data.event, msg.data.props);
           break;
         case 'OPEN_AD_INSPECTOR':
           openAdInspector();

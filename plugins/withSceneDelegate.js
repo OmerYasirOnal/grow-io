@@ -74,7 +74,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 `;
 
 // The template block that creates the window inside didFinishLaunching.
-const WINDOW_BLOCK = /#if os\(iOS\) \|\| os\(tvOS\)\s*\n\s*window = UIWindow\(frame: UIScreen\.main\.bounds\)\s*\n\s*factory\.startReactNative\(\s*\n?\s*withModuleName: "main",\s*\n?\s*in: window,\s*\n?\s*launchOptions: launchOptions\)\s*\n\s*#endif\s*\n/;
+// Other plugins (e.g. @react-native-firebase/app's FirebaseApp.configure())
+// may insert `// @generated` blocks between the window and startReactNative
+// lines; those are captured and kept in didFinishLaunching.
+const WINDOW_BLOCK = /#if os\(iOS\) \|\| os\(tvOS\)\s*\n\s*window = UIWindow\(frame: UIScreen\.main\.bounds\)\s*\n((?:[ \t]*\/\/ @generated begin[\s\S]*?\/\/ @generated end[^\n]*\n)*)\s*factory\.startReactNative\(\s*\n?\s*withModuleName: "main",\s*\n?\s*in: window,\s*\n?\s*launchOptions: launchOptions\)\s*\n\s*#endif\s*\n/;
 const MARKER = '// The window is created by SceneDelegate (plugins/withSceneDelegate.js).';
 
 function withSceneManifest(config) {
@@ -104,7 +107,7 @@ function withSceneAppDelegate(config) {
       if (!WINDOW_BLOCK.test(src)) {
         throw new Error('withSceneDelegate: AppDelegate template changed; update WINDOW_BLOCK');
       }
-      src = src.replace(WINDOW_BLOCK, `    ${MARKER}\n`);
+      src = src.replace(WINDOW_BLOCK, (_m, generated) => `    ${MARKER}\n${generated || ''}`);
     }
     cfg.modResults.contents = src;
     return cfg;

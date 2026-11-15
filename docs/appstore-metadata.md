@@ -224,6 +224,10 @@ Yılanını büyüt, arenaya hükmet! Küçük başla, yem yiyerek büyü ve di�
 ### Data Not Linked to You
 - **Device ID** (for analytics/crash reporting)
   - Purpose: Analytics, App Functionality
+- **Product Interaction** (Usage Data; Firebase Analytics game events, since 1.4.0)
+  - Purpose: Analytics
+- **Coarse Location** (Firebase Analytics derives country/region from IP, since 1.4.0)
+  - Purpose: Analytics
 
 ### Privacy Nutrition Labels Summary
 - Tracks you: Yes (IDFA via AdMob)
@@ -234,7 +238,7 @@ Yılanını büyüt, arenaya hükmet! Küçük başla, yem yiyerek büyü ve di�
 ## 6. Build / Version
 
 - **Version**: `1.4.0`
-- **Build**: (from EAS — `appVersionSource: remote`, auto-incremented)
+- **Build**: (from EAS — `appVersionSource: remote`, auto-incremented). 1.4.0 build 32 was archived locally with Xcode; run `eas build:version:set` (>= 33) before the next EAS build.
 - **Minimum iOS**: 13.0
 - **Device Support**: iPhone + iPad
 

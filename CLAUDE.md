@@ -91,6 +91,16 @@ built). Add an `androidAppId` only if/when an Android build is introduced.
   text-presentation selector `\ufe0e` after ▶ ↗ ⚙ ★ ✓ ☠ or iOS draws them as grey emoji.
 - **iOS 27 SDK:** the app must adopt UIScene; `plugins/withSceneDelegate.js` does it on every prebuild.
   Without it the app traps at launch (`_UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption`).
+  `plugins/withPodDeploymentTarget.js` raises every pod target to iOS 15.1 (the 27 SDK rejects the 9.0-13.4
+  targets some pod resource bundles still declare). Run `pod install` / prebuild with `LANG=en_US.UTF-8`.
+- **Firebase:** project `snake-grow-io-battle-arena` (account engomeryasironal, linked to the AdMob app).
+  `@react-native-firebase/app` + `analytics` are pinned to 26.4.2 with `disableSPM: true` and
+  `expo-build-properties` `useFrameworks: "static"` (v27+ is SPM-only and needs dynamic frameworks; don't
+  bump casually). `GoogleService-Info.plist` sits at the repo root. Game `TRACK` messages go to
+  Analytics through `src/analytics.ts` (`trackEvent`, names sanitised to Firebase rules).
+- **Test devices:** `TEST_DEVICE_IDS` in `src/adService.ts` makes the owner's phones get Google test
+  ads even in store builds. Take the hash from the `<Google> To get test ads on this device` console
+  line; it changes if the app is deleted and reinstalled.
 - **Dev on a real phone:** Debug builds load JS from Metro over the LAN; every save of
   `game/index.html` hot-reloads the phone and wipes the run in progress.
 - **Fonts are embedded** as base64 `@font-face` (offline-safe). Do not reintroduce network fonts.
