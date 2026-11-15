@@ -103,6 +103,17 @@ describe('v1.4 economy tables', () => {
     // A rewarded ad must never be a rounding error next to shop prices.
     expect(ladder[0] / RARITY.rare.price).toBeGreaterThanOrEqual(0.05);
   });
+  it('makes the post-run double ad pay at least the floor, and nothing for a 0-coin run', () => {
+    const floor = Number(constSrc('DOUBLE_MIN_REWARD'));
+    const doubleReward = new Function(
+      'DOUBLE_MIN_REWARD', `${extractFn(html, 'doubleReward')}; return doubleReward;`,
+    )(floor) as (earned: number) => number;
+    expect(doubleReward(0)).toBe(0);
+    expect(doubleReward(6)).toBe(floor);
+    expect(doubleReward(floor + 50)).toBe(floor + 50);
+    // The death screen offers it for any run that earned coins.
+    expect(html).toContain('const showDouble=lastRunEarned>0&&!doubleClaimed;');
+  });
   it('no longer rounds every pellet up to a whole coin', () => {
     expect(html).not.toContain('Math.max(1,Math.floor(pts*0.3))');
     expect(html).toContain('coinCarry+=pts*FOOD_COIN_RATE');
@@ -152,6 +163,35 @@ describe('v1.4 structural guards', () => {
     // Small phone (iPhone SE 1st gen): the row must still fit on screen.
     const se = settingsLayout(320, 568, 20, 0, { privacyOptions: true });
     expect(se.privacy.y + se.privacy.h).toBeLessThan(568);
+  });
+  it('gives bots unique player-style names and caps the giants', () => {
+    const names = new Function(`return (${/const BOT_NAMES = (\[[\s\S]*?\]);/.exec(html)![1]});`)() as string[];
+    expect(names.length).toBeGreaterThanOrEqual(60);
+    expect(new Set(names).size).toBe(names.length);
+    expect(html).toContain("name:isPlayer?(isTR?'Sen':'You'):pickBotName(),");
+    expect(html).toMatch(/const GIANT_MAX = [12];/);
+  });
+  it('keeps bonus zones fair: richer multipliers are smaller, shorter and rarer', () => {
+    const types = new Function(`return (${/const ZONE_TYPES = (\[[\s\S]*?\]);/.exec(html)![1]});`)() as
+      { mult: number; r: number; life: number[]; w: number }[];
+    expect(types.map((z) => z.mult)).toEqual([1.2, 1.5, 2, 2.5]);
+    for (let i = 1; i < types.length; i++) {
+      expect(types[i].r).toBeLessThan(types[i - 1].r);
+      expect(types[i].life[1]).toBeLessThan(types[i - 1].life[1]);
+      expect(types[i].w).toBeLessThan(types[i - 1].w);
+    }
+  });
+  it('gives every hero skin a known power and keeps bots out of hero skins', () => {
+    const skins = new Function(`return (${/const SKINS = (\[[\s\S]*?\]);\n/.exec(html)![1]});`)() as
+      { name: string; r: string; power?: string }[];
+    const heroes = skins.filter((k) => k.power);
+    expect(heroes.map((k) => k.power).sort()).toEqual(['blade', 'claws', 'jet', 'orbit']);
+    heroes.forEach((k) => expect(k.r).toBe('hero'));
+    // Hero skins are appended after every regular skin.
+    const first = skins.findIndex((k) => k.power);
+    expect(skins.slice(first).every((k) => k.power)).toBe(true);
+    expect(html).toContain('b.skin=randInt(5,HERO_FIRST-1);');
+    expect(html).toContain('b.skin=randInt(0,HERO_FIRST-1);');
   });
   it('keeps the in-game version stamp in sync with app.json', () => {
     const appVersion = JSON.parse(readFileSync(join(__dirname, '..', 'app.json'), 'utf8')).expo.version;

@@ -19,7 +19,7 @@
       "buildNumber": "31",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSUserTrackingUsageDescription": "Sana daha alakalı reklamlar göstermek için kullanılır.",
+        "NSUserTrackingUsageDescription": "This lets us show you ads that are more relevant to you.",
         "SKAdNetworkItems": [
           { "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork" },
           { "SKAdNetworkIdentifier": "4fzdc2evr5.skadnetwork" },
@@ -103,8 +103,16 @@
         }
       ],
       "expo-asset",
-      "expo-tracking-transparency"
+      [
+        "expo-tracking-transparency",
+        { "userTrackingPermission": "This lets us show you ads that are more relevant to you." }
+      ],
+      "./plugins/withSceneDelegate"
     ],
+    "locales": {
+      "en": "./locales/en.json",
+      "tr": "./locales/tr.json"
+    },
     "extra": {
       "eas": {
         "projectId": "0271139c-7e4c-4921-a479-8154b2b52387"

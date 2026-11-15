@@ -155,6 +155,7 @@ function markAdClosed(kind: AdKind): void {
 // presentation can never block every later ad or leave the game waiting.
 function abortPendingShow(kind: AdKind): void {
   if (showingKind !== kind || adShowing) return;
+  if (__DEV__) console.warn('[AdMob] abortPendingShow', kind);
   showingKind = null;
   // The stuck object is discarded: a fresh one is created and loaded.
   if (kind === 'interstitial') {
@@ -256,6 +257,7 @@ function finishRewarded(): void {
   onRewardFailed = null;
   rewardEarned = false;
   rewardedOpened = false;
+  if (__DEV__) console.log('[AdMob] finishRewarded earned=', earned, 'opened=', opened, 'cb=', !!cb);
   if (earned && cb) cb(pendingRewardType);
   // Closed early by the player = opened but not earned: nothing to report
   // (AD_CLOSED already told the game). Never opened = a failure to report.
@@ -279,13 +281,16 @@ function createRewarded(): void {
     emitStatus();
   });
   ad.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
+    if (__DEV__) console.log('[AdMob] rewarded EARNED');
     rewardEarned = true;
   });
   ad.addAdEventListener(AdEventType.OPENED, () => {
+    if (__DEV__) console.log('[AdMob] rewarded OPENED');
     rewardedOpened = true;
     markAdOpened('rewarded');
   });
   ad.addAdEventListener(AdEventType.CLOSED, () => {
+    if (__DEV__) console.log('[AdMob] rewarded CLOSED, earned=', rewardEarned);
     rewardedLoaded = false;
     markAdClosed('rewarded');
     finishRewarded();
