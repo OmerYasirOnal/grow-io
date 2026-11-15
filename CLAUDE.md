@@ -128,8 +128,10 @@ renders" is a strong parse/smoke signal.
 
 ## Release
 
-EAS Build with `appVersionSource: "remote"` + iOS `autoIncrement` — **EAS owns the build
-number**; bump only the marketing `version` in `app.json` (and the in-game stamp in
-`drawMenu`, plus `docs/appstore-metadata.md`). Keep these three in sync (a Jest test checks the
-stamp against `app.json`). Adding a native module (e.g. `expo-store-review`) needs a new store
+`appVersionSource: "local"`: `app.json` owns the iOS `buildNumber` (EAS `autoIncrement` bumps it there;
+a local Xcode archive needs it bumped by hand, then prebuild or set `CFBundleVersion`). It must always be
+above the latest build in App Store Connect (34 as of 1.4.0). Bump the marketing `version` in `app.json`,
+the in-game stamp in `drawMenu` and `docs/appstore-metadata.md` together (a Jest test checks the stamp
+against `app.json`). Local upload: `xcodebuild archive`, then `-exportArchive` with `destination=upload`
+and the ASC API key in `~/.appstoreconnect`. Adding a native module (e.g. `expo-store-review`) needs a new store
 build; it cannot ship as an OTA update.
