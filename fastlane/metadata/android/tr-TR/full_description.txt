@@ -1,0 +1,35 @@
+Snake Grow.io bir neon yılan arenası oyunu. Parlayan yemleri ye, uza, rakiplerinin önünü kes ve haritanın en büyük yılanı ol. İnternet olmadan da her yerde oyna.
+
+NASIL OYNANIR
+• Tek parmakla yönlendir, hızlanmak için HIZ butonuna bas.
+• Yem yiyerek büyü. Rakipleri gövdene çarptır, uzunluklarını kap.
+• Yeterince büyüyünce Kral'ı ve Boss'u devir, büyük ödülleri al.
+
+İÇİNDE NELER VAR
+• 3 mod: Klasik (sonsuz), Rush (90 saniye) ve Boss Rush.
+• Önünü kesen, seni kuşatan ve güçler için seninle yarışan, oyuncu isimli 12 yapay zekâ rakip.
+• Kral: +500 skor ve 75 altın. Boss: +1000 skor ve 100 altın.
+• 4 güç: Hız, Kalkan, Mıknatıs ve Hayalet.
+• x1.2 ile x2.5 arası bonus bölgeler ve iki kata kadar hızlı büyüten kombo çubuğu.
+• Harita olayları: hazine, yem yağmuru, oklu hız pistleri, çamur ve fren pistleri.
+
+BÖLÜMLER (YENİ)
+• 7 temalı harita: Çayır, Çöl, Buzul, Orman, Volkan, Derinlik ve Galaksi.
+• Görevler sonraki bölümü açar: kuş yuvalarından yumurta, elmas, boy, av ve Kral.
+
+KAHRAMAN GÖRÜNÜMLER (YENİ)
+• Samuray: rakip kuyruklarını kesen kılıç.
+• Yörünge: bir çarpmayı engelleyen küreler.
+• Kraken: başının yanındaki küçük rakibi yakalayan pençeler.
+• Jet: hız yakıtını koruyan jet.
+
+TOPLA VE İLERLE
+• 38 yılan görünümü (4 kahraman) ve 5 iz; nadirlikler ve fiyatlar net.
+• Günlük görevler, günlük giriş ödülleri, seviyeler, rütbe kademeleri ve 10 başarım.
+• En iyi skorların cihazında saklanır.
+
+ÖZENLE HAZIRLANDI
+• Akıcı oynanış, ses ve müzik için ses seviyesi ayarı.
+• Türkçe ve İngilizce.
+
+Büyümeye devam et, arenaya hükmet!
