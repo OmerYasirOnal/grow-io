@@ -68,6 +68,7 @@ const L={
   privacyContinue:isTR?'DEVAM':'CONTINUE',
   privacyChoices:isTR?'GİZLİLİK TERCİHLERİ':'YOUR PRIVACY CHOICES',
   shopBuy:isTR?'AL':'BUY',shopAd:isTR?'REKLAM':'AD',
+  guideNext:isTR?'İLERİ':'NEXT',guideBack:isTR?'GERİ':'BACK',guideDone:isTR?'HADİ OYNA':'LET\'S PLAY',
   powerBlade:isTR?'Güç: 6 sn\'de bir kılıçla rakibin kuyruğunu keser':'Power: the sword slices a rival\'s tail every 6 s',
   powerOrbit:isTR?'Güç: yakın yemi çeker, 20 sn\'de bir ölümcül çarpmayı engeller':'Power: pulls nearby food, blocks one fatal hit every 20 s',
   powerClaws:isTR?'Güç: yanından geçen küçük rakibi yakalar (8 sn)':'Power: grabs a smaller rival beside your head (every 8 s)',
@@ -382,7 +383,6 @@ const trailParts = [];
 (function(){for(let i=0;i<TRAIL_MAX;i++)trailParts.push({active:false,x:0,y:0,vx:0,vy:0,life:0,ml:1,size:2,r:255,g:255,b:255,style:0,rot:0});}());
 let trailHead = 0;        // ring-buffer write cursor
 let trailSpawnAcc = 0;    // cadence accumulator (seconds) for the selected trail
-let spatialGrid = {};
 let camera = {x:WCX, y:WCY, zoom:1};
 let joystick = {active:false, cx:0, cy:0, dx:0, dy:0, angle:0};
 let currentSkin = 0, unlockedSkins = [0,1,2,3,4];
@@ -492,6 +492,28 @@ const ZONE_TYPES = [
   {mult:2.5, r:115, life:[12,18], w:1, col:'#ff4081'}
 ];
 const ZONE_MAX = 2;
+// ═══ GROWTH STEPS + COMBO METER ═══
+// Growth per pellet by size band (all snakes): fast while small, then step by
+// step slower, so a huge snake is earned, not handed out.
+const GROWTH_STEPS=[[100,2],[250,1.2],[500,0.75],[900,0.5],[1e9,0.35]];
+function growthStep(len){for(let i=0;i<GROWTH_STEPS.length;i++)if(len<GROWTH_STEPS[i][0])return GROWTH_STEPS[i][1];return 0.35;}
+// Player combo meter (0-100): +2.5 per pellet, +20 per kill, drains after a
+// second without eating. Tiers multiply growth and score.
+let comboMeter=0,comboIdle=0;
+function comboMult(){return comboMeter>=85?2:(comboMeter>=55?1.5:(comboMeter>=25?1.25:1));}
+function updateCombo(dt){comboIdle+=dt;if(comboIdle>1.0)comboMeter=Math.max(0,comboMeter-16*dt);}
+function drawComboBar(){
+  if(!player||!player.alive)return;
+  const bw=Math.min(190,W*0.5),bh=9,bx=W/2-bw/2,by=H-sab-34,m=comboMult(),f=comboMeter/100;
+  const col=m>=2?'#ff4081':(m>=1.5?'#ffab00':(m>=1.25?'#76ff03':'rgba(255,255,255,0.5)'));
+  ctx.fillStyle='rgba(0,0,0,0.45)';rr(bx-4,by-18,bw+8,bh+24,10);ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.1)';rr(bx,by,bw,bh,bh/2);ctx.fill();
+  // tier marks at 25 / 55 / 85
+  ctx.fillStyle='rgba(255,255,255,0.25)';for(const tm of [0.25,0.55,0.85])ctx.fillRect(bx+bw*tm-1,by-2,2,bh+4);
+  if(f>0){ctx.fillStyle=col;if(m>1){ctx.shadowColor=col;ctx.shadowBlur=8;}rr(bx,by,Math.max(bh,bw*f),bh,bh/2);ctx.fill();ctx.shadowBlur=0;}
+  ctx.textAlign='center';ctx.font='900 11px Orbitron';ctx.fillStyle=m>1?col:'rgba(255,255,255,0.55)';
+  ctx.fillText('COMBO x'+m,W/2,by-5);ctx.textAlign='left';
+}
 let zoneTrickleT = 0;
 function zoneSeedFood(z,n){
   for(let i=0;i<n;i++){const a=rand(0,TAU),r=Math.sqrt(Math.random())*(z.r-12);spawnFood(z.x+Math.cos(a)*r,z.y+Math.sin(a)*r,1,z.col,true);}
@@ -1397,14 +1419,22 @@ function buildBgGrad(){
 }
 
 // ═══ SPATIAL GRID ═══
-function resetGrid(){spatialGrid={};}
-function gridInsert(entity,x,y){const k=Math.floor(x/CELL_SIZE)+','+Math.floor(y/CELL_SIZE);if(!spatialGrid[k])spatialGrid[k]=[];spatialGrid[k].push(entity);}
+// Allocation-free spatial grid: numeric cell keys, reused buckets holding flat
+// (snake, segmentIndex) pairs. Cells are visited gx-major then gy, in insertion
+// order inside a cell, exactly like the old string-keyed version, so collision
+// results (and who gets the kill) are unchanged.
+const GRID_N=GRID_W+2;
+const gridCells=[];for(let i=0;i<GRID_N*GRID_N;i++)gridCells.push([]);
+const gridUsed=[],gridQ=[];
+function _cell(v){const c=Math.floor(v/CELL_SIZE)+1;return c<0?0:(c>=GRID_N?GRID_N-1:c);}
+function resetGrid(){for(let i=0;i<gridUsed.length;i++)gridCells[gridUsed[i]].length=0;gridUsed.length=0;}
+function gridInsert(sn,idx,x,y){const k=_cell(x)*GRID_N+_cell(y),c=gridCells[k];if(!c.length)gridUsed.push(k);c.push(sn,idx);}
+// Fills gridQ with pairs and returns its length.
 function gridQuery(x,y,r){
-  const results=[];
-  const cx1=Math.floor((x-r)/CELL_SIZE),cx2=Math.floor((x+r)/CELL_SIZE);
-  const cy1=Math.floor((y-r)/CELL_SIZE),cy2=Math.floor((y+r)/CELL_SIZE);
-  for(let gx=cx1;gx<=cx2;gx++)for(let gy=cy1;gy<=cy2;gy++){const k=gx+','+gy;if(spatialGrid[k])for(const e of spatialGrid[k])results.push(e);}
-  return results;
+  gridQ.length=0;
+  const x1=_cell(x-r),x2=_cell(x+r),y1=_cell(y-r),y2=_cell(y+r);
+  for(let gx=x1;gx<=x2;gx++)for(let gy=y1;gy<=y2;gy++){const c=gridCells[gx*GRID_N+gy];for(let j=0;j<c.length;j++)gridQ.push(c[j]);}
+  return gridQ.length;
 }
 
 // ═══ PARTICLE SYSTEM ═══
@@ -1776,7 +1806,7 @@ function createSnake(isPlayer,x,y,skinIdx){
     boosting:false,boostFuel:100,
     powerups:{speed:0,shield:0,magnet:0,ghost:0},
     killCount:0,invulnTimer:0,
-    aiTimer:rand(0,0.2),respawnTimer:0,isKing:false,tier:'normal',hunter:false,
+    aiTimer:rand(0,0.2),respawnTimer:0,isKing:false,tier:'normal',hunter:false,padT:0,padMul:1,
     skill:0.6+rand(0,0.4), // per-bot skill multiplier 0.6..1
     pathHistory:pathHistory,_lastHX:x,_lastHY:y,
     // Eat-punch (Wave 3.2): short-lived scalar 0→eases back, scales the head on
@@ -1805,6 +1835,7 @@ function updateSnake(s,dt){
   }
   if(s.powerups.speed>0)spd*=1.8;
   if(s.isBoss)spd*=1.3; // Boss is 30% faster than a normal aggressive bot.
+  if(s.padT>0)spd*=s.padMul; // floor pads (boost / mud / brake)
   // Turn
   let diff=normAngle(s.targetAngle-s.angle);
   s.angle+=Math.sign(diff)*Math.min(Math.abs(diff),turnRate(s)*dt);
@@ -1844,9 +1875,14 @@ function updateSnake(s,dt){
   const dxH=head.x-s._lastHX,dyH=head.y-s._lastHY;
   const movedH=Math.sqrt(dxH*dxH+dyH*dyH);
   s._lastHX=head.x;s._lastHY=head.y;
-  if(movedH>0.01){
+  // Record a trail point every >=2px of head travel (was every substep, i.e.
+  // up to 4 unshifts per frame on arrays of thousands of entries). Segments
+  // interpolate between points, so the body path is visually identical.
+  s._pend=(s._pend||0)+movedH;
+  if(s._pend>=2||!s.pathHistory.length){
     const prevCum=s.pathHistory.length?s.pathHistory[0].cumDist:0;
-    s.pathHistory.unshift({x:head.x,y:head.y,cumDist:prevCum+movedH});
+    s.pathHistory.unshift({x:head.x,y:head.y,cumDist:prevCum+s._pend});
+    s._pend=0;
   }
   // Walk the (descending-by-recency) history with a single advancing pointer.
   // pathHistory[0] = head with the largest cumDist; entries get smaller cumDist
@@ -1855,7 +1891,7 @@ function updateSnake(s,dt){
   // HYBRID: when the recorded path isn't deep enough yet (long snake +
   // recent growth), fall back to chain-pull physics for the segments past
   // the path's reach so segments don't all stack on the last known point.
-  const headCum=s.pathHistory.length?s.pathHistory[0].cumDist:0;
+  const headCum=(s.pathHistory.length?s.pathHistory[0].cumDist:0)+(s._pend||0);
   let hIdx=0;
   for(let i=1;i<s.segments.length;i++){
     // The last segment sits at a fractional distance while the snake is
@@ -1914,17 +1950,35 @@ function turnRate(s){return 5.4-Math.min(s.length/350,2.0);}                  //
 //   treasure  - a glowing orb (one at a time): coins + a food burst for the
 //               player, a big growth spurt for the bot that steals it first.
 //   food rain - for a few seconds pellets pour into one spot.
-//   speed pads- fixed arrow strips: crossing one gives a short speed burst.
+//   pads      - strips on the floor, re-rolled every run:
+//               boost: crossing WITH the arrows gives a speed burst and pulls
+//                      your heading toward them; AGAINST the arrows slows you;
+//                      across them does nothing.
+//               mud:   slows anything that crosses it (any direction).
+//               brake: rare; almost stops you for a moment.
 const TREASURE_COIN = 60;
 let treasure=null;            // {x,y,life}
 let treasureT=0;              // seconds until the next treasure
 let rain=null;                // {x,y,life,acc}
 let rainT=0;                  // seconds until the next food rain
-const speedPads=[];           // {x,y,a}
+const speedPads=[];           // {x,y,a,type:'boost'|'mud'|'brake'}
+const PAD_R = 40;             // radius of a pad's effect area
+const PAD_FX = {boost:{t:1.3,mul:1.75}, against:{t:0.9,mul:0.55}, mud:{t:1.1,mul:0.5}, brake:{t:0.7,mul:0.15}};
 function resetWorldEvents(){
   treasure=null;treasureT=rand(35,55);rain=null;rainT=rand(70,100);
   speedPads.length=0;
-  for(let i=0;i<7;i++){const a=rand(0,TAU),r=rand(250,WR-200);speedPads.push({x:WCX+Math.cos(a)*r,y:WCY+Math.sin(a)*r,a:rand(0,TAU)});}
+  // 5 boost, 2 mud, and a brake in about half of the runs.
+  const types=['boost','boost','boost','boost','boost','mud','mud'];
+  if(Math.random()<0.5)types.push('brake');
+  for(const ty of types){
+    let x=WCX,y=WCY;
+    for(let k=0;k<10;k++){
+      const a=rand(0,TAU),r=rand(250,WR-200);x=WCX+Math.cos(a)*r;y=WCY+Math.sin(a)*r;
+      let ok=true;for(const o of speedPads){if(Math.hypot(o.x-x,o.y-y)<260){ok=false;break;}}
+      if(ok)break;
+    }
+    speedPads.push({x:x,y:y,a:rand(0,TAU),type:ty});
+  }
 }
 function farSpot(minD){const sp=pickSafeBotSpawn(minD);return sp;}
 function updateWorldEvents(dt){
@@ -1960,27 +2014,59 @@ function updateWorldEvents(dt){
     rainT-=dt;
     if(rainT<=0){const sp=farSpot(500);rain={x:sp.x,y:sp.y,life:14,acc:0};showToast(isTR?'☂ Yem yağmuru başladı!':'☂ Food rain incoming!','info');}
   }
-  // Speed pads
-  for(const pd of speedPads){
-    for(const o of snakes){
-      if(!o.alive)continue;const h=o.segments[0];
-      if((h.x-pd.x)*(h.x-pd.x)+(h.y-pd.y)*(h.y-pd.y)<40*40&&o.powerups.speed<1.2){
-        o.powerups.speed=Math.max(o.powerups.speed,1.6);
-        if(o.isPlayer){sndBoost();postMsg({type:'HAPTIC',data:'light'});}
+  // Pads: the effect is set while the head is on the pad and lingers briefly.
+  for(const o of snakes){
+    if(!o.alive)continue;
+    if(o.padT>0){o.padT-=dt;if(o.padT<=0){o.padT=0;o.padMul=1;}}
+    const h=o.segments[0];
+    for(const pd of speedPads){
+      if((h.x-pd.x)*(h.x-pd.x)+(h.y-pd.y)*(h.y-pd.y)>PAD_R*PAD_R)continue;
+      let fx=null;
+      if(pd.type==='boost'){
+        const dot=Math.cos(o.angle-pd.a);
+        if(dot>0.35){
+          fx=PAD_FX.boost;
+          // Ease the heading toward the arrows (and the AI's target with it).
+          const d=normAngle(pd.a-o.angle),turn=Math.sign(d)*Math.min(Math.abs(d),2.2*dt);
+          o.angle=normAngle(o.angle+turn);if(!o.isPlayer)o.targetAngle=o.angle;
+        }else if(dot<-0.35)fx=PAD_FX.against;
+      }else fx=PAD_FX[pd.type];
+      if(!fx)break;
+      const fresh=o.padMul!==fx.mul;
+      o.padMul=fx.mul;o.padT=fx.t;
+      if(fresh&&o.isPlayer){
+        if(fx.mul>1){sndBoost();postMsg({type:'HAPTIC',data:'light'});}
+        else{tone(140,'square',0.12,0.04);postMsg({type:'HAPTIC',data:fx.mul<0.3?'heavy':'medium'});}
       }
+      break;
     }
   }
 }
 function drawWorldEvents(){
   const t=performance.now()*0.001;
-  // Speed pads: three chevrons along the pad direction
+  // Pads
   for(const pd of speedPads){
     ctx.save();ctx.translate(pd.x,pd.y);ctx.rotate(pd.a);
-    ctx.fillStyle='rgba(0,229,255,0.14)';rr(-42,-22,84,44,12);ctx.fill();
-    ctx.strokeStyle='rgba(0,229,255,0.45)';ctx.lineWidth=1.5;rr(-42,-22,84,44,12);ctx.stroke();
-    ctx.strokeStyle='#18ffff';ctx.lineWidth=4;ctx.lineCap='round';ctx.lineJoin='round';
-    for(let i=0;i<3;i++){const ph=reducedMotion?0:((t*2.2+i/3)%1);ctx.globalAlpha=0.35+0.65*(1-Math.abs(ph-0.5)*2);
-      const x=-22+i*18;ctx.beginPath();ctx.moveTo(x-6,-12);ctx.lineTo(x+6,0);ctx.lineTo(x-6,12);ctx.stroke();}
+    ctx.lineCap='round';ctx.lineJoin='round';
+    if(pd.type==='boost'){
+      ctx.fillStyle='rgba(0,229,255,0.14)';rr(-42,-22,84,44,12);ctx.fill();
+      ctx.strokeStyle='rgba(0,229,255,0.45)';ctx.lineWidth=1.5;rr(-42,-22,84,44,12);ctx.stroke();
+      ctx.strokeStyle='#18ffff';ctx.lineWidth=4;
+      for(let i=0;i<3;i++){const ph=reducedMotion?0:((t*2.2+i/3)%1);ctx.globalAlpha=0.35+0.65*(1-Math.abs(ph-0.5)*2);
+        const x=-22+i*18;ctx.beginPath();ctx.moveTo(x-6,-12);ctx.lineTo(x+6,0);ctx.lineTo(x-6,12);ctx.stroke();}
+    }else if(pd.type==='mud'){
+      ctx.fillStyle='rgba(255,145,0,0.16)';rr(-40,-26,80,52,18);ctx.fill();
+      ctx.strokeStyle='rgba(255,145,0,0.55)';ctx.lineWidth=1.5;rr(-40,-26,80,52,18);ctx.stroke();
+      ctx.strokeStyle='rgba(255,171,64,0.8)';ctx.lineWidth=3;
+      for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(-26,i*12);ctx.quadraticCurveTo(-13,i*12-6,0,i*12);ctx.quadraticCurveTo(13,i*12+6,26,i*12);ctx.stroke();}
+    }else{
+      const pl=reducedMotion?0.5:0.5+0.5*Math.sin(t*6);
+      ctx.rotate(-pd.a);
+      ctx.fillStyle='rgba(255,23,68,'+(0.14+0.1*pl)+')';ctx.beginPath();
+      for(let i=0;i<8;i++){const a=PI/8+i*PI/4;ctx.lineTo(Math.cos(a)*30,Math.sin(a)*30);}ctx.closePath();ctx.fill();
+      ctx.strokeStyle='#ff1744';ctx.lineWidth=2.5;ctx.stroke();
+      ctx.fillStyle='#ff5252';ctx.font='900 22px Orbitron';ctx.textAlign='center';ctx.fillText('!',0,8);
+    }
     ctx.restore();
   }
   // Food rain marker
@@ -2005,7 +2091,20 @@ function drawWorldEvents(){
 
 // ═══ HERO POWERS (update) ═══
 // Width of a snake's body (same formula as collisions and drawing).
-function snakeWidth(o){return 6+Math.min(o.length*0.03,14);}
+// Body width keeps growing longer (cap 28 near length 880) so a big snake
+// looks big; drawing and collisions use this same formula.
+function snakeWidth(o){return 6+Math.min(o.length*0.025,22);}
+let viewX1=-1e9,viewX2=1e9,viewY1=-1e9,viewY2=1e9;
+function onScreen(x,y,m){return x>viewX1-m&&x<viewX2+m&&y>viewY1-m&&y<viewY2+m;}
+// Body colours are precomputed per skin (65 steps along the body) instead of
+// building ~15 temporary strings per segment per frame in lerpColor().
+const _skinLUT=[];
+function skinBodyColor(si,t){
+  let L=_skinLUT[si];
+  if(!L){const c=SKINS[si].c;L=_skinLUT[si]=[];for(let k=0;k<=64;k++)L.push(lerpColor(c[1],c[0],0.45+k/64*0.55));}
+  return L[(t*64+0.5)|0];
+}
+const HSL_LUT=[];for(let h=0;h<360;h++)HSL_LUT.push('hsl('+h+',80%,60%)');
 // Centroid and spread of the player's body, refreshed ~6x/s. `coiled` = the
 // body is packed into a disc much smaller than its stretched-out length.
 let _pShape={x:0,y:0,r:0,coiled:false,f:-99};
@@ -2136,12 +2235,12 @@ function checkCollisions(){
   resetGrid();
   for(const s of snakes){
     if(!s.alive)continue;
-    for(let i=0;i<s.segments.length;i++)gridInsert({snake:s,idx:i},s.segments[i].x,s.segments[i].y);
+    for(let i=0;i<s.segments.length;i++)gridInsert(s,i,s.segments[i].x,s.segments[i].y);
   }
   for(const s of snakes){
     if(!s.alive)continue;
     const head=s.segments[0];
-    const sw=6+Math.min(s.length*0.03,14);
+    const sw=snakeWidth(s);
     const hr=sw/2;
     // Head-vs-body / head-vs-head — skipped while invulnerable (spawn protection),
     // ghost (phase through), or shield (active barrier blocks the hit).
@@ -2150,33 +2249,34 @@ function checkCollisions(){
     let died=false;
     if(s.invulnTimer<=0&&s.powerups.ghost<=0&&s.powerups.shield<=0){
       // Wider search radius (covers max possible other-snake body width too).
-      const nearby=gridQuery(head.x,head.y,hr+24);
-      for(const n of nearby){
-        if(n.snake===s||!n.snake.alive)continue;
+      const nq=gridQuery(head.x,head.y,hr+24);
+      for(let j=0;j<nq;j+=2){
+        const nSnake=gridQ[j],nIdx=gridQ[j+1];
+        if(nSnake===s||!nSnake.alive)continue;
         // King/Boss are only ever killed by the player. Letting them die on a
         // bot's body ends the encounter off-screen with no reward and, in Boss
         // Rush, re-spawns the same wave without counting it.
-        if((s.isKing||s.isBoss)&&!n.snake.isPlayer)continue;
+        if((s.isKing||s.isBoss)&&!nSnake.isPlayer)continue;
         // Spawn-invulnerable opponents are completely intangible.
-        if(n.snake.invulnTimer>0)continue;
-        const seg=n.snake.segments[n.idx];
-        const ow=6+Math.min(n.snake.length*0.03,14);
+        if(nSnake.invulnTimer>0)continue;
+        const seg=nSnake.segments[nIdx];
+        const ow=snakeWidth(nSnake);
         // Tight threshold without fudge so brushing past misses cleanly while
         // any actual overlap registers. (Substepping handles fast movement.)
         const collR=hr+ow/2;if(dist2(head,seg)<collR*collR){
-          if(n.idx===0){
+          if(nIdx===0){
             // Head-vs-head: smaller dies — unless the would-be victim has an
             // active shield, which absorbs the hit and leaves both alive.
-            if(s.length<=n.snake.length){
-              killSnake(s,n.snake,'head');
+            if(s.length<=nSnake.length){
+              killSnake(s,nSnake,'head');
             }else{
-              if(n.snake.powerups.shield>0||n.snake.powerups.ghost>0)continue;
-              killSnake(n.snake,s,'head');
+              if(nSnake.powerups.shield>0||nSnake.powerups.ghost>0)continue;
+              killSnake(nSnake,s,'head');
             }
           }else{
             // Head-vs-body: head's owner (s) dies — opponent's body stays solid
             // even when they're shielded, so attackers can't phase through us.
-            killSnake(s,n.snake,'body');
+            killSnake(s,nSnake,'body');
           }
           died=true;break;
         }
@@ -2186,8 +2286,12 @@ function checkCollisions(){
     if(died)continue;
     // Food
     const magR=s.powerups.magnet>0?200:0;
+    const preR=Math.max(magR,hr+12);
     for(let i=foods.length-1;i>=0;i--){
-      const f=foods[i];const d2=dist2(head,f);
+      const f=foods[i];
+      const fdx=f.x-head.x;if(fdx>preR||fdx<-preR)continue;
+      const fdy=f.y-head.y;if(fdy>preR||fdy<-preR)continue;
+      const d2=fdx*fdx+fdy*fdy;
       if(magR>0&&d2<magR*magR&&d2>(hr+f.r)*(hr+f.r)){const a=angleTo(f,head);f.x+=Math.cos(a)*200*gdt;f.y+=Math.sin(a)*200*gdt;}
       if(d2<(hr+f.r)*(hr+f.r)){
         // Diminishing growth: each food contributes more to a small snake
@@ -2196,7 +2300,9 @@ function checkCollisions(){
         // Growth per pellet falls off with size so a huge snake has to keep
         // working: x2 while small, x1 around 300, x0.5 past ~900 (fractions
         // carry over in growCarry instead of rounding up to a whole segment).
-        const growMul=Math.max(0.4,Math.min(2,2.2-s.length/400));
+        // Step-wise growth: each size band grows slower than the one below.
+        let growMul=growthStep(s.length);
+        if(s.isPlayer){growMul*=comboMult();comboMeter=Math.min(100,comboMeter+2.5*f.val);comboIdle=0;}
         s.growCarry=(s.growCarry||0)+f.val*growMul;
         const grow=Math.floor(s.growCarry);s.growCarry-=grow;
         s.length+=grow;s.score+=f.val;
@@ -2208,8 +2314,9 @@ function checkCollisions(){
           const inZone=mult>1;
           const pts=Math.max(1,Math.floor(f.val*mult));
           // Food pays FOOD_COIN_RATE coins per point; the fraction carries
-          // over instead of rounding every pellet up to a whole coin.
-          score+=pts;coinCarry+=pts*FOOD_COIN_RATE;
+          // over instead of rounding every pellet up to a whole coin. The
+          // combo multiplies score, not coins (keeps the economy stable).
+          score+=Math.round(pts*comboMult());coinCarry+=pts*FOOD_COIN_RATE;
           if(coinCarry>=1){const wc=Math.floor(coinCarry);coins+=wc;coinCarry-=wc;}
           if(inZone)addScorePopup(f.x,f.y,'+'+pts,'#ffd600');
           sndCollect();postMsg({type:'HAPTIC',data:'light'});
@@ -2266,6 +2373,7 @@ function killSnake(victim,killer,cause){
     if(killer.isPlayer){
       // Bump kill-combo BEFORE awarding so multiplier reflects this kill.
       killCombo++;killComboTimer=KILL_COMBO_S;
+      comboMeter=Math.min(100,comboMeter+20);comboIdle=0;
       const km=killComboMult();
       const baseScore=100,baseCoin=KILL_COIN;
       const gainScore=Math.floor(baseScore*km);
@@ -2387,7 +2495,7 @@ function revivePlayer(){
   // guard a duplicate or late AD_REWARD_EARNED{continue} could yank a live run —
   // or even the menu — back to 'playing' and grant a free reset.
   if(!player||state!=='dead'||hasRevived)return;
-  hasRevived=true;heroCd=0;
+  hasRevived=true;heroCd=0;player.padT=0;player.padMul=1;comboMeter=0;
   player.alive=true;player.length=Math.max(10,Math.floor(player.length*0.7));
   // Rebuild a body trailing behind the head along the current facing angle,
   // instead of stacking every segment on the head and letting them fan out
@@ -2642,7 +2750,7 @@ function startGame(modeId){
   // Update the global so HUD / other systems can read it.
   mode=_modeCfg.id;
   initAudio();score=0;killCombo=0;killComboTimer=0;hasRevived=false;currentRank=0;runKingKills=0;runWaves=0;runReachedApex=false;
-  runXpScore=0;runXpKills=0;runTopEntry=null;runNewBest=false;runWatchedRewarded=false;sessionRuns++;lastResumeShieldAt=-1e9;coinCarry=0;heroCd=0;runBonusCoins=0;resetWorldEvents();
+  runXpScore=0;runXpKills=0;runTopEntry=null;runNewBest=false;runWatchedRewarded=false;sessionRuns++;lastResumeShieldAt=-1e9;coinCarry=0;heroCd=0;runBonusCoins=0;resetWorldEvents();comboMeter=0;comboIdle=0;
   foods=[];powerups=[];particles=[];snakes=[];scorePopups=[];
   kingActive=false;nextKingScore=2000;kingToast=0;
   bossActive=false;nextBossScore=5000;bossToast=0;
@@ -2791,6 +2899,7 @@ function update(dt){
   // Bonus zones age, trickle food and get replaced (see updateZones).
   updateZones(dt);
   updateWorldEvents(dt);
+  updateCombo(dt);
   // Respawn bots
   for(let i=snakes.length-1;i>=0;i--){
     const s=snakes[i];
@@ -2841,9 +2950,10 @@ function update(dt){
     const camK=1-Math.pow(1-0.08,dt*60);
     camera.x=lerp(camera.x,player.segments[0].x,camK);
     camera.y=lerp(camera.y,player.segments[0].y,camK);
-    // Smooth power-curve auto-zoom: 1.0 (small) → 0.45 (very long). Faster early, plateaus.
-    const t=Math.min(1,player.length/800);
-    const targetZoom=1.0-(1-Math.pow(1-t,1.6))*0.55;
+    // Gentle auto-zoom: 1.0 (small) → 0.62 at length 1,500. The old curve
+    // reached 0.45 by length 800, so growing made the snake LOOK smaller.
+    const t=Math.min(1,player.length/1500);
+    const targetZoom=1.0-Math.pow(t,0.85)*0.38;
     // Asymmetric lerp: zoom IN faster (snake just lost length, the player
     // wants to feel the recovery) and OUT slower so growth feels gradual.
     const zLerp=targetZoom>camera.zoom?0.07:0.03;
@@ -2876,6 +2986,8 @@ function render(){
     }
     const sx=shakeTimer>0?rand(-shakeMag,shakeMag):0,sy=shakeTimer>0?rand(-shakeMag,shakeMag):0;
     ctx.save();ctx.translate(W/2+sx,H/2+sy);ctx.scale(zoom,zoom);ctx.translate(-camera.x,-camera.y);
+    // Visible world rectangle (used to skip off-screen snake segments).
+    {const hw=(W/2+Math.abs(sx)+8)/zoom,hh=(H/2+Math.abs(sy)+8)/zoom;viewX1=camera.x-hw;viewX2=camera.x+hw;viewY1=camera.y-hh;viewY2=camera.y+hh;}
     drawGrid();drawStars();drawBoundary();drawComboZones();drawWorldEvents();drawFood();drawPowerups();
     // Z-sort snakes: smaller bots first, bigger bots above; player always on top.
     // Reuse a module buffer (like hudLeaderboard) instead of allocating a fresh
@@ -2906,7 +3018,7 @@ function render(){
     if(state!=='dead'){drawHUD();drawMinimap();}
     if(state==='playing')drawObjectivePointers();
     if(joystick.active&&state==='playing')drawJoystick();
-    if(state==='playing'){drawBoostFuel();drawPauseBtn();}
+    if(state==='playing'){drawBoostFuel();drawPauseBtn();drawComboBar();}
   }
   if(state==='menu'){drawMenu();if(showSettings)drawSettingsOverlay();if(!showTutorial&&showDailyModal)drawDailyModal();if(!showTutorial&&!showDailyModal&&showMissionsPanel)drawMissionsPanel();if(privacyPrimerOpen&&!showTutorial)drawPrivacyPrimer();}
   if(state==='dead')drawDeathScreen();
@@ -2918,7 +3030,7 @@ function render(){
   if(state==='modeselect')drawModeSelect();
   // Tutorial overlay renders on top of menu / pause / playing only — never
   // over the death screen, where it would just confuse the player.
-  if(showTutorial&&state!=='dead')drawTutorial();
+  if(showTutorial&&state!=='dead')drawGuide();
   if(flashAlpha>0){ctx.fillStyle=flashColor;ctx.globalAlpha=flashAlpha;ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;}
   drawToasts();
   if(unlockToast>0&&(state==='playing'||state==='paused')){
@@ -3057,7 +3169,7 @@ function drawSnake(s){
   const segs=s.segments;
   const segLen=segs.length;
   const denom=Math.max(1,segLen-1);
-  const w=6+Math.min(segLen*0.03,14);
+  const w=6+Math.min(segLen*0.025,22);
   const halfW=w/2;
   if(s.powerups.ghost>0)ctx.globalAlpha=0.4;
   if(s.invulnTimer>0&&Math.floor(s.invulnTimer*10)%2===0)ctx.globalAlpha=0.3;
@@ -3068,8 +3180,11 @@ function drawSnake(s){
   // Outline pass — fillStyle set once for the whole pass (was per-segment).
   ctx.shadowBlur=0;
   ctx.fillStyle='rgba(0,0,0,0.35)';
+  const cm=halfW+10;
   for(let i=segLen-1;i>=0;i--){
-    const seg=segs[i];const t=1-i/denom;
+    const seg=segs[i];
+    if(!onScreen(seg.x,seg.y,cm))continue;
+    const t=1-i/denom;
     const r=halfW*(0.72+t*0.28)+1.2;
     ctx.beginPath();ctx.arc(seg.x,seg.y,r,0,TAU);ctx.fill();
     if(i>0&&r<bridgeR+1.2){const n=segs[i-1];ctx.beginPath();ctx.arc((seg.x+n.x)/2,(seg.y+n.y)/2,r,0,TAU);ctx.fill();}
@@ -3079,12 +3194,14 @@ function drawSnake(s){
   const headScale=1+(s.headPunch||0);
   // Fill pass with skin colours.
   for(let i=segLen-1;i>=0;i--){
-    const seg=segs[i];const t=1-i/denom;
+    const seg=segs[i];
+    if(i>0&&!onScreen(seg.x,seg.y,cm))continue;
+    const t=1-i/denom;
     let r=halfW*(0.72+t*0.28);let color;
     if(i===0&&headScale!==1)r*=headScale;
-    if(skin.p==='rainbow')color=hsl((i*8+frameCount*2)%360,80,60);
+    if(skin.p==='rainbow')color=HSL_LUT[(i*8+frameCount*2)%360];
     else if(skin.p==='striped')color=((i/3)|0)%2===0?skin.c[0]:skin.c[1];
-    else color=lerpColor(skin.c[1],skin.c[0],0.45+t*0.55); // tail keeps colour, not near-black
+    else color=skinBodyColor(s.skin,t); // tail keeps colour, not near-black
     ctx.fillStyle=color;
     if(i===0){ctx.shadowColor=skin.c[0];ctx.shadowBlur=skin.p==='neon'?22:14;}
     ctx.beginPath();ctx.arc(seg.x,seg.y,r,0,TAU);ctx.fill();
@@ -3228,22 +3345,29 @@ function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx
 
 // Responsive "GROW.io" title — measures both pieces and centers them as one unit.
 function drawBrandTitle(cx,cy,scale){
+  // "GROW" in a cyan→lime neon gradient plus an "io" badge (a pink pill set on
+  // the baseline), instead of a small grey ".io" that read as an afterthought.
   const s=scale||1;
   const baseSize=Math.min(64,Math.floor(W*0.16))*s;
-  const subSize=Math.floor(baseSize*0.55);
   const prevAlign=ctx.textAlign;
   ctx.font='900 '+baseSize+'px Orbitron';
   const mainW=ctx.measureText('GROW').width;
-  ctx.font='700 '+subSize+'px Orbitron';
-  const subW=ctx.measureText('.io').width;
-  const startX=cx-(mainW+subW)/2;
+  const pillH=Math.round(baseSize*0.46),pillFont=Math.round(baseSize*0.32);
+  ctx.font='900 '+pillFont+'px Orbitron';
+  const pillW=ctx.measureText('io').width+pillFont*0.9;
+  const gap=baseSize*0.08,total=mainW+gap+pillW,startX=cx-total/2;
   ctx.textAlign='left';
   ctx.font='900 '+baseSize+'px Orbitron';
-  ctx.fillStyle='#00e5ff';ctx.shadowColor='#00e5ff';ctx.shadowBlur=baseSize*(0.42+0.13*Math.sin(menuPulseT*3));
+  const g=ctx.createLinearGradient(startX,cy-baseSize,startX+mainW,cy);
+  g.addColorStop(0,'#00e5ff');g.addColorStop(1,'#76ff03');
+  ctx.fillStyle=g;ctx.shadowColor='#00e5ff';ctx.shadowBlur=baseSize*(0.36+0.12*Math.sin(menuPulseT*3));
   ctx.fillText('GROW',startX,cy);ctx.shadowBlur=0;
-  ctx.font='700 '+subSize+'px Orbitron';
-  ctx.fillStyle='rgba(255,255,255,0.8)';
-  ctx.fillText('.io',startX+mainW,cy);
+  const px=startX+mainW+gap,py=cy-pillH;
+  ctx.fillStyle='rgba(255,64,129,0.22)';rr(px,py,pillW,pillH,pillH/2);ctx.fill();
+  ctx.strokeStyle='#ff4081';ctx.lineWidth=Math.max(1.5,baseSize*0.035);ctx.shadowColor='#ff4081';ctx.shadowBlur=10;
+  rr(px,py,pillW,pillH,pillH/2);ctx.stroke();ctx.shadowBlur=0;
+  ctx.fillStyle='#ffd1e3';ctx.font='900 '+pillFont+'px Orbitron';ctx.textAlign='center';
+  ctx.fillText('io',px+pillW/2,py+pillH/2+pillFont*0.36);
   ctx.textAlign=prevAlign;
 }
 
@@ -3252,7 +3376,10 @@ function drawHUD(){
   // Boss Rush headline = "Wave N" (the run's score proxy); classic/rush show score.
   ctx.fillStyle=zoneAccent;ctx.font='900 28px Orbitron';ctx.textAlign='left';
   ctx.shadowColor=zoneAccent;ctx.shadowBlur=10;
-  ctx.fillText(mode==='bossrush'?(L.wave+' '+(runWaves+1)):(''+score),15,m+30);ctx.shadowBlur=0;
+  const hudBig=mode==='bossrush'?(L.wave+' '+(runWaves+1)):(''+score);
+  ctx.fillText(hudBig,15,m+30);ctx.shadowBlur=0;
+  // The big number is the SCORE; the number above the snake is its LENGTH.
+  if(mode!=='bossrush'){const bw=ctx.measureText(hudBig).width;ctx.fillStyle='rgba(255,255,255,0.45)';ctx.font='700 10px Rajdhani';ctx.fillText(L.score.toUpperCase(),15+bw+6,m+29);}
   ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='700 14px Rajdhani';
   ctx.fillText(L.length+': '+(player?player.length:0),15,m+50);
   ctx.fillText(L.kills+': '+(player?player.killCount:0),15,m+66);
@@ -3778,6 +3905,111 @@ function handleMissionsPanelTap(x,y){
 }
 
 // ═══ TUTORIAL ═══
+// ═══ HOW TO PLAY (paged guide) ═══
+// Shown on first launch, from the menu "?" and from the pause screen. Each page
+// has a small live illustration, a title and two or three short lines.
+let guidePage=0;
+const GUIDE_PAGES=[
+  {col:'#00e5ff',t:isTR?'YÖN VER':'STEER',l:isTR?['Parmağını ekranda sürükle, yılan o yöne döner.','Çift dokun ve basılı tut ya da ikinci parmağını koy: HIZ.','Küçükken hızlı ve çeviksin, büyüdükçe ağırlaşırsın.']:['Drag your finger, the snake turns that way.','Double-tap and hold, or add a second finger: BOOST.','Small snakes are quick and nimble; big ones are heavier.']},
+  {col:'#76ff03',t:isTR?'BÜYÜ VE KOMBO':'GROW & COMBO',l:isTR?['Yemleri ye: uzarsın, skorun ve paran artar.','Arka arkaya yedikçe alttaki KOMBO dolar, büyümeyi x2\'ye kadar katlar.','Bonus bölgeleri (x1.2 ile x2.5) ve yem yağmuru daha çok kazandırır.']:['Eat pellets to grow, score and earn coins.','Keep eating and the COMBO bar fills, up to x2 growth.','Bonus zones (x1.2 to x2.5) and food rain pay more.']},
+  {col:'#ff4081',t:isTR?'RAKİPLERİ YEN':'TAKE THEM DOWN',l:isTR?['Rakibin kafası senin gövdene çarparsa o elenir.','Kafa kafaya çarpışmada büyük olan kazanır.','En uzun yılanın başında taç olur. Kral ve Boss büyük ödül verir.']:['If a rival\'s head hits your body, it is out.','Head-on, the bigger snake wins.','The longest snake wears the crown. King and Boss pay big.']},
+  {col:'#ffab00',t:isTR?'GÜÇLER VE PİSTLER':'POWER-UPS & PADS',l:isTR?['Hız, kalkan, mıknatıs, hayalet: üstünden geçince alırsın.','Mavi oklu pist ok yönünde hızlandırır, ters yönde yavaşlatır.','Turuncu çamur yavaşlatır, kırmızı fren neredeyse durdurur.']:['Speed, shield, magnet, ghost: run over them to collect.','Blue arrow pads boost you along the arrows, slow you against them.','Orange mud slows you; the red brake nearly stops you.']},
+  {col:'#ffd600',t:isTR?'HARİTA':'THE MAP',l:isTR?['Mini harita: Kral altın, Boss kırmızı, büyük noktalar dev yılanlar.','Ekran kenarındaki oklar Kral, Boss, hazine ve yağmuru gösterir.','Hazine: önce sen kap, botlar da peşinde!']:['Minimap: King in gold, Boss in red, big dots are giants.','Edge arrows point to the King, Boss, treasure and food rain.','Treasure: grab it before the bots do!']},
+  {col:'#b388ff',t:isTR?'KOSTÜM VE MODLAR':'SKINS & MODES',l:isTR?['Parayla kostüm ve iz al. Kahraman kostümlerin küçük güçleri var.','Klasik, 90 saniyelik Hızlı ve Boss Akını modları.','Günlük görevler ve günlük ödül her gün yenilenir.']:['Spend coins on skins and trails. Hero skins have small powers.','Classic, 90-second Rush and Boss Rush modes.','Daily missions and the daily reward refresh every day.']}
+];
+function guideLayout(){
+  const uh=H-sat-sab,oy=sat;
+  const cw=Math.min(350,W-28),ch=Math.min(560,uh-40),cx=W/2-cw/2,cy=oy+(uh-ch)/2;
+  const bh=48,bw=(cw-48)/2,by=cy+ch-bh-18;
+  return {card:{x:cx,y:cy,w:cw,h:ch},art:{x:cx+16,y:cy+44,w:cw-32,h:Math.min(170,ch*0.33)},
+    close:{x:cx+cw-48,y:cy+6,w:42,h:42},back:{x:cx+16,y:by,w:bw,h:bh},next:{x:cx+32+bw,y:by,w:bw,h:bh},dotsY:by-18};
+}
+function closeGuide(){markTutorialSeen();guidePage=0;}
+function handleGuideTap(x,y){
+  const gl=guideLayout();
+  if(inRect(gl.close,x,y)){closeGuide();sndMenu();return;}
+  if(guidePage>0&&inRect(gl.back,x,y)){guidePage--;sndMenu();return;}
+  if(inRect(gl.next,x,y)){if(guidePage<GUIDE_PAGES.length-1){guidePage++;sndMenu();}else{closeGuide();sndMenu();}return;}
+  if(inRect(gl.card,x,y)){if(x>gl.card.x+gl.card.w/2&&guidePage<GUIDE_PAGES.length-1)guidePage++;else if(x<gl.card.x+gl.card.w/2&&guidePage>0)guidePage--;sndMenu();}
+}
+function drawGuideArt(i,a){
+  const t=performance.now()*0.001,cx=a.x+a.w/2,cy=a.y+a.h/2;
+  ctx.save();ctx.beginPath();rr(a.x,a.y,a.w,a.h,14);ctx.clip();
+  ctx.fillStyle='rgba(255,255,255,0.04)';ctx.fillRect(a.x,a.y,a.w,a.h);
+  if(i===0){
+    drawSnakePreview(SKINS[0],cx-10,cy,150,10,20,8);
+    const fx=cx+70+Math.sin(t*2)*16,fy=cy+38+Math.cos(t*2)*10;
+    ctx.fillStyle='rgba(255,255,255,0.85)';ctx.beginPath();ctx.arc(fx,fy,11,0,TAU);ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(fx,fy,18+6*Math.abs(Math.sin(t*3)),0,TAU);ctx.stroke();
+  }else if(i===1){
+    const cols=['#00e5ff','#76ff03','#ff4081','#ffab00','#7c4dff'];
+    for(let k=0;k<14;k++){ctx.fillStyle=cols[k%5];ctx.beginPath();ctx.arc(a.x+30+((k*53)%(a.w-60)),a.y+18+((k*37)%(a.h-60)),4+(k%3),0,TAU);ctx.fill();}
+    drawSnakePreview(SKINS[1],cx-30,cy-6,120,9,16,6);
+    const bw=a.w*0.7,bx=cx-bw/2,by=a.y+a.h-26,f=0.5+0.45*Math.sin(t*1.5);
+    ctx.fillStyle='rgba(255,255,255,0.1)';rr(bx,by,bw,10,5);ctx.fill();
+    ctx.fillStyle=f>0.85?'#ff4081':(f>0.55?'#ffab00':'#76ff03');rr(bx,by,bw*f,10,5);ctx.fill();
+    ctx.fillStyle='#fff';ctx.font='900 11px Orbitron';ctx.textAlign='center';ctx.fillText('COMBO x'+(f>0.85?2:(f>0.55?1.5:1.25)),cx,by-6);
+  }else if(i===2){
+    drawSnakePreview(SKINS[3],cx,cy+28,200,10,26,4);
+    const ox=cx-40+Math.sin(t*1.5)*10;
+    ctx.save();ctx.translate(ox,cy-34);ctx.rotate(PI/2);drawSnakePreview(SKINS[2],0,0,90,8,12,3);ctx.restore();
+    ctx.fillStyle='#ffd600';ctx.beginPath();const kx=cx+100,ky=cy+6;
+    ctx.moveTo(kx-9,ky+5);ctx.lineTo(kx-9,ky-4);ctx.lineTo(kx-4,ky+1);ctx.lineTo(kx,ky-7);ctx.lineTo(kx+4,ky+1);ctx.lineTo(kx+9,ky-4);ctx.lineTo(kx+9,ky+5);ctx.closePath();ctx.fill();
+  }else if(i===3){
+    const ics=['speed','shield','magnet','ghost'];
+    for(let k=0;k<4;k++){const x=a.x+a.w*(0.14+k*0.12),y=cy-30;ctx.fillStyle=PU_COLORS[ics[k]];ctx.globalAlpha=0.9;ctx.beginPath();ctx.arc(x,y,12,0,TAU);ctx.fill();ctx.globalAlpha=1;}
+    ctx.save();ctx.translate(cx+70,cy-28);ctx.scale(0.8,0.8);
+    ctx.fillStyle='rgba(0,229,255,0.16)';rr(-42,-22,84,44,12);ctx.fill();ctx.strokeStyle='#18ffff';ctx.lineWidth=4;ctx.lineCap='round';
+    for(let k=0;k<3;k++){const x=-22+k*18;ctx.beginPath();ctx.moveTo(x-6,-12);ctx.lineTo(x+6,0);ctx.lineTo(x-6,12);ctx.stroke();}
+    ctx.restore();
+    ctx.fillStyle='rgba(255,145,0,0.25)';rr(cx-80,cy+18,70,36,14);ctx.fill();
+    ctx.fillStyle='rgba(255,23,68,0.25)';ctx.beginPath();for(let k=0;k<8;k++){const an=PI/8+k*PI/4;ctx.lineTo(cx+40+Math.cos(an)*20,cy+36+Math.sin(an)*20);}ctx.closePath();ctx.fill();
+    ctx.fillStyle='#ff5252';ctx.font='900 16px Orbitron';ctx.textAlign='center';ctx.fillText('!',cx+40,cy+42);
+  }else if(i===4){
+    const R=Math.min(a.h*0.4,60);ctx.fillStyle='rgba(0,0,0,0.4)';ctx.beginPath();ctx.arc(cx-50,cy,R,0,TAU);ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.beginPath();ctx.arc(cx-50,cy,R,0,TAU);ctx.stroke();
+    const pl=0.5+0.5*Math.sin(t*5);
+    ctx.fillStyle='#ffd600';ctx.beginPath();ctx.arc(cx-70,cy-18,3.5,0,TAU);ctx.fill();ctx.strokeStyle='#ffd600';ctx.beginPath();ctx.arc(cx-70,cy-18,6+pl*3,0,TAU);ctx.stroke();
+    ctx.fillStyle='#ff1744';ctx.beginPath();ctx.arc(cx-28,cy+20,3.5,0,TAU);ctx.fill();ctx.strokeStyle='#ff1744';ctx.beginPath();ctx.arc(cx-28,cy+20,6+pl*3,0,TAU);ctx.stroke();
+    const g=ctx.createRadialGradient(cx+70,cy-4,2,cx+70,cy,16);g.addColorStop(0,'#fffde7');g.addColorStop(0.5,'#ffd600');g.addColorStop(1,'#ff8f00');
+    ctx.fillStyle=g;ctx.shadowColor='#ffd600';ctx.shadowBlur=18;ctx.beginPath();ctx.arc(cx+70,cy,14+2*pl,0,TAU);ctx.fill();ctx.shadowBlur=0;
+  }else{
+    const hs=SKINS.filter(function(k){return !!k.power;});
+    for(let k=0;k<hs.length;k++)drawSnakePreview(hs[k],cx,a.y+a.h*(0.18+k*0.21),130,7,14,3);
+  }
+  ctx.restore();
+}
+function drawGuide(){
+  ctx.fillStyle='rgba(6,6,20,0.94)';ctx.fillRect(0,0,W,H);
+  const gl=guideLayout(),c=gl.card,pg=GUIDE_PAGES[guidePage];
+  ctx.fillStyle='#0f0f26';rr(c.x,c.y,c.w,c.h,20);ctx.fill();
+  ctx.strokeStyle=pg.col;ctx.globalAlpha=0.8;ctx.lineWidth=2;rr(c.x,c.y,c.w,c.h,20);ctx.stroke();ctx.globalAlpha=1;
+  ctx.textAlign='left';ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='700 12px Rajdhani';
+  ctx.fillText(L.howToPlay+'  ·  '+(guidePage+1)+'/'+GUIDE_PAGES.length,c.x+18,c.y+30);
+  {const r=gl.close,x0=r.x+r.w/2,y0=r.y+r.h/2;ctx.strokeStyle='rgba(255,255,255,0.6)';ctx.lineWidth=2.2;ctx.lineCap='round';
+   ctx.beginPath();ctx.moveTo(x0-7,y0-7);ctx.lineTo(x0+7,y0+7);ctx.moveTo(x0+7,y0-7);ctx.lineTo(x0-7,y0+7);ctx.stroke();}
+  drawGuideArt(guidePage,gl.art);
+  let y=gl.art.y+gl.art.h+40;
+  ctx.textAlign='center';ctx.fillStyle=pg.col;ctx.shadowColor=pg.col;ctx.shadowBlur=10;
+  ctx.font='900 '+Math.min(24,Math.floor(c.w*0.07))+'px Orbitron';ctx.fillText(pg.t,W/2,y,c.w-30);ctx.shadowBlur=0;
+  y+=14;ctx.font='600 15px Rajdhani';
+  const maxW=c.w-44;
+  for(const line of pg.l){
+    const ls=wrapLines(line,maxW-18);
+    if(y+ls.length*20>gl.dotsY-8)break;
+    ctx.fillStyle=pg.col;ctx.beginPath();ctx.arc(c.x+26,y+16,3,0,TAU);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.86)';ctx.textAlign='left';
+    for(const l of ls){y+=20;ctx.fillText(l,c.x+36,y);}
+    y+=8;ctx.textAlign='center';
+  }
+  for(let k=0;k<GUIDE_PAGES.length;k++){ctx.fillStyle=k===guidePage?pg.col:'rgba(255,255,255,0.22)';ctx.beginPath();ctx.arc(W/2+(k-(GUIDE_PAGES.length-1)/2)*16,gl.dotsY,k===guidePage?4.5:3.5,0,TAU);ctx.fill();}
+  const last=guidePage===GUIDE_PAGES.length-1;
+  if(guidePage>0){const r=gl.back;ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=2;rr(r.x,r.y,r.w,r.h,r.h/2);ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.85)';ctx.font='900 14px Orbitron';ctx.textAlign='center';ctx.fillText(L.guideBack,r.x+r.w/2,r.y+r.h*0.64);}
+  {const r=gl.next;ctx.fillStyle=pg.col;ctx.shadowColor=pg.col;ctx.shadowBlur=10;rr(r.x,r.y,r.w,r.h,r.h/2);ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle='#0a0a1a';ctx.font='900 15px Orbitron';ctx.textAlign='center';ctx.fillText(last?L.guideDone:L.guideNext,r.x+r.w/2,r.y+r.h*0.64,r.w-12);}
+  ctx.textAlign='left';
+}
 function drawTutorial(){
   // Backdrop with subtle vignette
   ctx.fillStyle='rgba(6,6,20,0.985)';ctx.fillRect(0,0,W,H);
@@ -4766,7 +4998,7 @@ $.addEventListener('touchstart',function(e){
   if(adBlocksInput())return;
   // Tutorial overlay can be shown over any state (initial spawn or pause-launched).
   // A single tap dismisses it and returns control to the underlying screen.
-  if(showTutorial){markTutorialSeen();sndMenu();return;}
+  if(showTutorial){handleGuideTap(t.clientX,t.clientY);return;}
   if(privacyPrimerOpen){handlePrimerTap(t.clientX,t.clientY);return;}
   if(state==='menu'){handleMenuTap(t.clientX,t.clientY);return;}
   if(state==='dead'){handleDeathTap(t.clientX,t.clientY);return;}
@@ -4878,7 +5110,7 @@ function resumeGame(){
 $.addEventListener('mousedown',function(e){
   initAudio();
   if(adBlocksInput())return;
-  if(showTutorial){markTutorialSeen();sndMenu();return;}
+  if(showTutorial){handleGuideTap(e.clientX,e.clientY);return;}
   if(privacyPrimerOpen){handlePrimerTap(e.clientX,e.clientY);return;}
   if(state==='menu'){handleMenuTap(e.clientX,e.clientY);return;}
   if(state==='dead'){handleDeathTap(e.clientX,e.clientY);return;}
@@ -4923,7 +5155,7 @@ function handleMenuTap(x,y){
   }
   const ml=menuLayout();
   if(inRect(ml.settings,x,y)){showSettings=true;sndMenu();return;}
-  if(inRect(ml.help,x,y)){showTutorial=true;sndMenu();return;}
+  if(inRect(ml.help,x,y)){guidePage=0;showTutorial=true;sndMenu();return;}
   if(inRect(ml.play,x,y)){sndMenu();startGame(mode);return;}
   if(inRect(ml.mode,x,y)){sndMenu();state='modeselect';resetTouchState();return;}
   if(inRect(ml.cosmetics,x,y)||inRect(ml.hero,x,y)){sndMenu();openShop();return;}
@@ -4969,7 +5201,7 @@ function handlePauseTap(x,y){
   }
   // How to play
   ry=oy+uh*0.50;
-  if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){showTutorial=true;return;}
+  if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){guidePage=0;showTutorial=true;return;}
   // Main menu (open confirm)
   ry=oy+uh*0.64;
   if(x>bx&&x<bx+bw&&y>ry&&y<ry+bh){quitConfirmTimer=10;return;}
