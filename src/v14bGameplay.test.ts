@@ -127,3 +127,13 @@ describe('chapters (campaign)', () => {
     expect(html).toContain("const MODE_CARDS = MODES.filter(function(m){return m.id!=='chapter';});");
   });
 });
+
+describe('chapter competition', () => {
+  it('bots chase nests/gems in chapters and actually eat them', () => {
+    const bot = extractFn(html, 'updateBot');
+    expect(bot).toContain("if(mode==='chapter'&&Math.random()<0.3+0.45*bot.skill){");
+    const upd = extractFn(html, 'updateChapter');
+    expect(upd).toContain('botAte(');
+    expect(upd.indexOf('botAte(')).toBeLessThan(upd.indexOf('if(!player||!player.alive)return;'));
+  });
+});

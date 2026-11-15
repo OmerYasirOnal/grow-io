@@ -399,11 +399,18 @@ function setupChapter(){
   chapterWinT=0;chapterBannerT=3.4;chapterJustWon=false;
   zoneBg=ch.bg;targetZoneBg=ch.bg;zoneAccent=ch.accent;targetZoneAccent=ch.accent;bgGrad=null;bgGradKey='';
   nests=[];gems=[];shards=[];decor=[];
-  if(ch.goals.some(function(g){return g[0]==='eggs';}))for(let i=0;i<6;i++)nests.push(makeNest());
-  if(ch.goals.some(function(g){return g[0]==='gems';}))for(let i=0;i<10;i++)gems.push(makeGem(250));
+  if(ch.goals.some(function(g){return g[0]==='eggs';}))for(let i=0;i<8;i++)nests.push(makeNest());
+  if(ch.goals.some(function(g){return g[0]==='gems';}))for(let i=0;i<12;i++)gems.push(makeGem(250));
   for(let i=0;i<170;i++){const a=rand(0,TAU),r=Math.sqrt(Math.random())*(WR-40);decor.push({x:WCX+Math.cos(a)*r,y:WCY+Math.sin(a)*r,s:rand(0.6,1.5),rot:rand(0,TAU),ph:rand(0,TAU)});}
   nextKingScore=ch.goals.some(function(g){return g[0]==='king';})?700:3000;nextBossScore=1e9;
   track('chapter_start',{chapter:curChapter+1});
+}
+// Nests refill this long after the last egg is taken (bots compete for them).
+const NEST_REFILL_S=10;
+// A rival snatching an egg or gem: visible crack/sparkle, a popup only on screen.
+function botAte(x,y,col){
+  for(let k=0;k<6;k++){const a=rand(0,TAU),sp=rand(50,130);shards.push({x:x,y:y,z:rand(3,9),vx:Math.cos(a)*sp,vy:Math.sin(a)*sp*0.7,vz:rand(110,200),rot:rand(0,TAU),vr:rand(-10,10),life:rand(0.5,0.8),s:rand(2.5,4.5),c:col});}
+  if(onScreen(x,y,0)&&Math.random()<0.5)addScorePopup(x,y-16,isTR?'KAPTI!':'STOLEN!','#ff8a80');
 }
 function eatEgg(x,y,gold){
   chapterProg.eggs+=gold?3:1;player.length+=gold?8:4;score+=gold?75:25;
@@ -437,7 +444,25 @@ function updateChapter(dt){
     q.life-=dt;if(q.life<=0){const last=shards.length-1;if(i!==last)shards[i]=shards[last];shards.pop();}
   }
   if(chapterBannerT>0)chapterBannerT-=dt;
-  if(!player||!player.alive||!chapterProg)return;
+  if(!chapterProg)return;
+  for(const o of snakes){
+    if(!o.alive||o.isPlayer)continue;
+    const oh=o.segments[0],or=snakeWidth(o)/2;
+    for(const n of nests){
+      if(!n.eggs.length)continue;
+      if((oh.x-n.x)*(oh.x-n.x)+(oh.y-n.y)*(oh.y-n.y)>(or+60)*(or+60))continue;
+      for(let i=n.eggs.length-1;i>=0;i--){
+        const e=n.eggs[i],ex=n.x+Math.cos(e.a)*e.d,ey=n.y+Math.sin(e.a)*e.d*0.7;
+        if((oh.x-ex)*(oh.x-ex)+(oh.y-ey)*(oh.y-ey)<(or+9)*(or+9)){n.eggs.splice(i,1);o.length+=e.gold?8:4;botAte(ex,ey,e.gold?'#ffe082':'#fff8e1');}
+      }
+      if(!n.eggs.length)n.refill=NEST_REFILL_S;
+    }
+    for(let i=gems.length-1;i>=0;i--){
+      const g=gems[i];
+      if((oh.x-g.x)*(oh.x-g.x)+(oh.y-g.y)*(oh.y-g.y)<(or+13)*(or+13)){gems.splice(i,1);o.length+=6;botAte(g.x,g.y,g.c);gems.push(makeGem(600));}
+    }
+  }
+  if(!player||!player.alive)return;
   const h=player.segments[0],hr=snakeWidth(player)/2;
   for(const n of nests){
     if(!n.eggs.length){n.refill-=dt;if(n.refill<=0){const nn=makeNest();n.eggs=nn.eggs;}continue;}
@@ -446,7 +471,7 @@ function updateChapter(dt){
       const e=n.eggs[i],ex=n.x+Math.cos(e.a)*e.d,ey=n.y+Math.sin(e.a)*e.d*0.7;
       if((h.x-ex)*(h.x-ex)+(h.y-ey)*(h.y-ey)<(hr+9)*(hr+9)){n.eggs.splice(i,1);eatEgg(ex,ey,e.gold);}
     }
-    if(!n.eggs.length)n.refill=14;
+    if(!n.eggs.length)n.refill=NEST_REFILL_S;
   }
   for(let i=gems.length-1;i>=0;i--){
     const g=gems[i];
@@ -3097,6 +3122,13 @@ function updateBot(bot,dt){
     }
   }
 
+  // Chapters: bots race the player for eggs and gems (sharper bots more often).
+  if(mode==='chapter'&&Math.random()<0.3+0.45*bot.skill){
+    let tgt=null,td=650*stage.sightMul;
+    for(const n of nests){if(!n.eggs.length)continue;const d=dist(head,n);if(d<td){td=d;tgt=n;}}
+    for(const g of gems){const d=dist(head,g);if(d<td*0.9){td=d;tgt=g;}}
+    if(tgt){bot.targetAngle=angleTo(head,tgt);bot.boosting=td<260&&bot.boostFuel>45&&bot.skill>0.6;return;}
+  }
   // Treasure and food rain pull nearby bots hard (they race the player).
   if(treasure&&dist(head,treasure)<800&&Math.random()<0.6){bot.targetAngle=angleTo(head,treasure);bot.boosting=dist(head,treasure)<300&&bot.boostFuel>40;return;}
   if(rain&&dist(head,rain)<700&&dist(head,rain)>120&&Math.random()<0.4){bot.targetAngle=angleTo(head,rain);bot.boosting=false;return;}

@@ -17,7 +17,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.omeryasir.growio",
       "googleServicesFile": "./GoogleService-Info.plist",
-      "buildNumber": "33",
+      "buildNumber": "34",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSUserTrackingUsageDescription": "This lets us show you ads that are more relevant to you.",
