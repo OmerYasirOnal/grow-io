@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <style>
 /*iPad-shim-css*/
-html.ipad-shim,html.ipad-shim body{background:#000 !important}
+html.ipad-shim,html.ipad-shim body{background:#070714 !important}
 html.ipad-shim body{display:flex !important;align-items:center !important;justify-content:center !important}
-html.ipad-shim canvas{position:relative !important;width:min(100vw,calc((100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom))*0.5625)) !important;height:min(calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)),calc(100vw*1.7778)) !important;max-width:520px !important;max-height:924px !important}
+html.ipad-shim canvas{position:relative !important;width:min(100vw,calc((100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom))*0.5625)) !important;height:min(calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)),calc(100vw*1.7778)) !important}
 </style>
 <script>
 /*iPad-shim-js*/
-(function(){var BP=700;if(Math.min(window.innerWidth,window.innerHeight)<BP)return;var MW=520,MH=924,AR=9/16;var rW=window.innerWidth,rH=window.innerHeight;function calc(){var lh=Math.min(rH,MH),lw=Math.min(rW,MW,Math.floor(lh*AR));lh=Math.min(rH,MH,Math.floor(lw/AR));return{w:lw,h:lh}}var L=calc();try{Object.defineProperty(window,'innerWidth',{configurable:true,get:function(){return L.w}});Object.defineProperty(window,'innerHeight',{configurable:true,get:function(){return L.h}});if(window.innerWidth!==L.w||window.innerHeight!==L.h)throw 0;}catch(e){return}document.documentElement.classList.add('ipad-shim');var oA=EventTarget.prototype.addEventListener;EventTarget.prototype.addEventListener=function(t,l,o){if(!l)return oA.call(this,t,l,o);if(t==='resize'){var rfn=typeof l==='function'?l:(l.handleEvent&&l.handleEvent.bind(l));return oA.call(this,'resize',function(e){rW=document.documentElement.clientWidth||MW;rH=document.documentElement.clientHeight||MH;L=calc();if(rfn)rfn.call(this,e)},o)}var ev=['touchstart','touchmove','touchend','touchcancel','mousedown','mousemove','mouseup','click','pointerdown','pointermove','pointerup'];if(ev.indexOf(t)<0)return oA.call(this,t,l,o);var fn=typeof l==='function'?l:(l.handleEvent&&l.handleEvent.bind(l));if(!fn)return oA.call(this,t,l,o);var w=function(e){var c=document.querySelector('canvas');if(c){var r=c.getBoundingClientRect();var sx=r.width>0?L.w/r.width:1,sy=r.height>0?L.h/r.height:1;function patch(p){try{var rcx=p.clientX,rcy=p.clientY;var nx=(rcx-r.left)*sx,ny=(rcy-r.top)*sy;Object.defineProperty(p,'clientX',{configurable:true,get:function(){return nx}});Object.defineProperty(p,'clientY',{configurable:true,get:function(){return ny}});Object.defineProperty(p,'pageX',{configurable:true,get:function(){return nx}});Object.defineProperty(p,'pageY',{configurable:true,get:function(){return ny}})}catch(_){}}if(e.touches){for(var i=0;i<e.touches.length;i++)patch(e.touches[i])}if(e.changedTouches){for(var j=0;j<e.changedTouches.length;j++)patch(e.changedTouches[j])}if(typeof e.clientX==='number'&&!e.touches)patch(e)}return fn.call(this,e)};return oA.call(this,t,w,o)}})();
+(function(){var BP=700;if(Math.min(window.innerWidth,window.innerHeight)<BP)return;var MW=520,MH=924,AR=9/16;var rW=window.innerWidth,rH=window.innerHeight;function calc(){var lh=Math.min(rH,MH),lw=Math.min(rW,MW,Math.floor(lh*AR));lh=Math.min(rH,MH,Math.floor(lw/AR));return{w:lw,h:lh}}var L=calc();try{Object.defineProperty(window,'innerWidth',{configurable:true,get:function(){return L.w}});Object.defineProperty(window,'innerHeight',{configurable:true,get:function(){return L.h}});if(window.innerWidth!==L.w||window.innerHeight!==L.h)throw 0;}catch(e){return}document.documentElement.classList.add('ipad-shim');var sc=function(){var ch=Math.min(rH,rW*16/9);return Math.max(1,ch/L.h);};try{Object.defineProperty(window,'__shimScale',{configurable:true,get:sc});}catch(e){}var oA=EventTarget.prototype.addEventListener;EventTarget.prototype.addEventListener=function(t,l,o){if(!l)return oA.call(this,t,l,o);if(t==='resize'){var rfn=typeof l==='function'?l:(l.handleEvent&&l.handleEvent.bind(l));return oA.call(this,'resize',function(e){rW=document.documentElement.clientWidth||MW;rH=document.documentElement.clientHeight||MH;L=calc();if(rfn)rfn.call(this,e)},o)}var ev=['touchstart','touchmove','touchend','touchcancel','mousedown','mousemove','mouseup','click','pointerdown','pointermove','pointerup'];if(ev.indexOf(t)<0)return oA.call(this,t,l,o);var fn=typeof l==='function'?l:(l.handleEvent&&l.handleEvent.bind(l));if(!fn)return oA.call(this,t,l,o);var w=function(e){var c=document.querySelector('canvas');if(c){var r=c.getBoundingClientRect();var sx=r.width>0?L.w/r.width:1,sy=r.height>0?L.h/r.height:1;function patch(p){try{var rcx=p.clientX,rcy=p.clientY;var nx=(rcx-r.left)*sx,ny=(rcy-r.top)*sy;Object.defineProperty(p,'clientX',{configurable:true,get:function(){return nx}});Object.defineProperty(p,'clientY',{configurable:true,get:function(){return ny}});Object.defineProperty(p,'pageX',{configurable:true,get:function(){return nx}});Object.defineProperty(p,'pageY',{configurable:true,get:function(){return ny}})}catch(_){}}if(e.touches){for(var i=0;i<e.touches.length;i++)patch(e.touches[i])}if(e.changedTouches){for(var j=0;j<e.changedTouches.length;j++)patch(e.changedTouches[j])}if(typeof e.clientX==='number'&&!e.touches)patch(e)}return fn.call(this,e)};return oA.call(this,t,w,o)}})();
 </script>
 
 <title>Grow.io</title>
@@ -82,7 +82,7 @@ const L={
   coinsEarned:isTR?'KAZANILAN PARA':'COINS EARNED',
   bonusCoins:isTR?'+{n} ödül (seviye, görev)':'+{n} rewards (level, missions)',
   nextSkinHint:isTR?'Sonraki skin: ':'Next skin: ',
-  toGo:isTR?' daha':'  to go',
+  toGo:isTR?' daha':' to go',
   time:isTR?'Süre':'Time',
   howToPlay:isTR?'NASIL OYNANIR':'HOW TO PLAY',
   tut1:isTR?'Sürükle: yön ver':'Drag to steer',
@@ -167,7 +167,10 @@ const L={
 };
 
 function resize(){
-  dpr = Math.min(window.devicePixelRatio||1, 2);
+  // iPad shim: the 9:16 canvas is CSS-scaled up to the screen height, so the
+  // backing store follows that scale (up to 3x) to stay sharp.
+  const _shim=window.__shimScale||1;
+  dpr = Math.min((window.devicePixelRatio||1)*_shim, _shim>1?3:2);
   W = window.innerWidth; H = window.innerHeight;
   $.width = W*dpr; $.height = H*dpr;
   $.style.width = W+'px'; $.style.height = H+'px';
@@ -191,7 +194,10 @@ resize();
 // ═══ CONSTANTS ═══
 const WS = 3000, WCX = 1500, WCY = 1500, WR = 1500;
 const SEG_DIST = 8, TURN_SPEED = 3.5, BASE_SPEED = 150;
-const MAX_FOOD = 600, MAX_BOTS = 12, MAX_PARTICLES = 300, MAX_POWERUPS = 8;
+// Ambient food refills up to FOOD_TARGET; drops (deaths, treasure, rain) may go
+// up to MAX_FOOD before old pellets are recycled, and then only off-screen ones.
+const FOOD_TARGET = 620;
+const MAX_FOOD = 850, MAX_BOTS = 12, MAX_PARTICLES = 300, MAX_POWERUPS = 8;
 const SHK_MAX = 24; // shockwave pool size — 24 slots: at most 1–2 simultaneous kills per frame
 const TRAIL_MAX = 90; // cosmetic-trail particle pool — pre-allocated, ring-buffer, never grows
 const CELL_SIZE = 200, GRID_W = Math.ceil(WS/CELL_SIZE);
@@ -251,8 +257,21 @@ const SKINS = [
   {name:'Orbit',    c:['#18ffff','#304ffe'],p:'neon',    u:'coins', r:'hero', power:'orbit', nameTR:'Yörünge'},
   {name:'Kraken',   c:['#ff6e40','#4a148c'],p:'gradient',u:'coins', r:'hero', power:'claws', nameTR:'Kraken'},
   {name:'Jet',      c:['#ffea00','#ff3d00'],p:'gradient',u:'coins', r:'hero', power:'jet', nameTR:'Jet'},
+  // v1.4 costume pack (appended: indices 28+). The shop lists heroes last.
+  {name:'Glacier',  c:['#e1f5fe','#4fc3f7'],p:'gradient',u:'coins', r:'rare', nameTR:'Buzul'},
+  {name:'Ocean',    c:['#00b0ff','#004d40'],p:'gradient',u:'coins', r:'rare', nameTR:'Okyanus'},
+  {name:'Zebra',    c:['#ffffff','#212121'],p:'striped', u:'coins', r:'rare', nameTR:'Zebra'},
+  {name:'Ember',    c:['#ffab40','#3e2723'],p:'dotted',  u:'coins', r:'rare', nameTR:'Kor'},
+  {name:'Bubblegum',c:['#f48fb1','#ce93d8'],p:'gradient',u:'coins', r:'rare', nameTR:'Sakız'},
+  {name:'Tiger',    c:['#ff9800','#212121'],p:'striped', u:'coins', r:'epic', nameTR:'Kaplan'},
+  {name:'Galaxy',   c:['#7c4dff','#00e5ff'],p:'neon',    u:'coins', r:'epic', nameTR:'Galaksi'},
+  {name:'Sakura',   c:['#ffb7c5','#ffffff'],p:'dotted',  u:'coins', r:'epic', nameTR:'Sakura'},
+  {name:'Venom',    c:['#76ff03','#4a148c'],p:'striped', u:'coins', r:'legendary', nameTR:'Engerek'},
+  {name:'Inferno',  c:['#ff1744','#ffea00'],p:'gradient',u:'coins', r:'mythic', nameTR:'Cehennem'},
 ];
-// Bots never wear hero skins: an accessory without its power would mislead.
+// Shop grid order: every regular skin, then the hero skins.
+const SHOP_ORDER=SKINS.map(function(_,i){return i;}).filter(function(i){return !SKINS[i].power;}).concat(SKINS.map(function(_,i){return i;}).filter(function(i){return !!SKINS[i].power;}));
+// First hero skin index (regular skins may also follow the heroes).
 const HERO_FIRST = SKINS.findIndex(function(k){return !!k.power;});
 // ═══ HERO POWERS ═══
 // Small, readable advantages with a cooldown. They only ever work for the
@@ -316,6 +335,320 @@ const ZONES = [
   {min:251,bg:'#0d0020',accent:'#d500f9'}
 ];
 
+
+// ═══ CHAPTERS (campaign) ═══
+// Seven themed maps played in order. Each has goals; finishing them pays the
+// reward and unlocks the next chapter. Goal types: eggs (from bird nests),
+// gems, length (reach it once), kills, king (defeat the King).
+const CHAPTERS=[
+  {key:'meadow', en:'Meadow', tr:'Çayır',    bg:'#0c2414',accent:'#76ff03',deco:'leaf',  bots:7, lobby:'easy',  goals:[['eggs',5],['length',120]],            reward:150},
+  {key:'desert', en:'Desert', tr:'Çöl',      bg:'#2a1c08',accent:'#ffca28',deco:'dune',  bots:8, lobby:'easy',  goals:[['eggs',8],['kills',1]],               reward:200},
+  {key:'glacier',en:'Glacier',tr:'Buzul',    bg:'#08202e',accent:'#80d8ff',deco:'snow',  bots:9, lobby:'mixed', goals:[['gems',5],['length',250]],            reward:250},
+  {key:'jungle', en:'Jungle', tr:'Orman',    bg:'#062018',accent:'#00e676',deco:'fern',  bots:10,lobby:'mixed', goals:[['eggs',12],['kills',3]],              reward:300},
+  {key:'volcano',en:'Volcano',tr:'Volkan',   bg:'#2a0a06',accent:'#ff6d00',deco:'ember', bots:11,lobby:'mixed', goals:[['gems',8],['length',450]],            reward:400},
+  {key:'abyss',  en:'Abyss',  tr:'Derinlik', bg:'#041a2a',accent:'#18ffff',deco:'bubble',bots:12,lobby:'sharp', goals:[['eggs',16],['kills',5]],              reward:500},
+  {key:'galaxy', en:'Galaxy', tr:'Galaksi',  bg:'#100626',accent:'#e040fb',deco:'star',  bots:12,lobby:'sharp', goals:[['gems',12],['length',700],['king',1]],reward:800},
+];
+let curChapter=0,chapterUnlocked=1,chapterDone=[];
+let chapterProg=null;                 // {eggs,gems,kills,king,maxLen} for the live run
+let nests=[],gems=[],decor=[],shards=[];
+let chapterWinT=0,chapterBannerT=0,chapterJustWon=false;
+function chapterName(c){return isTR?c.tr:c.en;}
+function loadChapters(){
+  const o=loadBlob('chap',{u:1,d:[],c:0});
+  chapterUnlocked=Math.max(1,Math.min(CHAPTERS.length,o.u|0));
+  chapterDone=Array.isArray(o.d)?o.d.slice(0,CHAPTERS.length).map(function(v){return !!v;}):[];
+  curChapter=Math.max(0,Math.min(chapterUnlocked-1,o.c|0));
+}
+function saveChapters(){saveBlob('chap',{u:chapterUnlocked,d:chapterDone.slice(),c:curChapter});}
+function goalLabel(t){
+  if(isTR)return {eggs:'YUMURTA',gems:'ELMAS',length:'BOY',kills:'AV',king:'KRAL'}[t];
+  return {eggs:'EGGS',gems:'GEMS',length:'LENGTH',kills:'KILLS',king:'KING'}[t];
+}
+function goalValue(t){
+  if(!chapterProg)return 0;
+  if(t==='length')return chapterProg.maxLen;
+  return chapterProg[t]||0;
+}
+function chapterGoalsDone(){
+  const ch=CHAPTERS[curChapter];
+  for(const g of ch.goals)if(goalValue(g[0])<g[1])return false;
+  return true;
+}
+function goalWord(t,n){if(!isTR&&n===1)return {eggs:'egg',gems:'gem',kills:'kill',length:'length',king:'king'}[t];return goalLabel(t).toLowerCase();}
+function goalSummary(ch){return ch.goals.map(function(g){return g[1]+' '+goalWord(g[0],g[1]);}).join(' · ');}
+function randArenaSpot(minFromPlayer,rim){
+  let x=WCX,y=WCY;
+  for(let k=0;k<14;k++){
+    const a=rand(0,TAU),r=rand(260,WR-(rim||170));x=WCX+Math.cos(a)*r;y=WCY+Math.sin(a)*r;
+    if(!player||Math.hypot(x-player.segments[0].x,y-player.segments[0].y)>minFromPlayer)break;
+  }
+  return {x:x,y:y};
+}
+function makeNest(){
+  const sp=randArenaSpot(420),n=randInt(3,5),eggs=[];
+  for(let i=0;i<n;i++)eggs.push({a:i/n*TAU+rand(-0.25,0.25),d:rand(9,16),gold:Math.random()<0.12,wob:rand(0,TAU)});
+  const tw=[];for(let i=0;i<18;i++)tw.push({a:rand(0,TAU),l:rand(0.35,0.8),c:randInt(0,2),o:rand(-3,3)});
+  return {x:sp.x,y:sp.y,eggs:eggs,tw:tw,refill:0};
+}
+const GEM_COLS=['#40c4ff','#ff4081','#76ff03','#ffd600','#e040fb'];
+function makeGem(minD){const sp=randArenaSpot(minD||300,140);return {x:sp.x,y:sp.y,c:GEM_COLS[randInt(0,GEM_COLS.length-1)],ph:rand(0,TAU)};}
+function setupChapter(){
+  const ch=CHAPTERS[curChapter];
+  chapterProg={eggs:0,gems:0,kills:0,king:0,maxLen:0};
+  chapterWinT=0;chapterBannerT=3.4;chapterJustWon=false;
+  zoneBg=ch.bg;targetZoneBg=ch.bg;zoneAccent=ch.accent;targetZoneAccent=ch.accent;bgGrad=null;bgGradKey='';
+  nests=[];gems=[];shards=[];decor=[];
+  if(ch.goals.some(function(g){return g[0]==='eggs';}))for(let i=0;i<6;i++)nests.push(makeNest());
+  if(ch.goals.some(function(g){return g[0]==='gems';}))for(let i=0;i<10;i++)gems.push(makeGem(250));
+  for(let i=0;i<170;i++){const a=rand(0,TAU),r=Math.sqrt(Math.random())*(WR-40);decor.push({x:WCX+Math.cos(a)*r,y:WCY+Math.sin(a)*r,s:rand(0.6,1.5),rot:rand(0,TAU),ph:rand(0,TAU)});}
+  nextKingScore=ch.goals.some(function(g){return g[0]==='king';})?700:3000;nextBossScore=1e9;
+  track('chapter_start',{chapter:curChapter+1});
+}
+function eatEgg(x,y,gold){
+  chapterProg.eggs+=gold?3:1;player.length+=gold?8:4;score+=gold?75:25;
+  for(let k=0;k<12;k++){const a=rand(0,TAU),sp=rand(60,170);
+    shards.push({x:x,y:y,z:rand(4,12),vx:Math.cos(a)*sp,vy:Math.sin(a)*sp*0.7,vz:rand(130,260),rot:rand(0,TAU),vr:rand(-12,12),life:rand(0.7,1.1),s:rand(3,6),c:gold?'#ffe082':(k%3?'#fff8e1':'#ffe0b2')});}
+  spawnShock(x,y,gold?'#ffd600':'#ffe082',false);spawnP(x,y,'#ffca28',8,90,3);
+  addScorePopup(x,y-18,(gold?'+3 ':'+1 ')+(isTR?'YUMURTA':'EGG'),gold?'#ffd600':'#fff3c4');
+  tone(880,'triangle',0.05,0.05);tone(560,'square',0.05,0.03,0.035);postMsg({type:'HAPTIC',data:'light'});
+  player.headPunch=Math.min(0.6,(player.headPunch||0)+0.45);
+}
+function eatGem(g){
+  chapterProg.gems++;score+=50;
+  spawnP(g.x,g.y,g.c,16,140,3);spawnShock(g.x,g.y,g.c,false);
+  addScorePopup(g.x,g.y-20,'+1 '+(isTR?'ELMAS':'GEM'),g.c);
+  tone(1320,'sine',0.12,0.05);tone(1760,'sine',0.14,0.04,0.06);postMsg({type:'HAPTIC',data:'light'});
+}
+function winChapter(){
+  const ch=CHAPTERS[curChapter];
+  chapterJustWon=true;chapterWinT=2.4;
+  coins+=ch.reward;saveCoins();
+  chapterDone[curChapter]=true;chapterUnlocked=Math.max(chapterUnlocked,Math.min(CHAPTERS.length,curChapter+2));saveChapters();
+  flashAlpha=0.4;flashColor=ch.accent;sndKingSlain();postMsg({type:'HAPTIC',data:'heavy'});
+  const h=player.segments[0];spawnShock(h.x,h.y,ch.accent,true);spawnP(h.x,h.y,ch.accent,30,200,3);
+  track('chapter_win',{chapter:curChapter+1,time:Math.floor(playTime)});
+}
+function finishChapter(){settleRun();state='chapterwin';resetTouchState();}
+function updateChapter(dt){
+  for(let i=shards.length-1;i>=0;i--){
+    const q=shards[i];q.x+=q.vx*dt;q.y+=q.vy*dt;q.z+=q.vz*dt;q.vz-=420*dt;q.rot+=q.vr*dt;
+    if(q.z<0){q.z=0;q.vz*=-0.35;q.vx*=0.6;q.vy*=0.6;}
+    q.life-=dt;if(q.life<=0){const last=shards.length-1;if(i!==last)shards[i]=shards[last];shards.pop();}
+  }
+  if(chapterBannerT>0)chapterBannerT-=dt;
+  if(!player||!player.alive||!chapterProg)return;
+  const h=player.segments[0],hr=snakeWidth(player)/2;
+  for(const n of nests){
+    if(!n.eggs.length){n.refill-=dt;if(n.refill<=0){const nn=makeNest();n.eggs=nn.eggs;}continue;}
+    const dx=h.x-n.x,dy=h.y-n.y;if(dx*dx+dy*dy>(hr+60)*(hr+60))continue;
+    for(let i=n.eggs.length-1;i>=0;i--){
+      const e=n.eggs[i],ex=n.x+Math.cos(e.a)*e.d,ey=n.y+Math.sin(e.a)*e.d*0.7;
+      if((h.x-ex)*(h.x-ex)+(h.y-ey)*(h.y-ey)<(hr+9)*(hr+9)){n.eggs.splice(i,1);eatEgg(ex,ey,e.gold);}
+    }
+    if(!n.eggs.length)n.refill=14;
+  }
+  for(let i=gems.length-1;i>=0;i--){
+    const g=gems[i];
+    if((h.x-g.x)*(h.x-g.x)+(h.y-g.y)*(h.y-g.y)<(hr+13)*(hr+13)){gems.splice(i,1);eatGem(g);gems.push(makeGem(600));}
+  }
+  chapterProg.maxLen=Math.max(chapterProg.maxLen,player.length);
+  if(chapterWinT>0){
+    chapterWinT-=dt;player.invulnTimer=Math.max(player.invulnTimer,0.5);
+    if(chapterWinT<=0)finishChapter();
+  }else if(!chapterJustWon&&chapterGoalsDone())winChapter();
+}
+// ── Chapter drawing (world space) ──
+function drawDecor(){
+  const ch=CHAPTERS[curChapter],t=menuPulseT+playTime;
+  ctx.save();
+  for(const d of decor){
+    if(!onScreen(d.x,d.y,40))continue;
+    const k=d.s;
+    if(ch.deco==='leaf'||ch.deco==='fern'){
+      ctx.globalAlpha=0.16;ctx.fillStyle=ch.accent;
+      const n=ch.deco==='fern'?3:1;
+      for(let j=0;j<n;j++){ctx.beginPath();ctx.ellipse(d.x+j*7*k,d.y-j*5*k,9*k,4*k,d.rot+j*0.6,0,TAU);ctx.fill();}
+    }else if(ch.deco==='dune'){
+      ctx.globalAlpha=0.16;ctx.strokeStyle='#ffcc80';ctx.lineWidth=3;
+      ctx.beginPath();ctx.arc(d.x,d.y+18*k,30*k,PI*1.15,PI*1.85);ctx.stroke();
+    }else if(ch.deco==='snow'){
+      ctx.globalAlpha=0.22;ctx.strokeStyle='#e1f5fe';ctx.lineWidth=1.4;ctx.beginPath();
+      for(let j=0;j<3;j++){const a=d.rot+j*PI/3;ctx.moveTo(d.x-Math.cos(a)*6*k,d.y-Math.sin(a)*6*k);ctx.lineTo(d.x+Math.cos(a)*6*k,d.y+Math.sin(a)*6*k);}
+      ctx.stroke();
+    }else if(ch.deco==='ember'){
+      ctx.globalAlpha=0.25+0.2*Math.sin(t*3+d.ph);ctx.fillStyle='#ff8a65';
+      ctx.beginPath();ctx.arc(d.x,d.y,2.4*k,0,TAU);ctx.fill();
+    }else if(ch.deco==='bubble'){
+      ctx.globalAlpha=0.22;ctx.strokeStyle='#80deea';ctx.lineWidth=1.3;
+      ctx.beginPath();ctx.arc(d.x,d.y+Math.sin(t+d.ph)*3,5*k,0,TAU);ctx.stroke();
+    }else{
+      ctx.globalAlpha=0.25+0.25*Math.sin(t*2+d.ph);ctx.fillStyle='#ffffff';
+      const r=3.2*k;ctx.beginPath();ctx.moveTo(d.x,d.y-r);ctx.lineTo(d.x+r*0.3,d.y-r*0.3);ctx.lineTo(d.x+r,d.y);ctx.lineTo(d.x+r*0.3,d.y+r*0.3);
+      ctx.lineTo(d.x,d.y+r);ctx.lineTo(d.x-r*0.3,d.y+r*0.3);ctx.lineTo(d.x-r,d.y);ctx.lineTo(d.x-r*0.3,d.y-r*0.3);ctx.closePath();ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+// An egg drawn as a lit 3D ovoid: contact shadow, radial highlight, speckles.
+function drawEgg(x,y,r,gold,wob){
+  ctx.fillStyle='rgba(0,0,0,0.28)';ctx.beginPath();ctx.ellipse(x+r*0.2,y+r*0.95,r*0.85,r*0.3,0,0,TAU);ctx.fill();
+  const g=ctx.createRadialGradient(x-r*0.32,y-r*0.5,r*0.08,x,y,r*1.35);
+  if(gold){g.addColorStop(0,'#fffde7');g.addColorStop(0.45,'#ffd54f');g.addColorStop(1,'#e65100');}
+  else{g.addColorStop(0,'#ffffff');g.addColorStop(0.5,'#fff3e0');g.addColorStop(1,'#a1887f');}
+  ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(x,y,r*0.76,r,Math.sin(wob)*0.1,0,TAU);ctx.fill();
+  if(!gold){ctx.fillStyle='rgba(121,85,72,0.45)';ctx.beginPath();ctx.arc(x+r*0.25,y+r*0.15,r*0.11,0,TAU);ctx.arc(x-r*0.2,y+r*0.45,r*0.08,0,TAU);ctx.fill();}
+}
+function drawGem(g,t){
+  const bob=Math.sin(t*2.2+g.ph)*4,s=11,x=g.x,y=g.y-6-bob;
+  ctx.fillStyle='rgba(0,0,0,0.3)';ctx.beginPath();ctx.ellipse(g.x,g.y+9,s*0.8,s*0.3,0,0,TAU);ctx.fill();
+  ctx.globalAlpha=0.18;ctx.fillStyle=g.c;ctx.beginPath();ctx.arc(x,y,s*1.9,0,TAU);ctx.fill();ctx.globalAlpha=1;
+  ctx.fillStyle=lerpColor(g.c,'#ffffff',0.45);
+  ctx.beginPath();ctx.moveTo(x-s,y);ctx.lineTo(x-s*0.55,y-s*0.7);ctx.lineTo(x+s*0.55,y-s*0.7);ctx.lineTo(x+s,y);ctx.closePath();ctx.fill();
+  ctx.fillStyle=g.c;ctx.beginPath();ctx.moveTo(x-s,y);ctx.lineTo(x,y+s*1.25);ctx.lineTo(x+s,y);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.55)';ctx.lineWidth=1;ctx.beginPath();
+  ctx.moveTo(x-s*0.55,y-s*0.7);ctx.lineTo(x-s*0.2,y);ctx.lineTo(x,y+s*1.25);ctx.moveTo(x+s*0.55,y-s*0.7);ctx.lineTo(x+s*0.2,y);ctx.lineTo(x,y+s*1.25);
+  ctx.moveTo(x-s,y);ctx.lineTo(x+s,y);ctx.stroke();
+  const sp=0.5+0.5*Math.sin(t*4+g.ph);ctx.fillStyle='rgba(255,255,255,'+(0.4+0.6*sp)+')';
+  const sx=x-s*0.35,sy=y-s*0.45,r=2.5+sp*2;ctx.beginPath();ctx.moveTo(sx,sy-r);ctx.lineTo(sx+r*0.25,sy);ctx.lineTo(sx,sy+r);ctx.lineTo(sx-r*0.25,sy);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(sx-r,sy);ctx.lineTo(sx,sy+r*0.25);ctx.lineTo(sx+r,sy);ctx.lineTo(sx,sy-r*0.25);ctx.closePath();ctx.fill();
+}
+function drawChapterItems(){
+  const t=menuPulseT+playTime;
+  for(const n of nests){
+    if(!onScreen(n.x,n.y,80))continue;
+    ctx.fillStyle='rgba(0,0,0,0.32)';ctx.beginPath();ctx.ellipse(n.x+4,n.y+9,46,25,0,0,TAU);ctx.fill();
+    ctx.fillStyle='#4e342e';ctx.beginPath();ctx.ellipse(n.x,n.y,42,26,0,0,TAU);ctx.fill();
+    ctx.fillStyle='#2d1b16';ctx.beginPath();ctx.ellipse(n.x,n.y-2,29,16,0,0,TAU);ctx.fill();
+    ctx.lineCap='round';ctx.lineWidth=3;
+    const tc=['#8d6e63','#6d4c41','#a1887f'];
+    for(const w of n.tw){ctx.strokeStyle=tc[w.c];ctx.beginPath();ctx.ellipse(n.x,n.y+w.o,38,23,0,w.a,w.a+w.l);ctx.stroke();}
+    const eggs=n.eggs.slice().sort(function(a,b){return Math.sin(a.a)-Math.sin(b.a);});
+    for(const e of eggs)drawEgg(n.x+Math.cos(e.a)*e.d,n.y+Math.sin(e.a)*e.d*0.7-3,8,e.gold,t*2+e.wob);
+  }
+  for(const g of gems){if(onScreen(g.x,g.y,30))drawGem(g,t);}
+  for(const q of shards){
+    const k=1+q.z/60;
+    ctx.globalAlpha=Math.max(0,Math.min(1,q.life*1.6))*0.35;ctx.fillStyle='#000';ctx.beginPath();ctx.arc(q.x,q.y,q.s*0.5,0,TAU);ctx.fill();
+    ctx.globalAlpha=Math.max(0,Math.min(1,q.life*1.6));ctx.fillStyle=q.c;
+    ctx.save();ctx.translate(q.x,q.y-q.z);ctx.rotate(q.rot);ctx.scale(k,k);
+    ctx.beginPath();ctx.moveTo(-q.s,q.s*0.6);ctx.lineTo(q.s,q.s*0.4);ctx.lineTo(0,-q.s);ctx.closePath();ctx.fill();ctx.restore();
+  }
+  ctx.globalAlpha=1;
+}
+// ── Chapter HUD: goal chips above the combo bar, start banner, win banner ──
+function drawGoalIcon(t,x,y,col){
+  if(t==='eggs'){drawEgg(x,y,6,false,0);return;}
+  if(t==='gems'){ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(x-6,y-1);ctx.lineTo(x-3,y-5);ctx.lineTo(x+3,y-5);ctx.lineTo(x+6,y-1);ctx.lineTo(x,y+6);ctx.closePath();ctx.fill();return;}
+  ctx.fillStyle=col;ctx.beginPath();ctx.arc(x,y,4,0,TAU);ctx.fill();
+}
+function drawChapterHUD(){
+  if(!chapterProg)return;
+  const ch=CHAPTERS[curChapter];
+  ctx.save();ctx.textAlign='left';ctx.font='700 13px Rajdhani';
+  const chips=ch.goals.map(function(g){const v=Math.min(g[1],goalValue(g[0]));return {t:g[0],txt:goalLabel(g[0])+' '+v+'/'+g[1],done:v>=g[1]};});
+  let total=0;for(const c of chips){c.w=ctx.measureText(c.txt).width+34;total+=c.w+8;}total-=8;
+  let x=W/2-total/2;const y=H-sab-122; // above the pause button and combo bar
+  for(const c of chips){
+    ctx.fillStyle=c.done?'rgba(0,230,118,0.18)':'rgba(0,0,0,0.5)';rr(x,y,c.w,26,13);ctx.fill();
+    ctx.strokeStyle=c.done?'#00e676':ch.accent;ctx.lineWidth=1.3;rr(x,y,c.w,26,13);ctx.stroke();
+    drawGoalIcon(c.t,x+14,y+13,ch.accent);
+    ctx.fillStyle=c.done?'#b9f6ca':'#ffffff';ctx.fillText(c.txt,x+26,y+18);
+    x+=c.w+8;
+  }
+  if(chapterBannerT>0){
+    const a=Math.min(1,chapterBannerT/0.5);ctx.globalAlpha=a;ctx.textAlign='center';
+    const by=H*0.66;
+    ctx.fillStyle='rgba(0,0,0,0.5)';rr(W/2-150,by-36,300,72,16);ctx.fill();
+    ctx.fillStyle=ch.accent;ctx.font='900 20px Rajdhani';ctx.fillText((isTR?'BÖLÜM ':'CHAPTER ')+(curChapter+1)+' · '+chapterName(ch).toUpperCase(),W/2,by-8);
+    ctx.fillStyle='#fff';ctx.font='700 14px Rajdhani';ctx.fillText(goalSummary(ch),W/2,by+18);
+    ctx.globalAlpha=1;
+  }
+  if(chapterWinT>0){
+    ctx.textAlign='center';ctx.globalAlpha=Math.min(1,(2.4-chapterWinT)*3);
+    ctx.fillStyle=ch.accent;ctx.font='900 30px Rajdhani';ctx.fillText(isTR?'BÖLÜM TAMAMLANDI!':'CHAPTER COMPLETE!',W/2,H*0.36);
+    ctx.font='900 18px Orbitron';const rt='+'+ch.reward,rw=ctx.measureText(rt).width;
+    iconCoin(W/2-rw/2-12,H*0.36+30,9);ctx.fillStyle='#ffd600';ctx.textAlign='left';ctx.fillText(rt,W/2-rw/2+2,H*0.36+37);
+    ctx.globalAlpha=1;
+  }
+  ctx.restore();
+}
+// ── Chapter select screen ──
+function chaptersLayout(){
+  const oy=sat,gap=12,cols=2,cw=Math.floor((Math.min(W,520)-16*2-gap)/cols);
+  const x0=Math.floor(W/2-(cw*cols+gap)/2),top=oy+108;
+  const rows=Math.ceil(CHAPTERS.length/cols);
+  const ch=Math.max(96,Math.min(132,Math.floor((H-sab-top-24)/rows)-gap));
+  const cards=[];for(let i=0;i<CHAPTERS.length;i++){const r=Math.floor(i/cols),c=i%cols;cards.push({x:x0+c*(cw+gap),y:top+r*(ch+gap),w:cw,h:ch});}
+  return {back:{x:12,y:oy+12,w:84,h:40},cards:cards};
+}
+function drawChapters(){
+  ctx.fillStyle='#0a0a1a';ctx.fillRect(0,0,W,H);
+  const lay=chaptersLayout(),oy=sat;
+  ctx.fillStyle='rgba(0,229,255,0.12)';rr(12,oy+12,84,40,20);ctx.fill();
+  ctx.fillStyle='#00e5ff';ctx.font='900 16px Rajdhani';ctx.textAlign='center';ctx.fillText(L.back,54,oy+38);
+  ctx.fillStyle='#fff';ctx.font='900 '+Math.min(30,Math.floor(W*0.07))+'px Rajdhani';ctx.fillText(isTR?'BÖLÜMLER':'CHAPTERS',W/2,oy+86);
+  const doneN=chapterDone.filter(Boolean).length;
+  ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='700 12px Rajdhani';ctx.fillText(doneN+'/'+CHAPTERS.length+(isTR?' tamamlandı':' complete'),W/2,oy+102);
+  for(let i=0;i<CHAPTERS.length;i++){
+    const c=CHAPTERS[i],r=lay.cards[i],locked=i>=chapterUnlocked,done=!!chapterDone[i];
+    ctx.globalAlpha=locked?0.45:1;
+    ctx.fillStyle=c.bg;rr(r.x,r.y,r.w,r.h,16);ctx.fill();
+    ctx.strokeStyle=done?'#00e676':c.accent;ctx.lineWidth=i===curChapter&&!locked?2.4:1.3;rr(r.x,r.y,r.w,r.h,16);ctx.stroke();
+    ctx.textAlign='left';
+    ctx.fillStyle=c.accent;ctx.font='900 30px Orbitron';ctx.fillText(''+(i+1),r.x+14,r.y+40);
+    ctx.fillStyle='#fff';ctx.font='700 18px Rajdhani';ctx.fillText(chapterName(c),r.x+14,r.y+64,r.w-24);
+    ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font='600 12px Rajdhani';ctx.fillText(goalSummary(c),r.x+14,r.y+83,r.w-24);
+    if(r.h>=112){iconCoin(r.x+22,r.y+r.h-17,7);ctx.fillStyle='#ffd600';ctx.font='700 12px Rajdhani';ctx.fillText('+'+c.reward,r.x+34,r.y+r.h-13);}
+    ctx.globalAlpha=1;
+    if(locked)iconLock(r.x+r.w-24,r.y+24,16,'rgba(255,255,255,0.7)');
+    else if(done){ctx.strokeStyle='#00e676';ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(r.x+r.w-32,r.y+24);ctx.lineTo(r.x+r.w-25,r.y+31);ctx.lineTo(r.x+r.w-13,r.y+17);ctx.stroke();}
+  }
+  ctx.textAlign='left';
+}
+function handleChaptersTap(x,y){
+  const lay=chaptersLayout();
+  if(inRect(lay.back,x,y)){state='menu';resetTouchState();sndMenu();return;}
+  for(let i=0;i<lay.cards.length;i++){
+    if(!inRect(lay.cards[i],x,y))continue;
+    if(i>=chapterUnlocked){showToast(isTR?'Önce önceki bölümü bitir':'Finish the previous chapter first','info');return;}
+    sndMenu();curChapter=i;mode='chapter';saveBlob('opts',{mode:mode});saveChapters();startGame('chapter');return;
+  }
+}
+// ── Chapter complete screen ──
+function chapterWinLayout(){
+  const bw=Math.min(280,W-48),bh=54,x=W/2-bw/2,y0=H*0.56;
+  return {next:{x:x,y:y0,w:bw,h:bh},list:{x:x,y:y0+bh+14,w:bw,h:46}};
+}
+function drawChapterWin(){
+  const ch=CHAPTERS[curChapter],lay=chapterWinLayout(),hasNext=curChapter+1<CHAPTERS.length;
+  ctx.fillStyle=ch.bg;ctx.fillRect(0,0,W,H);ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';
+  ctx.fillStyle=ch.accent;ctx.font='900 '+Math.min(30,Math.floor(W*0.07))+'px Rajdhani';
+  ctx.fillText((isTR?'BÖLÜM ':'CHAPTER ')+(curChapter+1)+(isTR?' TAMAMLANDI':' COMPLETE'),W/2,H*0.24);
+  ctx.fillStyle='#fff';ctx.font='700 20px Rajdhani';ctx.fillText(chapterName(ch),W/2,H*0.24+32);
+  ctx.font='900 22px Orbitron';const rt='+'+ch.reward,rw=ctx.measureText(rt).width;
+  iconCoin(W/2-rw/2-14,H*0.36,10);ctx.fillStyle='#ffd600';ctx.textAlign='left';ctx.fillText(rt,W/2-rw/2+2,H*0.36+8);ctx.textAlign='center';
+  ctx.fillStyle='rgba(255,255,255,0.75)';ctx.font='700 15px Rajdhani';ctx.fillText((isTR?'Skor: ':'Score: ')+score,W/2,H*0.36+40);
+  if(hasNext){
+    const nx=CHAPTERS[curChapter+1];
+    ctx.fillStyle='rgba(255,255,255,0.65)';ctx.font='600 13px Rajdhani';ctx.fillText((isTR?'Açıldı: ':'Unlocked: ')+chapterName(nx),W/2,H*0.36+62);
+    ctx.fillStyle=nx.accent;rr(lay.next.x,lay.next.y,lay.next.w,lay.next.h,27);ctx.fill();
+    ctx.fillStyle='#0a0a1a';ctx.font='900 18px Rajdhani';ctx.fillText(isTR?'SONRAKİ BÖLÜM':'NEXT CHAPTER',W/2,lay.next.y+34);
+  }else{
+    ctx.fillStyle='#fff';ctx.font='700 15px Rajdhani';ctx.fillText(isTR?'Tüm bölümleri bitirdin!':'You finished every chapter!',W/2,H*0.36+62);
+  }
+  ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=1.5;rr(lay.list.x,lay.list.y,lay.list.w,lay.list.h,23);ctx.stroke();
+  ctx.fillStyle='#fff';ctx.font='700 15px Rajdhani';ctx.fillText(isTR?'BÖLÜMLER':'CHAPTERS',W/2,lay.list.y+29);
+  ctx.textAlign='left';
+}
+function handleChapterWinTap(x,y){
+  const lay=chapterWinLayout();
+  if(curChapter+1<CHAPTERS.length&&inRect(lay.next,x,y)){sndMenu();curChapter++;saveChapters();startGame('chapter');return;}
+  if(inRect(lay.list,x,y)){sndMenu();state='chapters';resetTouchState();}
+}
+function modeLabel(){return mode==='chapter'?((isTR?'BÖLÜM ':'CHAPTER ')+(curChapter+1)):(L[mode]||mode.toUpperCase());}
+
 // ═══ GAME MODES ═══
 // Each entry carries the per-run knobs startGame() reads.
 // classic MUST reproduce the current endless behavior exactly:
@@ -327,8 +660,12 @@ const MODES = [
   {id:'rush',     name:'rush',     botCount:MAX_BOTS, startLength:22, timeLimit:90},
   // Boss Rush (Wave 3.1): fewer ambient bots, back-to-back bosses. The run's
   // "score" proxy is waves-cleared (runWaves), not points. timeLimit 0 = endless.
-  {id:'bossrush', name:'bossrush', botCount:4,        startLength:22, timeLimit:0}
+  {id:'bossrush', name:'bossrush', botCount:4,        startLength:22, timeLimit:0},
+  // Chapters (campaign): bot count and theme come from CHAPTERS[curChapter].
+  {id:'chapter',  name:'chapter',  botCount:8,        startLength:22, timeLimit:0}
 ];
+// The mode-select cards list the score modes; chapters have their own card.
+const MODE_CARDS = MODES.filter(function(m){return m.id!=='chapter';});
 let mode = 'classic';
 
 // Player-style handles (a mix of Turkish and international gamer tags) so the
@@ -612,8 +949,11 @@ let gdt = 0;
 // ═══ AUDIO ═══
 let ac = null;
 function initAudio(){try{if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac&&ac.state==='suspended'&&ac.resume)ac.resume();if(musicOn&&!musicTimer)startMusic();}catch(e){}}
+// Concurrent one-shot voices. Each tone is 2 nodes; WebKit frees them lazily,
+// so a feeding frenzy could pile up hundreds. Extra tones are simply skipped.
+const MAX_TONES=24;let activeTones=0;
 function tone(f,t,d,v,dl){
-  if(!ac||!soundOn)return;
+  if(!ac||!soundOn||activeTones>=MAX_TONES)return;
   try{
     const now=ac.currentTime+(dl||0);
     const o=ac.createOscillator(),g=ac.createGain();
@@ -621,10 +961,13 @@ function tone(f,t,d,v,dl){
     g.gain.setValueAtTime(Math.max(0.0002,(v||0.06)*sfxVol),now);
     g.gain.exponentialRampToValueAtTime(0.001,now+(d||0.1));
     o.connect(g);g.connect(ac.destination);
+    activeTones++;o.onended=function(){activeTones=Math.max(0,activeTones-1);try{o.disconnect();g.disconnect();}catch(e){}};
     o.start(now);o.stop(now+(d||0.1)+0.01);
   }catch(e){}
 }
-function sndCollect(){tone(520,'sine',0.04,0.05);tone(780,'sine',0.03,0.03,0.02);}
+// The pellet blip plays at most every SND_COLLECT_GAP_MS (feeding frenzies).
+const SND_COLLECT_GAP_MS=60;let _sndCollectAt=-1e9;
+function sndCollect(){const n=performance.now();if(n-_sndCollectAt<SND_COLLECT_GAP_MS)return;_sndCollectAt=n;tone(520,'sine',0.04,0.05);tone(780,'sine',0.03,0.03,0.02);}
 function sndKill(){tone(200,'sawtooth',0.15,0.07);tone(400,'square',0.1,0.04,0.02);}
 function sndDeath(){tone(300,'sawtooth',0.4,0.06);tone(200,'sawtooth',0.3,0.04,0.1);tone(100,'sawtooth',0.3,0.03,0.2);}
 function sndPowerup(){tone(660,'sine',0.08,0.05);tone(880,'sine',0.08,0.04,0.08);tone(1100,'sine',0.1,0.05,0.16);}
@@ -994,8 +1337,18 @@ function leaveDeathScreen(action){
 }
 function finishAfterAd(){const a=afterAdAction;afterAdAction=null;afterAdShown=false;if(a)a();}
 let hostBridgeSeen = false;
+// Minimum gap between two haptics of the same kind (ms). A big snake can eat
+// dozens of pellets a second; each used to cross the bridge as its own HAPTIC.
+const HAPTIC_GAP_MS={light:200,medium:120,heavy:0};
+const _hapticLast={light:-1e9,medium:-1e9,heavy:-1e9};
+function hapticAllowed(kind,now,last){const g=HAPTIC_GAP_MS[kind];return g===undefined||now-last>=g;}
 function postMsg(m){try{
-  if(m.type==='HAPTIC'&&!vibrationOn)return;
+  if(m.type==='HAPTIC'){
+    if(!vibrationOn)return;
+    const k=m.data||'light',now=performance.now();
+    if(!hapticAllowed(k,now,_hapticLast[k]))return;
+    _hapticLast[k]=now;
+  }
   if(window.ReactNativeWebView){window.ReactNativeWebView.postMessage(JSON.stringify(m));hostBridgeSeen=true;}
 }catch(e){}}
 window.addEventListener('message',function(e){
@@ -1285,6 +1638,7 @@ function hydrateBlobState(persistMissions){
   {const a=loadBlob('adc',{day:'',count:0});coinAdDay=typeof a.day==='string'?a.day:'';coinAdCount=Math.max(0,a.count|0);}
   // Last-played mode (persisted via saveBlob('opts',{mode})).
   {const o=loadBlob('opts',{mode:'classic'});if(MODES.some(function(m){return m.id===o.mode;}))mode=o.mode;}
+  loadChapters();
   // Per-mode best scores (flat object: {classic:N, rush:N, …}).
   {const b=loadBlob('bests',{});bestByMode=b;}
   // Achievements (unlocked set + persisted boss-kill counter + apex flag).
@@ -1666,6 +2020,7 @@ function _hslToRgb(h,s,l){
 // ═══ FOOD ═══
 function spawnFood(x,y,val,color,force){
   let slot=-1;
+  if(!force&&foods.length>=FOOD_TARGET)return;
   if(foods.length>=MAX_FOOD){
     if(!force)return;
     // At cap, overwrite the next pellet via a rotating pointer (O(1)) rather
@@ -1674,7 +2029,9 @@ function spawnFood(x,y,val,color,force){
     // worst moment. A rotating cursor (vs. a random slot) guarantees a full
     // sweep before any slot is reused, so pellets from one burst can't clobber
     // each other. Food has no order dependency, so this is visually identical.
-    slot=foodEvict=(foodEvict+1)%foods.length;
+    // Recycle a pellet the player cannot see: overwriting on-screen ones made
+    // food visibly vanish when a big snake died nearby.
+    slot=pickEvictSlot();
   }
   // Radius ~ u^0.7: between the old linear sampling (pellets piled up in the
   // centre, rim almost bare) and a uniform disc (u^0.5), so the middle is still
@@ -1682,10 +2039,21 @@ function spawnFood(x,y,val,color,force){
   if(x==null){const a=rand(0,TAU),r=Math.pow(Math.random(),0.7)*(WR-50);x=WCX+Math.cos(a)*r;y=WCY+Math.sin(a)*r;}
   val=val||1;
   const colors=['#00e5ff','#76ff03','#ff4081','#ffab00','#7c4dff','#00bfa5','#ff6e40','#ea80fc'];
-  const f={x,y,val,color:color||colors[randInt(0,colors.length-1)],r:3+val*1.5,pulse:rand(0,TAU)};
+  // g: 0..1 pop-in scale for pellets that appear during play.
+  const f={x,y,val,color:color||colors[randInt(0,colors.length-1)],r:3+val*1.5,pulse:rand(0,TAU),g:state==='playing'?0:1};
   if(slot>=0)foods[slot]=f;else foods.push(f);
 }
 let foodEvict=0; // rotating eviction cursor for force-spawn at MAX_FOOD cap
+// Next pellet slot to recycle: the first off-screen one after the cursor (a
+// full sweep at most), falling back to the cursor itself if all are visible.
+function pickEvictSlot(){
+  const n=foods.length;
+  for(let k=1;k<=n;k++){
+    const i=(foodEvict+k)%n,f=foods[i];
+    if(!onScreen(f.x,f.y,80)){foodEvict=i;return i;}
+  }
+  foodEvict=(foodEvict+1)%n;return foodEvict;
+}
 function spawnInitialFood(){for(let i=0;i<400;i++)spawnFood();}
 // Pick a spawn point at least minD pixels from the player. Prevents bots
 // from popping into existence right on top of the head and instakilling a
@@ -1711,6 +2079,31 @@ function pickSafeBotSpawn(minD){
 // 'normal': the regular field.
 // hunter: true = this bot notices the player from far away and comes for them.
 const GIANT_MAX = 2;
+// Each run rolls a lobby so games feel different: usually a mixed field (some
+// bots sharp, some clumsy), sometimes an easy one, sometimes everyone is good.
+const LOBBIES=[{name:'mixed',w:55,lo:0.25,hi:1.0},{name:'easy',w:25,lo:0.2,hi:0.6},{name:'sharp',w:20,lo:0.75,hi:1.0}];
+let lobby=LOBBIES[0];
+function rollLobby(){let t=0;for(const l of LOBBIES)t+=l.w;let r=Math.random()*t;for(const l of LOBBIES){r-=l.w;if(r<=0)return l;}return LOBBIES[0];}
+function lobbySkill(bonus){return Math.min(1,rand(lobby.lo,lobby.hi)+(bonus||0));}
+// Bot looks: mostly the free colours, regularly a premium skin, and now and then
+// a special costume (hero skins are cosmetic on bots; powers are player-only).
+const BOT_SKINS=SKINS.map(function(k,i){return k.power?-1:i;}).filter(function(i){return i>=0;});
+const HERO_SKINS=SKINS.map(function(k,i){return k.power?i:-1;}).filter(function(i){return i>=0;});
+function botSkin(tier){
+  const heroP=tier==='giant'?0.15:(tier==='elite'?0.10:0.04);
+  if(Math.random()<heroP)return HERO_SKINS[randInt(0,HERO_SKINS.length-1)];
+  if(tier==='normal'&&Math.random()<0.65)return randInt(0,4);
+  return BOT_SKINS[randInt(tier==='giant'?5:0,BOT_SKINS.length-1)];
+}
+// Big snakes do not pop in at full size: they start smaller and grow toward
+// their target over `secs`, so they race the player instead of towering at once.
+// Hard cap on any spawn target: lengths derived from score must never explode.
+const SPAWN_LEN_CAP=6000;
+function setGrowth(o,target,startFrac,secs){
+  target=Math.max(10,Math.min(SPAWN_LEN_CAP,Math.floor(target)));
+  o.length=Math.max(20,Math.floor(target*startFrac));
+  o.growTo=target;o.growRate=Math.max(2,(target-o.length)/secs);o.growAcc=0;
+}
 function aliveGiants(){let n=0;for(let k=0;k<snakes.length;k++){const o=snakes[k];if(o.alive&&o.tier==='giant')n++;}return n;}
 function spawnBot(minD,initial,forceGiant){
   // With no giant alive the next respawn is fairly likely to bring one back.
@@ -1719,18 +2112,19 @@ function spawnBot(minD,initial,forceGiant){
   const sp=pickSafeBotSpawn(giant?Math.max(minD,800):minD);
   const b=createSnake(false,sp.x,sp.y);
   if(giant){
-    b.tier='giant';b.length=Math.max(randInt(120,260)+Math.floor(score/100),Math.floor((player?player.length:0)*rand(0.7,1.25)));
-    b.skill=0.9+rand(0,0.1);b.personality=Math.random()<0.6?'aggressive':'coiler';b.hunter=true;
-    b.skin=randInt(5,HERO_FIRST-1);
+    b.tier='giant';
+    setGrowth(b,Math.max(randInt(120,260)+Math.floor(score/100),Math.floor((player?player.length:0)*rand(0.7,1.25))),rand(0.25,0.4),rand(40,70));
+    b.skill=Math.min(1,Math.max(0.6,lobbySkill(0.15)));b.personality=Math.random()<0.6?'aggressive':'coiler';b.hunter=true;
   }else if(Math.random()<0.22){
-    b.tier='elite';b.length=Math.max(randInt(50,110)+Math.floor(score/150),Math.floor((player?player.length:0)*rand(0.3,0.6)));
-    b.skill=0.85+rand(0,0.15);b.hunter=Math.random()<0.6;
-    b.skin=randInt(0,HERO_FIRST-1);
+    b.tier='elite';
+    setGrowth(b,Math.max(randInt(50,110)+Math.floor(score/150),Math.floor((player?player.length:0)*rand(0.3,0.6))),0.45,rand(30,50));
+    b.skill=lobbySkill(0.15);b.hunter=Math.random()<0.6;
   }else{
     b.tier='normal';
     b.length=initial?randInt(15,50):randInt(10,30+Math.floor(score/200));
-    b.hunter=Math.random()<0.35;
+    b.skill=lobbySkill(0);b.hunter=Math.random()<0.35;
   }
+  b.skin=botSkin(b.tier);
   if(!initial)b.invulnTimer=1.5;
   snakes.push(b);
   return b;
@@ -2163,9 +2557,7 @@ function updateHero(dt){
         const sg=o.segments[i],dx=sg.x-tx,dy=sg.y-ty;
         if(dx*dx+dy*dy>r2)continue;
         // Cut here: the severed tail becomes food, the rival keeps the front.
-        const col=SKINS[o.skin].c[0];
-        for(let k=i;k<o.segments.length;k+=3){const q=o.segments[k];spawnFood(q.x+rand(-6,6),q.y+rand(-6,6),2,col,true);}
-        o.length=Math.max(8,i);if(o.segments.length>o.length)o.segments.length=o.length;
+        cutSnake(o,i);
         heroCd=HERO_POWERS.blade.cd;
         sndKill();postMsg({type:'HAPTIC',data:'medium'});shakeTimer=0.12;shakeMag=4;
         spawnP(sg.x,sg.y,'#e0f7fa',14,140,2.5);
@@ -2253,7 +2645,26 @@ function drawHeroAccessory(power,hx,hy,ang,w,ready,boosting,tail){
 }
 
 // ═══ COLLISIONS ═══
+// A shield blocks exactly one fatal hit: it breaks, and a short grace period
+// lets the snake get clear. (It used to make the snake intangible for its whole
+// 7 s, so shielded snakes - often big ones - visibly slid through bodies.)
+function shieldSave(o){
+  if(!o||o.powerups.shield<=0)return false;
+  o.powerups.shield=0;o.invulnTimer=Math.max(o.invulnTimer,0.9);
+  const h=o.segments[0];spawnShock(h.x,h.y,'#40c4ff',false);
+  if(o.isPlayer){sndPowerup();postMsg({type:'HAPTIC',data:'medium'});addScorePopup(h.x,h.y-24,isTR?'KALKAN!':'SHIELD!','#40c4ff');}
+  return true;
+}
+// Cuts a snake at segment i: the severed tail becomes food, the front lives on.
+function cutSnake(o,i){
+  const col=SKINS[o.skin].c[0];
+  for(let k=i;k<o.segments.length;k+=3){const q=o.segments[k];spawnFood(q.x+rand(-6,6),q.y+rand(-6,6),2,col,true);}
+  o.length=Math.max(8,i);if(o.segments.length>o.length)o.segments.length=o.length;
+  o.growTo=0;
+}
+const pendingCuts=[];
 function checkCollisions(){
+  pendingCuts.length=0;
   resetGrid();
   for(const s of snakes){
     if(!s.alive)continue;
@@ -2264,12 +2675,12 @@ function checkCollisions(){
     const head=s.segments[0];
     const sw=snakeWidth(s);
     const hr=sw/2;
-    // Head-vs-body / head-vs-head — skipped while invulnerable (spawn protection),
-    // ghost (phase through), or shield (active barrier blocks the hit).
+    // Head-vs-body / head-vs-head — skipped while invulnerable (spawn protection)
+    // or ghost (phase through). A shield is checked per hit (shieldSave).
     // Food + powerup collection still runs below so the player can grow during
     // those first 2.5 s instead of starving.
     let died=false;
-    if(s.invulnTimer<=0&&s.powerups.ghost<=0&&s.powerups.shield<=0){
+    if(s.invulnTimer<=0&&s.powerups.ghost<=0){
       // Wider search radius (covers max possible other-snake body width too).
       const nq=gridQuery(head.x,head.y,hr+24);
       for(let j=0;j<nq;j+=2){
@@ -2278,26 +2689,39 @@ function checkCollisions(){
         // King/Boss are only ever killed by the player. Letting them die on a
         // bot's body ends the encounter off-screen with no reward and, in Boss
         // Rush, re-spawns the same wave without counting it.
-        if((s.isKing||s.isBoss)&&!nSnake.isPlayer)continue;
+        // So instead of ghosting through a bot, the King/Boss smashes it: a body
+        // hit cuts the bot there (tail becomes food), a head hit kills it.
+        if((s.isKing||s.isBoss)&&!nSnake.isPlayer){
+          if(nSnake.invulnTimer>0||nSnake.isKing||nSnake.isBoss)continue;
+          const seg2=nSnake.segments[nIdx],cr=hr+snakeWidth(nSnake)/2;
+          if(!seg2||dist2(head,seg2)>=cr*cr)continue;
+          if(nIdx===0)killSnake(nSnake,s,'head');
+          // Cut after the scan: the grid still holds this frame's segment indices.
+          else if(nIdx>=4)pendingCuts.push(nSnake,nIdx);
+          continue;
+        }
         // Spawn-invulnerable opponents are completely intangible.
         if(nSnake.invulnTimer>0)continue;
         const seg=nSnake.segments[nIdx];
+        if(!seg)continue;
         const ow=snakeWidth(nSnake);
         // Tight threshold without fudge so brushing past misses cleanly while
         // any actual overlap registers. (Substepping handles fast movement.)
         const collR=hr+ow/2;if(dist2(head,seg)<collR*collR){
           if(nIdx===0){
-            // Head-vs-head: smaller dies — unless the would-be victim has an
-            // active shield, which absorbs the hit and leaves both alive.
+            // Head-vs-head: smaller dies. A shield absorbs the hit once.
             if(s.length<=nSnake.length){
+              if(shieldSave(s))break;
               killSnake(s,nSnake,'head');
             }else{
-              if(nSnake.powerups.shield>0||nSnake.powerups.ghost>0)continue;
+              if(nSnake.powerups.ghost>0||shieldSave(nSnake))continue;
               killSnake(nSnake,s,'head');
+              continue;
             }
           }else{
-            // Head-vs-body: head's owner (s) dies — opponent's body stays solid
-            // even when they're shielded, so attackers can't phase through us.
+            // Head-vs-body: head's owner (s) dies unless its shield takes the hit.
+            // The opponent's body stays solid even when they're shielded.
+            if(shieldSave(s))break;
             killSnake(s,nSnake,'body');
           }
           died=true;break;
@@ -2366,6 +2790,9 @@ function checkCollisions(){
       }
     }
   }
+  // Apply King/Boss cuts now that the grid scan is over.
+  for(let k=0;k<pendingCuts.length;k+=2){const o=pendingCuts[k];if(o.alive&&pendingCuts[k+1]<o.segments.length)cutSnake(o,pendingCuts[k+1]);}
+  pendingCuts.length=0;
 }
 
 function killSnake(victim,killer,cause){
@@ -2401,6 +2828,7 @@ function killSnake(victim,killer,cause){
       const gainScore=Math.floor(baseScore*km);
       const gainCoin=Math.max(1,Math.floor(baseCoin*km));
       score+=gainScore;coins+=gainCoin;totalKills++;
+      if(chapterProg)chapterProg.kills++;
       sndKill();postMsg({type:'HAPTIC',data:'medium'});
       const popupCol=km>=3?'#ff1744':(km>=2?'#ffab00':'#ff80ab');
       const popupTxt=km>1?'+'+gainScore+(isTR?' SERİ x':' COMBO x')+killCombo:'+'+gainScore;
@@ -2412,6 +2840,7 @@ function killSnake(victim,killer,cause){
     }
     if(victim.isKing&&killer.isPlayer){
       score+=KING_SCORE_REWARD;coins+=KING_COIN_REWARD;sndKingSlain();postMsg({type:'HAPTIC',data:'heavy'});
+      if(chapterProg)chapterProg.king++;
       flashAlpha=0.3;flashColor='#ffd600';nextKingScore=score+2000;runKingKills++;
     }
     if(victim.isBoss&&killer.isPlayer){
@@ -2457,7 +2886,7 @@ function killSnake(victim,killer,cause){
     deathCamTimer=DEATH_CAM_S;deathInputLock=0.8;
     // No ad here: the interstitial is requested when the player LEAVES the
     // death screen (see leaveDeathScreen) so it never covers the revive offer.
-    track('run_end',{mode:mode,score:score,time:Math.floor(playTime),revived:hasRevived});
+    track('run_end',{mode:mode,score:score,time:Math.floor(playTime),revived:hasRevived,lobby:lobby.name});
   }else{victim.respawnTimer=rand(3,6);}
 }
 
@@ -2542,7 +2971,7 @@ function updateBot(bot,dt){
   const stage=currentBotStage();
   bot.aiTimer-=dt;if(bot.aiTimer>0)return;
   // Smarter bots think more often
-  bot.aiTimer=(0.12+rand(0,0.08))*stage.reactMul/Math.max(0.6,bot.skill);
+  bot.aiTimer=(0.12+rand(0,0.08))*stage.reactMul/Math.max(0.3,bot.skill);
 
   const head=bot.segments[0];
   // Sight scales with stage
@@ -2580,7 +3009,7 @@ function updateBot(bot,dt){
 
   // Panic flee: if a much bigger snake's head is close and we still have
   // some body to spend, flee away with boost regardless of personality.
-  if(nearBig&&nbD<240&&bot.length>14){
+  if(nearBig&&nbD<240*(0.55+0.45*bot.skill)&&bot.length>14){
     bot.targetAngle=angleTo(nearBig.segments[0],head);
     bot.boosting=true;
     return;
@@ -2628,8 +3057,9 @@ function updateBot(bot,dt){
       }
     }
   }
-  // Avoid the player's body too (smarter bots steer around it)
-  if(player&&player.alive&&player.segments.length>5){
+  // Avoid the player's body too (smarter bots steer around it; clumsy ones
+  // sometimes miss it and crash)
+  if(player&&player.alive&&player.segments.length>5&&Math.random()>(1-bot.skill)*0.55){
     let bodyHit=null,bhD=Infinity;
     for(let i=4;i<player.segments.length;i+=2){
       const seg=player.segments[i];const d=dist(head,seg);
@@ -2733,7 +3163,7 @@ function checkUnlocks(){
 
 // ═══ ZONE UPDATE ═══
 function updateZone(){
-  if(!player)return;
+  if(!player||mode==='chapter')return;
   let z=ZONES[0],zi=0;
   for(let i=0;i<ZONES.length;i++){if(player.length>=ZONES[i].min){z=ZONES[i];zi=i;}}
   if(z.bg!==targetZoneBg){
@@ -2783,6 +3213,9 @@ function startGame(modeId){
   // logic in killSnake(). Boss-Rush manages its own boss cadence — leave it
   // (and Classic, which keeps 2000/5000) untouched.
   if(mode==='rush'){nextKingScore=900;nextBossScore=2500;}
+  lobby=rollLobby();
+  nests=[];gems=[];decor=[];shards=[];chapterProg=null;chapterWinT=0;chapterBannerT=0;chapterJustWon=false;
+  if(mode==='chapter'){curChapter=Math.max(0,Math.min(chapterUnlocked-1,curChapter));const lb=CHAPTERS[curChapter].lobby;lobby=LOBBIES.find(function(l){return l.name===lb;})||lobby;}
   spawnComboZones(true); // silent on first spawn — no "moved" toast at game start
   spawnInitialFood();
   // Player starts with extra length so they have a real "boost reserve" up front.
@@ -2818,7 +3251,8 @@ function startGame(modeId){
   player._lastHX=SPX;player._lastHY=SPY;
   snakes.push(player);
   // Every classic / rush arena opens with one giant somewhere far away.
-  for(let i=0;i<_modeCfg.botCount;i++)spawnBot(500,true,i===0&&_modeCfg.botCount>=8);
+  const _botN=mode==='chapter'?CHAPTERS[curChapter].bots:_modeCfg.botCount;
+  for(let i=0;i<_botN;i++)spawnBot(500,true,i===0&&_botN>=8);
   for(let i=0;i<50;i++){const a=rand(0,TAU),r=rand(30,200);spawnFood(SPX+Math.cos(a)*r,SPY+Math.sin(a)*r,1);}
   camera.x=SPX;camera.y=SPY;camera.zoom=1;
   state='playing';totalGames++;playTime=0;runTimeLimit=_modeCfg.timeLimit;coinsAtStart=coins;runDoubleBase=coins;saveStats();
@@ -2833,6 +3267,7 @@ function startGame(modeId){
   // Reset biome state so the first frame of a new run starts from zone 0
   // without triggering a false zone-entry sweep.
   zoneIdx=0;bgGrad=null;bgGradKey='';
+  if(mode==='chapter')setupChapter();
   resetTouchState();
 }
 
@@ -2918,12 +3353,13 @@ function update(dt){
   {let best=null;for(const o of snakes){if(o.alive&&(!best||o.length>best.length))best=o;}arenaLeader=best;}
   updateParticles(dt);updateScorePopups(dt);updateShocks(dt);
   emitPlayerTrail(dt);updateTrailParts(dt);
-  foodSpawnTimer-=dt;if(foodSpawnTimer<=0){foodSpawnTimer=0.2;spawnFood();}
+  foodSpawnTimer-=dt;if(foodSpawnTimer<=0){foodSpawnTimer=0.2;const def=FOOD_TARGET-foods.length,k=def>220?4:(def>90?2:1);for(let i=0;i<k;i++)spawnFood();}
   for(let i=powerups.length-1;i>=0;i--){powerups[i].ttl-=dt;if(powerups[i].ttl<=0)powerups.splice(i,1);}
   puSpawnTimer-=dt;if(puSpawnTimer<=0){puSpawnTimer=5;spawnPowerup();}
   // Bonus zones age, trickle food and get replaced (see updateZones).
   updateZones(dt);
   updateWorldEvents(dt);
+  if(mode==='chapter')updateChapter(dt);
   updateCombo(dt);
   // Respawn bots
   for(let i=snakes.length-1;i>=0;i--){
@@ -2936,11 +3372,18 @@ function update(dt){
       spawnBot(450,false,false);
     }}
   }
+  // Gradual growth for big spawns (giants, elites, King, Boss).
+  for(const s of snakes){
+    if(!s.alive||s.isPlayer||!s.growTo)continue;
+    if(s.length>=s.growTo){s.growTo=0;continue;}
+    s.growAcc+=s.growRate*dt;const g=Math.floor(s.growAcc);
+    if(g>0){s.growAcc-=g;s.length=Math.min(s.growTo,s.length+g);}
+  }
   // King
   if(!kingActive&&score>=nextKingScore){
     kingActive=true;sndKing();
     const ksp=pickSafeBotSpawn(600);
-    const k=createSnake(false,ksp.x,ksp.y);k.name=isTR?'KRAL':'KING';k.isKing=true;k.length=Math.max(200+Math.floor(score/50),Math.floor((player?player.length:0)*1.15));
+    const k=createSnake(false,ksp.x,ksp.y);k.name=isTR?'KRAL':'KING';k.isKing=true;setGrowth(k,Math.max(200+Math.floor(score/50),Math.floor((player?player.length:0)*1.15)),0.5,25);
     k.personality='aggressive';k.skin=randInt(0,4);k.invulnTimer=1.5;snakes.push(k);
     kingToast=3.5;flashAlpha=0.35;flashColor='#ffd600';shakeTimer=0.3;shakeMag=6;postMsg({type:'HAPTIC',data:'heavy'});
   }
@@ -2957,7 +3400,7 @@ function update(dt){
     b.name=BOSS_NAMES[randInt(0,BOSS_NAMES.length-1)];
     // Boss Rush length escalates per wave (waves cleared so far); classic/rush
     // keep the existing score-driven length so they're byte-for-byte unchanged.
-    b.length=Math.floor((mode==='bossrush'?(260+runWaves*55):Math.max(300+Math.floor(score/120),Math.floor((player?player.length:0)*1.3)))*rand(0.85,1.25));
+    setGrowth(b,(mode==='bossrush'?(260+runWaves*55):Math.max(300+Math.floor(score/120),Math.floor((player?player.length:0)*1.3)))*rand(0.85,1.25),mode==='bossrush'?0.6:0.5,mode==='bossrush'?18:30);
     {const sn=BOSS_SKINS[randInt(0,BOSS_SKINS.length-1)],si=SKINS.findIndex(function(k){return k.name===sn;});b.skin=si>=0?si:BOSS_SKIN_IDX;}
     b.personality=Math.random()<0.5?'aggressive':'ambush';b.skill=0.92+rand(0,0.08);
     b.invulnTimer=1.5;
@@ -3013,7 +3456,7 @@ function render(){
     ctx.save();ctx.translate(W/2+sx,H/2+sy);ctx.scale(zoom,zoom);ctx.translate(-camera.x,-camera.y);
     // Visible world rectangle (used to skip off-screen snake segments).
     {const hw=(W/2+Math.abs(sx)+8)/zoom,hh=(H/2+Math.abs(sy)+8)/zoom;viewX1=camera.x-hw;viewX2=camera.x+hw;viewY1=camera.y-hh;viewY2=camera.y+hh;}
-    drawGrid();drawStars();drawBoundary();drawComboZones();drawWorldEvents();drawFood();drawPowerups();
+    drawGrid();if(mode==='chapter')drawDecor();drawStars();drawBoundary();drawComboZones();drawWorldEvents();drawFood();if(mode==='chapter')drawChapterItems();drawPowerups();
     // Z-sort snakes: smaller bots first, bigger bots above; player always on top.
     // Reuse a module buffer (like hudLeaderboard) instead of allocating a fresh
     // filtered+sorted array + comparator closure every frame.
@@ -3023,7 +3466,11 @@ function render(){
     liveBotsBuf.length=0;
     for(let i=0;i<snakes.length;i++){const s=snakes[i];if(s.alive&&!s.isPlayer)liveBotsBuf.push(s);}
     liveBotsBuf.sort(byLength);
-    for(const s of liveBotsBuf)drawSnake(s);
+    for(const s of liveBotsBuf){
+      drawSnake(s);
+      const bp=SKINS[s.skin].power;
+      if(bp){const sg=s.segments,n=sg.length;drawHeroAccessory(bp,sg[0].x,sg[0].y,s.angle,snakeWidth(s),true,s.boosting,n>1?{x:sg[n-1].x,y:sg[n-1].y,px:sg[n-2].x,py:sg[n-2].y}:null);}
+    }
     if(player&&player.alive){
       drawSnake(player);
       const pw=heroPower();
@@ -3043,7 +3490,7 @@ function render(){
     if(state!=='dead'){drawHUD();drawMinimap();}
     if(state==='playing')drawObjectivePointers();
     if(joystick.active&&state==='playing')drawJoystick();
-    if(state==='playing'){drawBoostFuel();drawPauseBtn();drawComboBar();}
+    if(state==='playing'){drawBoostFuel();drawPauseBtn();drawComboBar();if(mode==='chapter')drawChapterHUD();}
   }
   if(state==='menu'){drawMenu();if(showSettings)drawSettingsOverlay();if(!showTutorial&&showDailyModal)drawDailyModal();if(!showTutorial&&!showDailyModal&&showMissionsPanel)drawMissionsPanel();if(privacyPrimerOpen&&!showTutorial)drawPrivacyPrimer();}
   if(state==='dead')drawDeathScreen();
@@ -3053,6 +3500,8 @@ function render(){
   if(state==='leaderboard')drawLeaderboard();
   if(state==='achievements')drawAchievements();
   if(state==='modeselect')drawModeSelect();
+  if(state==='chapters')drawChapters();
+  if(state==='chapterwin')drawChapterWin();
   // Tutorial overlay renders on top of menu / pause / playing only — never
   // over the death screen, where it would just confuse the player.
   if(showTutorial&&state!=='dead')drawGuide();
@@ -3166,7 +3615,8 @@ function drawFood(){
   const vy1=camera.y-H/2/camera.zoom-20,vy2=camera.y+H/2/camera.zoom+20;
   for(const f of foods){
     if(f.x<vx1||f.x>vx2||f.y<vy1||f.y>vy2)continue;
-    f.pulse+=3*gdt;const r=f.r+Math.sin(f.pulse)*1;
+    f.pulse+=3*gdt;let r=f.r+Math.sin(f.pulse)*1;
+    if(f.g<1){f.g=Math.min(1,f.g+gdt*5);r*=1-(1-f.g)*(1-f.g);}
     ctx.fillStyle=f.color;
     ctx.beginPath();ctx.arc(f.x,f.y,r,0,TAU);ctx.fill();
   }
@@ -3555,14 +4005,39 @@ function drawMinimap(){
 }
 // Edge-of-screen pointers to the King and the Boss while they are off screen:
 // an arrow pinned to the screen edge, a crown / skull badge and the distance.
+// Slides a new edge badge along its edge until it clears the badges already
+// placed. The slide direction is fixed per badge (toward the screen centre) and
+// the number of slides is capped: the old loop restarted its scan after every
+// slide with no bound, flipped direction when a badge crossed the centre, and
+// froze the whole game when 2+ targets (King, Boss, treasure, rain) shared a
+// direction. An overlapping badge is fine; a frozen game is not.
+const POINTER_MAX_SLIDES=8;
+function placePointer(px,py,placed,top,bot,left,right,cx,cy){
+  const onSide=px<=left+1||px>=right-1;
+  const dir=onSide?(py<cy?1:-1):(px<cx?1:-1);
+  for(let n=0;n<POINTER_MAX_SLIDES;n++){
+    let hit=false;
+    for(let k=0;k<placed.length;k++){const q=placed[k];if(Math.abs(q.x-px)<44&&Math.abs(q.y-py)<48){hit=true;break;}}
+    if(!hit)break;
+    if(onSide)py=Math.min(bot,Math.max(top,py+dir*50));
+    else px=Math.min(right,Math.max(left,px+dir*46));
+  }
+  return {x:px,y:py};
+}
 function drawObjectivePointers(){
   if(!player||!player.alive)return;
   const z=camera.zoom,ph=player.segments[0];
-  const top=sat+128,bot=H-sab-140,left=26,right=W-26;
+  const top=sat+128,bot=H-sab-(mode==='chapter'?172:140),left=26,right=W-26;
   const targets=[];
   for(const s of snakes){if(s.alive&&(s.isKing||s.isBoss))targets.push({x:s.segments[0].x,y:s.segments[0].y,col:s.isBoss?'#ff1744':'#ffd600',ic:s.isBoss?'☠\ufe0e':'♛\ufe0e'});}
   if(treasure)targets.push({x:treasure.x,y:treasure.y,col:'#ffd600',ic:'★\ufe0e'});
   if(rain)targets.push({x:rain.x,y:rain.y,col:'#40c4ff',ic:'☂\ufe0e'});
+  if(mode==='chapter'){
+    let best=null,bd=Infinity;
+    for(const n of nests){if(!n.eggs.length)continue;const d=dist2(ph,n);if(d<bd){bd=d;best={x:n.x,y:n.y,col:'#ffe082',ic:'',egg:true};}}
+    for(const g of gems){const d=dist2(ph,g);if(d<bd){bd=d;best={x:g.x,y:g.y,col:g.c,ic:'',gem:true};}}
+    if(best)targets.push(best);
+  }
   const placed=[];
   for(const tg of targets){
     const sx=(tg.x-camera.x)*z+W/2,sy=(tg.y-camera.y)*z+H/2;
@@ -3571,23 +4046,17 @@ function drawObjectivePointers(){
     let t=Infinity;
     if(ca>0)t=Math.min(t,(right-W/2)/ca);else if(ca<0)t=Math.min(t,(left-W/2)/ca);
     if(sa>0)t=Math.min(t,(bot-H/2)/sa);else if(sa<0)t=Math.min(t,(top-H/2)/sa);
-    let px=W/2+ca*t,py=H/2+sa*t;
     // Two targets in the same direction: slide this badge along the edge.
-    for(let k=0;k<placed.length;k++){
-      const q=placed[k];
-      if(Math.abs(q.x-px)<44&&Math.abs(q.y-py)<48){
-        if(px<=left+1||px>=right-1)py=Math.min(bot,Math.max(top,py+(py<H/2?50:-50)));
-        else px=Math.min(right,Math.max(left,px+(px<W/2?46:-46)));
-        k=-1;
-      }
-    }
-    placed.push({x:px,y:py});
+    const pp=placePointer(W/2+ca*t,H/2+sa*t,placed,top,bot,left,right,W/2,H/2);
+    const px=pp.x,py=pp.y;
+    placed.push(pp);
     ctx.save();ctx.translate(px,py);
     ctx.fillStyle='rgba(8,8,24,0.85)';ctx.beginPath();ctx.arc(0,0,17,0,TAU);ctx.fill();
     ctx.strokeStyle=tg.col;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,17,0,TAU);ctx.stroke();
     ctx.rotate(ang);ctx.fillStyle=tg.col;ctx.beginPath();ctx.moveTo(25,0);ctx.lineTo(17,-6);ctx.lineTo(17,6);ctx.closePath();ctx.fill();
     ctx.rotate(-ang);
-    ctx.fillStyle=tg.col;ctx.textAlign='center';ctx.font='900 13px Rajdhani';ctx.fillText(tg.ic,0,5);
+    ctx.fillStyle=tg.col;ctx.textAlign='center';ctx.font='900 13px Rajdhani';
+    if(tg.egg)drawEgg(0,-1,7,false,0);else if(tg.gem)drawGoalIcon('gems',0,0,tg.col);else ctx.fillText(tg.ic,0,5);
     ctx.font='700 11px Rajdhani';ctx.fillStyle='rgba(255,255,255,0.85)';
     ctx.fillText(Math.round(dist(ph,tg)/10)+'m',0,31);
     ctx.restore();
@@ -3658,7 +4127,7 @@ function drawPauseScreen(){
   // Confirm modal overlay if quitting
   if(quitConfirmTimer>0){
     ctx.fillStyle='rgba(0,0,0,0.92)';ctx.fillRect(0,0,W,H);
-    const mw=Math.min(320,W-40),mh=Math.min(220,H-sat-sab-40);
+    const mw=Math.min(320,W-40),mh=Math.min(168,H-sat-sab-40);
     const mx=W/2-mw/2,my=Math.max(sat+20,(H-mh)/2);
     ctx.fillStyle='#10102a';rr(mx,my,mw,mh,16);ctx.fill();
     ctx.strokeStyle='#ff1744';ctx.lineWidth=2;rr(mx,my,mw,mh,16);ctx.stroke();
@@ -3773,7 +4242,7 @@ function drawDailyModal(){
   ctx.fillStyle='rgba(0,0,0,0.82)';ctx.fillRect(0,0,W,H);
   ctx.textAlign='center';
   const uh=H-sat-sab,oy=sat;
-  const mw=Math.min(320,W-28),mh=Math.min(440,uh*0.88);
+  const mw=Math.min(320,W-28),mh=Math.min(318,uh*0.88);
   const mx=W/2-mw/2,my=oy+(uh-mh)/2;
   // Modal card
   ctx.fillStyle='#0e0e22';rr(mx,my,mw,mh,20);ctx.fill();
@@ -3850,7 +4319,7 @@ function drawDailyModal(){
 }
 function handleDailyModalTap(x,y){
   const uh=H-sat-sab,oy=sat;
-  const mw=Math.min(320,W-28),mh=Math.min(440,uh*0.88);
+  const mw=Math.min(320,W-28),mh=Math.min(318,uh*0.88);
   const mx=W/2-mw/2,my=oy+(uh-mh)/2;
   const stripY=my+68;
   const cellW=Math.floor((mw-20)/7),cellH=Math.min(74,Math.floor((mh-68-130)*0.9));
@@ -3974,7 +4443,8 @@ const GUIDE_PAGES=[
   {col:'#ff4081',t:isTR?'RAKİPLERİ YEN':'TAKE THEM DOWN',l:isTR?['Rakibin kafası senin gövdene çarparsa o elenir.','Kafa kafaya çarpışmada büyük olan kazanır.','En uzun yılanın başında taç olur. Kral ve Boss büyük ödül verir.']:['If a rival\'s head hits your body, it is out.','Head-on, the bigger snake wins.','The longest snake wears the crown. King and Boss pay big.']},
   {col:'#ffab00',t:isTR?'GÜÇLER VE PİSTLER':'POWER-UPS & PADS',l:isTR?['Hız, kalkan, mıknatıs, hayalet: üstünden geçince alırsın.','Mavi oklu pist ok yönünde hızlandırır, ters yönde yavaşlatır.','Turuncu çamur yavaşlatır, kırmızı fren neredeyse durdurur.']:['Speed, shield, magnet, ghost: run over them to collect.','Blue arrow pads boost you along the arrows, slow you against them.','Orange mud slows you; the red brake nearly stops you.']},
   {col:'#ffd600',t:isTR?'HARİTA':'THE MAP',l:isTR?['Mini harita: Kral altın, Boss kırmızı, büyük noktalar dev yılanlar.','Ekran kenarındaki oklar Kral, Boss, hazine ve yağmuru gösterir.','Hazine: önce sen kap, botlar da peşinde!']:['Minimap: King in gold, Boss in red, big dots are giants.','Edge arrows point to the King, Boss, treasure and food rain.','Treasure: grab it before the bots do!']},
-  {col:'#b388ff',t:isTR?'KOSTÜM VE MODLAR':'SKINS & MODES',l:isTR?['Parayla kostüm ve iz al. Kahraman kostümlerin küçük güçleri var.','Klasik, 90 saniyelik Hızlı ve Boss Akını modları.','Günlük görevler ve günlük ödül her gün yenilenir.']:['Spend coins on skins and trails. Hero skins have small powers.','Classic, 90-second Rush and Boss Rush modes.','Daily missions and the daily reward refresh every day.']}
+  {col:'#b388ff',t:isTR?'KOSTÜM VE MODLAR':'SKINS & MODES',l:isTR?['Parayla kostüm ve iz al. Kahraman kostümlerin küçük güçleri var.','Klasik, 90 saniyelik Hızlı ve Boss Akını modları.','Günlük görevler ve günlük ödül her gün yenilenir.']:['Spend coins on skins and trails. Hero skins have small powers.','Classic, 90-second Rush and Boss Rush modes.','Daily missions and the daily reward refresh every day.']},
+  {col:'#c6ff00',t:isTR?'BÖLÜMLER':'CHAPTERS',l:isTR?['Her bölüm haritasının görevleri var: yumurta, elmas, boy, av.','Kuş yuvalarındaki yumurtaları ye; altın yumurta 3 sayar.','Görevleri bitir, ödülü al, sonraki bölüm açılsın.']:['Each chapter map has goals: eggs, gems, length, kills.','Eat eggs from bird nests; a golden egg counts as 3.','Finish the goals to earn the reward and unlock the next chapter.']},
 ];
 function guideLayout(){
   const uh=H-sat-sab,oy=sat;
@@ -3995,6 +4465,18 @@ function drawGuideArt(i,a){
   const t=performance.now()*0.001,cx=a.x+a.w/2,cy=a.y+a.h/2;
   ctx.save();ctx.beginPath();rr(a.x,a.y,a.w,a.h,14);ctx.clip();
   ctx.fillStyle='rgba(255,255,255,0.04)';ctx.fillRect(a.x,a.y,a.w,a.h);
+  if(i===6){
+    // Chapters: a nest with eggs (one golden) and a floating gem.
+    const nx=cx-46,ny=cy+10;
+    ctx.fillStyle='rgba(0,0,0,0.32)';ctx.beginPath();ctx.ellipse(nx+4,ny+9,46,25,0,0,TAU);ctx.fill();
+    ctx.fillStyle='#4e342e';ctx.beginPath();ctx.ellipse(nx,ny,42,26,0,0,TAU);ctx.fill();
+    ctx.fillStyle='#2d1b16';ctx.beginPath();ctx.ellipse(nx,ny-2,29,16,0,0,TAU);ctx.fill();
+    ctx.lineWidth=3;ctx.lineCap='round';
+    for(let k=0;k<10;k++){ctx.strokeStyle=k%2?'#8d6e63':'#6d4c41';const a0=k*0.63;ctx.beginPath();ctx.ellipse(nx,ny,38,23,0,a0,a0+0.5);ctx.stroke();}
+    [[-10,-5,false],[6,-7,false],[-2,4,true],[13,3,false]].forEach(function(q){drawEgg(nx+q[0],ny+q[1]-3,8.5,q[2],t*2+q[0]);});
+    drawGem({x:cx+62,y:cy+14,c:'#40c4ff',ph:0},t);
+    ctx.restore();return;
+  }
   if(i===0){
     drawSnakePreview(SKINS[0],cx-10,cy,150,10,20,8);
     const fx=cx+70+Math.sin(t*2)*16,fy=cy+38+Math.cos(t*2)*10;
@@ -4149,7 +4631,7 @@ function drawLeaderboard(){
   ctx.fillText(L.classicMode,W/2,oy+111);
   // Per-mode bests row (shown for all defined modes)
   {const mbY=oy+132;ctx.fillStyle='rgba(255,255,255,0.35)';ctx.font='600 11px Rajdhani';
-  const parts=[];for(let i=0;i<MODES.length;i++){const mid=MODES[i].id;const b=bestByMode[mid]||0;parts.push((L[mid]||mid)+': '+(b>0?formatModeBest(mid,b):'-'));}
+  const parts=[];for(let i=0;i<MODE_CARDS.length;i++){const mid=MODE_CARDS[i].id;const b=bestByMode[mid]||0;parts.push((L[mid]||mid)+': '+(b>0?formatModeBest(mid,b):'-'));}
   ctx.fillText(parts.join('   ·   '),W/2,mbY);}
   // Stats line
   ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font='600 13px Rajdhani';
@@ -4247,13 +4729,13 @@ function drawModeSelect(){
   ctx.fillStyle='#fff';ctx.font='900 '+titleSize+'px Orbitron';
   ctx.fillText(L.selectMode,W/2,oy+88);
   // Mode cards
-  const cardW=Math.min(300,W-40),cardH=100,cardX=W/2-cardW/2;
+  const cardW=Math.min(300,W-40),cardH=modeCardH(),cardX=W/2-cardW/2;
   const startY=oy+116;
   const modeIcons={classic:'∞',rush:'⏱︎',bossrush:'☠︎'};
   const modeAccents={classic:'#00e5ff',rush:'#ffab00',bossrush:'#ff1744'};
   const modeDescs={classic:L.classicDesc,rush:L.rushDesc,bossrush:L.bossrushDesc};
-  for(let i=0;i<MODES.length;i++){
-    const m=MODES[i],cy=startY+i*(cardH+14);
+  for(let i=0;i<MODE_CARDS.length;i++){
+    const m=MODE_CARDS[i],cy=startY+i*(cardH+14);
     const accent=modeAccents[m.id]||'#00e5ff';
     const isActive=mode===m.id;
     // Card bg
@@ -4282,8 +4764,22 @@ function drawModeSelect(){
     // Active checkmark
     if(isActive){ctx.fillStyle=accent;ctx.font='900 20px Orbitron';ctx.textAlign='right';glyphText('✓︎',cardX+cardW-14,cy+cardH/2+7);}
   }
+  // Chapters (campaign) card: opens the chapter select screen.
+  {const cy=startY+MODE_CARDS.length*(cardH+14),accent='#76ff03',isActive=mode==='chapter';
+  ctx.fillStyle=isActive?'rgba(118,255,3,0.10)':'rgba(255,255,255,0.04)';rr(cardX,cy,cardW,cardH,16);ctx.fill();
+  ctx.strokeStyle=isActive?accent:'rgba(255,255,255,0.18)';ctx.lineWidth=isActive?2:1.5;rr(cardX,cy,cardW,cardH,16);ctx.stroke();
+  const iconR=28,ix=cardX+iconR+18,iy=cy+cardH/2;
+  ctx.fillStyle=accent;ctx.beginPath();ctx.arc(ix,iy,iconR,0,TAU);ctx.fill();
+  drawEgg(ix,iy-1,13,true,0);
+  ctx.textAlign='left';ctx.fillStyle=isActive?accent:'#fff';ctx.font='900 18px Rajdhani';
+  ctx.fillText(isTR?'BÖLÜMLER':'CHAPTERS',cardX+iconR*2+30,cy+cardH*0.42);
+  ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='600 13px Rajdhani';
+  ctx.fillText(isTR?'7 harita, görevler, yumurta ve elmas':'7 maps, goals, eggs and gems',cardX+iconR*2+30,cy+cardH*0.68,cardW-iconR*2-44);
+  ctx.fillStyle=accent;ctx.font='700 11px Rajdhani';
+  ctx.fillText(chapterDone.filter(Boolean).length+'/'+CHAPTERS.length,cardX+iconR*2+30,cy+cardH*0.90);}
   ctx.textAlign='left';
 }
+function modeCardH(){return Math.max(76,Math.min(100,Math.floor((H-sab-sat-116-16)/(MODE_CARDS.length+1))-14));}
 
 // ═══ MENU ═══
 // Pre-render the static background grid to an offscreen canvas. The grid
@@ -4358,7 +4854,7 @@ function menuLayout(){
   };
 }
 function inRect(r,x,y){return x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h;}
-function modeAccent(id){return id==='rush'?'#ffab00':(id==='bossrush'?'#ff1744':'#00e5ff');}
+function modeAccent(id){return id==='rush'?'#ffab00':(id==='bossrush'?'#ff1744':(id==='chapter'?CHAPTERS[curChapter].accent:'#00e5ff'));}
 // Small vector icons (no emoji: emoji glyphs differ per OS and break the neon look).
 function iconCoin(x,y,r){
   ctx.fillStyle='#ffd600';ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();
@@ -4412,8 +4908,9 @@ function iconGear(x,y,r,col){
 }
 function iconPalette(x,y,r,skin){
   const cs=[skin.c[0],skin.c[1]||skin.c[0],'#ffffff'];
-  for(let i=0;i<3;i++){const a=-PI/2+i*TAU/3;ctx.globalAlpha=i===2?0.55:0.95;ctx.fillStyle=cs[i];ctx.beginPath();ctx.arc(x+Math.cos(a)*r*0.42,y+Math.sin(a)*r*0.42,r*0.55,0,TAU);ctx.fill();}
-  ctx.globalAlpha=1;
+  const _pa=ctx.globalAlpha;
+  for(let i=0;i<3;i++){const a=-PI/2+i*TAU/3;ctx.globalAlpha=_pa*(i===2?0.55:0.95);ctx.fillStyle=cs[i];ctx.beginPath();ctx.arc(x+Math.cos(a)*r*0.42,y+Math.sin(a)*r*0.42,r*0.55,0,TAU);ctx.fill();}
+  ctx.globalAlpha=_pa;
 }
 function iconPodium(x,y,r,col){
   ctx.fillStyle=col;const w=r*0.52;
@@ -4434,9 +4931,9 @@ function iconGift(x,y,r,col){
 // Secondary menu tile: dark glass card, accent border, icon + label + sub-line.
 function drawMenuTile(r,accent,label,sub,hot,icon){
   ctx.fillStyle=hot?'rgba(255,214,0,0.12)':'rgba(255,255,255,0.055)';rr(r.x,r.y,r.w,r.h,14);ctx.fill();
-  ctx.strokeStyle=accent;ctx.lineWidth=hot?2:1.4;ctx.globalAlpha=hot?(0.7+0.3*Math.sin(menuPulseT*4)):0.75;
+  ctx.strokeStyle=accent;ctx.lineWidth=hot?2:1.4;const _ga=ctx.globalAlpha;ctx.globalAlpha=_ga*(hot?(0.7+0.3*Math.sin(menuPulseT*4)):0.75);
   if(hot){ctx.shadowColor=accent;ctx.shadowBlur=10;}
-  rr(r.x,r.y,r.w,r.h,14);ctx.stroke();ctx.shadowBlur=0;ctx.globalAlpha=1;
+  rr(r.x,r.y,r.w,r.h,14);ctx.stroke();ctx.shadowBlur=0;ctx.globalAlpha=_ga;
   icon(r.x+26,r.y+r.h/2,11,accent);
   ctx.textAlign='left';
   ctx.fillStyle='#fff';ctx.font='700 13px Orbitron';ctx.fillText(label,r.x+48,r.y+(sub?24:r.h/2+5),r.w-56);
@@ -4450,11 +4947,22 @@ function drawMenuSnake(cx,cy){
   drawSnakePreview(skin,cx,cy,170,9.5,24,9);
   ctx.shadowBlur=0;
 }
+// Launch intro (first menu after the app opens): the logo springs in, then
+// the rest of the menu rises and fades in. Skipped with reduced motion.
+let menuIntroT=0,menuIntroDone=false;
+function easeOutBack(t){const c=1.70158;return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2);}
 function drawMenu(){
   ensureMenuBg();
   ctx.drawImage(menuBgC,0,0,menuBgC.width,menuBgC.height,0,0,W,H);
   drawMenuParticles();
   menuPulseT+=gdt;
+  let introK=1,menuFade=1;
+  if(!menuIntroDone){
+    if(reducedMotion)menuIntroDone=true;
+    else{menuIntroT+=gdt;const t=menuIntroT;introK=easeOutBack(Math.min(1,t/0.7));menuFade=Math.max(0,Math.min(1,(t-0.3)/0.55));if(t>1.2)menuIntroDone=true;}
+  }
+  const menuOff=(1-menuFade)*26;
+  ctx.save();ctx.translate(0,menuOff);ctx.globalAlpha=menuFade;
   ctx.textAlign='center';
   const uh=H-sat-sab,oy=sat,ml=menuLayout();
   // ── Header: settings · coins · help ──
@@ -4491,7 +4999,8 @@ function drawMenu(){
   // On very short screens (320x568) the fractional position would run the
   // title into the profile row: keep a minimum distance below the header.
   const titleY=Math.max(oy+uh*0.215,oy+140);
-  drawBrandTitle(W/2,titleY);
+  ctx.save();ctx.translate(0,-menuOff);ctx.globalAlpha=menuIntroDone?1:Math.min(1,menuIntroT/0.3);
+  drawBrandTitle(W/2,titleY,0.6+0.4*introK);ctx.restore();
   {const menuBest=mode==='classic'?highScore:(bestByMode[mode]||0);
   if(menuBest>0){ctx.fillStyle='rgba(255,255,255,0.42)';ctx.font='600 15px Rajdhani';ctx.fillText(L.best+': '+formatModeBest(mode,menuBest),W/2,Math.max(oy+uh*0.285,titleY+22));}}
   // ── Hero: equipped skin (tap = cosmetics) ──
@@ -4507,7 +5016,7 @@ function drawMenu(){
   ctx.fillStyle='rgba(0,0,0,0.28)';rr(r.x,r.y,r.w,r.h,19);ctx.fill();
   ctx.strokeStyle=ac;ctx.lineWidth=1.5;rr(r.x,r.y,r.w,r.h,19);ctx.stroke();
   ctx.fillStyle=ac;ctx.font='700 13px Orbitron';
-  ctx.fillText(L.modes+' · '+(L[mode]||mode.toUpperCase())+'  ›',W/2,r.y+24,r.w-20);}
+  ctx.fillText(L.modes+' · '+modeLabel()+'  ›',W/2,r.y+24,r.w-20);}
   // ── Secondary tiles ──
   const skinNow=SKINS[currentSkin];
   drawMenuTile(ml.cosmetics,'#b388ff',L.cosmetics,unlockedSkins.length+'/'+SKINS.length,false,function(x,y,r){iconPalette(x,y,r,skinNow);});
@@ -4518,7 +5027,7 @@ function drawMenu(){
   drawMenuTile(ml.daily,'#ffd600',L.dailyShort,dailyAvailable?L.dailyReady:(L.streak+': '+loginStreak),dailyAvailable,iconGift);
   // ── Rewarded: coins ──
   {const r=ml.ad,left=coinAdsLeft(),adOk=adReady.rewarded&&left>0&&rewardPendingT<=0;
-  ctx.globalAlpha=adOk?1:0.4;
+  ctx.globalAlpha=(adOk?1:0.4)*menuFade;
   ctx.strokeStyle='#00e676';ctx.lineWidth=1.8;ctx.shadowColor='#00e676';ctx.shadowBlur=adOk?8:0;rr(r.x,r.y,r.w,r.h,21);ctx.stroke();ctx.shadowBlur=0;
   ctx.font='700 13px Orbitron';
   const lbl=L.watchAdCoins+(left>0?coinAdReward(coinAdCount):0),cnt=left+'/'+COIN_AD_DAILY_CAP;
@@ -4527,7 +5036,7 @@ function drawMenu(){
   ctx.textAlign='left';ctx.fillStyle='#00e676';ctx.font='700 13px Orbitron';ctx.fillText(lbl,x0,r.y+26);
   iconCoin(x0+lw+8+9,r.y+21,8);
   ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='700 12px Rajdhani';ctx.fillText(cnt,x0+lw+8+18+8,r.y+26);
-  ctx.textAlign='center';ctx.globalAlpha=1;
+  ctx.textAlign='center';ctx.globalAlpha=menuFade;
   // Next-skin hint: cheapest locked coins-rail skin
   let cheapPrice=Infinity;for(let si=0;si<SKINS.length;si++){const sk=SKINS[si];if(!unlockedSkins.includes(si)){const p=skinPrice(sk);if(p>0&&p<cheapPrice)cheapPrice=p;}}
   if(cheapPrice!==Infinity&&coins<cheapPrice&&r.y+r.h+18<H-sab-14){ctx.fillStyle='rgba(255,214,0,0.6)';ctx.font='600 12px Rajdhani';ctx.fillText(L.nextSkinHint+(cheapPrice-coins)+L.toGo,W/2,r.y+r.h+17);}}
@@ -4535,6 +5044,7 @@ function drawMenu(){
   ctx.fillStyle='rgba(255,255,255,0.18)';ctx.font='600 10px Rajdhani';ctx.textAlign='right';
   ctx.fillText('v1.4.0',W-12,H-sab-6);
   ctx.textAlign='left';
+  ctx.restore();
 }
 
 // ═══ PRIVACY PRIMER (pre-ATT explainer) ═══
@@ -4552,7 +5062,7 @@ function wrapLines(text,maxW){
   return lines;
 }
 function primerLayout(){
-  const mw=Math.min(330,W-36),mh=Math.min(310,H-sat-sab-40);
+  const mw=Math.min(330,W-36),mh=Math.min(270,H-sat-sab-40);
   const mx=W/2-mw/2,my=sat+(H-sat-sab-mh)/2;
   const bh=52;
   return {mx:mx,my:my,mw:mw,mh:mh,bx:mx+20,by:my+mh-bh-20,bw:mw-40,bh:bh};
@@ -4657,10 +5167,11 @@ function drawDeathScreen(){
   const dl=deathLayout(),k=dl.k;
   // Mode badge — small pill at the top so each mode's result is visibly distinct.
   const acc=modeAccent(mode);
-  const modeLabelDs=mode==='rush'?L.rushMode:(mode==='bossrush'?L.bossrushMode:L.classicMode);
-  ctx.fillStyle='rgba(0,0,0,0.45)';rr(W/2-66,dl.top+8,132,26,13);ctx.fill();
-  ctx.strokeStyle=acc;ctx.lineWidth=1.5;rr(W/2-66,dl.top+8,132,26,13);ctx.stroke();
-  ctx.fillStyle=acc;ctx.font='700 12px Rajdhani';ctx.fillText(modeLabelDs,W/2,dl.top+25,120);
+  const modeLabelDs=mode==='rush'?L.rushMode:(mode==='bossrush'?L.bossrushMode:(mode==='chapter'?((isTR?'BÖLÜM ':'CHAPTER ')+(curChapter+1)+' · '+chapterName(CHAPTERS[curChapter]).toUpperCase()):L.classicMode));
+  const pillHW=mode==='chapter'?96:66;
+  ctx.fillStyle='rgba(0,0,0,0.45)';rr(W/2-pillHW,dl.top+8,pillHW*2,26,13);ctx.fill();
+  ctx.strokeStyle=acc;ctx.lineWidth=1.5;rr(W/2-pillHW,dl.top+8,pillHW*2,26,13);ctx.stroke();
+  ctx.fillStyle=acc;ctx.font='700 12px Rajdhani';ctx.fillText(modeLabelDs,W/2,dl.top+25,mode==='chapter'?170:120);
   // Title: TIME'S UP for timeout, ELIMINATED for collisions.
   const isTimeout=(killerName==='time');
   const titleCol=isTimeout?'#ffab00':'#ff1744';
@@ -4929,8 +5440,8 @@ function drawSkinSelect(){
   }
   // ── Grid ──
   ctx.save();ctx.beginPath();ctx.rect(0,sl.gy-4,W,sl.gh+4);ctx.clip();
-  for(let i=0;i<SKINS.length;i++){
-    const r=shopCellRect(sl,i);
+  for(let c=0;c<SHOP_ORDER.length;c++){
+    const i=SHOP_ORDER[c],r=shopCellRect(sl,c);
     if(r.y+r.h<sl.gy-4||r.y>H)continue;
     const skin=SKINS[i],rc=rarityOf(skin).col,owned=unlockedSkins.includes(i),sel=i===shopSel;
     ctx.fillStyle=sel?'rgba(255,255,255,0.10)':'rgba(255,255,255,0.04)';rr(r.x,r.y,r.w,r.h,12);ctx.fill();
@@ -5097,6 +5608,8 @@ $.addEventListener('touchstart',function(e){
   if(state==='skinselect'){shopTouch={x:t.clientX,y:t.clientY,moved:false,grid:t.clientY>=shopLayout().gy};skinScrollLastY=t.clientY;return;}
   if(state==='trailselect'){handleTrailTap(t.clientX,t.clientY);return;}
   if(state==='modeselect'){handleModeselectTap(t.clientX,t.clientY);return;}
+  if(state==='chapters'){handleChaptersTap(t.clientX,t.clientY);return;}
+  if(state==='chapterwin'){handleChapterWinTap(t.clientX,t.clientY);return;}
   if(state==='playing'){
     // Pause button (bottom-left) — only remaining HUD button
     if(dist({x:t.clientX,y:t.clientY},{x:50,y:H-sab-60})<34){pauseGame();return;}
@@ -5210,6 +5723,8 @@ $.addEventListener('mousedown',function(e){
   if(state==='skinselect'){handleSkinTap(e.clientX,e.clientY);return;}
   if(state==='trailselect'){handleTrailTap(e.clientX,e.clientY);return;}
   if(state==='modeselect'){handleModeselectTap(e.clientX,e.clientY);return;}
+  if(state==='chapters'){handleChaptersTap(e.clientX,e.clientY);return;}
+  if(state==='chapterwin'){handleChapterWinTap(e.clientX,e.clientY);return;}
   if(state==='playing'&&dist({x:e.clientX,y:e.clientY},{x:50,y:H-sab-60})<34){pauseGame();return;}
   if(e.button===2&&player){player.boosting=true;sndBoost();}
 });
@@ -5270,7 +5785,7 @@ function handlePauseTap(x,y){
   const bw=Math.min(260,W-40),bh=Math.min(52,Math.floor(uh*0.08)),bx=W/2-bw/2;
   // If the confirm modal is up, only Yes/No respond.
   if(quitConfirmTimer>0){
-    const mw=Math.min(320,W-40),mh=Math.min(220,H-sat-sab-40);
+    const mw=Math.min(320,W-40),mh=Math.min(168,H-sat-sab-40);
     const mx=W/2-mw/2,my=Math.max(sat+20,(H-mh)/2);
     const cbw=120,cbh=48,cy=my+mh-cbh-20;
     if(x>mx+20&&x<mx+20+cbw&&y>cy&&y<cy+cbh){quitConfirmTimer=0;settleRun();track('run_quit',{mode:mode,score:score,time:Math.floor(playTime)});goMenu();sndMenu();return;}
@@ -5316,13 +5831,15 @@ function handleModeselectTap(x,y){
   if(x>=12&&x<=12+84&&y>=sat+12&&y<=sat+12+40){state='menu';resetTouchState();sndMenu();return;}
   // Mode cards (mirror drawModeSelect geometry)
   const oy=sat;
-  const cardW=Math.min(300,W-40),cardH=100,cardX=W/2-cardW/2;
+  const cardW=Math.min(300,W-40),cardH=modeCardH(),cardX=W/2-cardW/2;
   const startY=oy+116;
-  for(let i=0;i<MODES.length;i++){
+  {const cy=startY+MODE_CARDS.length*(cardH+14);
+  if(x>=cardX&&x<=cardX+cardW&&y>=cy&&y<=cy+cardH){sndMenu();state='chapters';resetTouchState();return;}}
+  for(let i=0;i<MODE_CARDS.length;i++){
     const cy=startY+i*(cardH+14);
     if(x>=cardX&&x<=cardX+cardW&&y>=cy&&y<=cy+cardH){
       sndMenu();
-      mode=MODES[i].id;
+      mode=MODE_CARDS[i].id;
       saveBlob('opts',{mode:mode});
       startGame(mode);
       return;
@@ -5371,8 +5888,9 @@ function handleSkinTap(x,y){
   if(st.showAd&&inRect(sl.adBtn,x,y)){sndMenu();requestRewarded('coins');return;}
   // Grid: an owned skin is equipped, a locked one is selected for preview
   if(y<sl.gy)return;
-  for(let i=0;i<SKINS.length;i++){
-    if(!inRect(shopCellRect(sl,i),x,y))continue;
+  for(let c=0;c<SHOP_ORDER.length;c++){
+    if(!inRect(shopCellRect(sl,c),x,y))continue;
+    const i=SHOP_ORDER[c];
     shopSel=i;
     if(unlockedSkins.includes(i)&&currentSkin!==i){currentSkin=i;saveStats();saveSkins();}
     sndMenu();return;
@@ -5414,14 +5932,23 @@ window.addEventListener('focus',resumeFromBackground);
 
 // ═══ GAME LOOP ═══
 let lt=0;
+// One bad frame must never stop the game: an exception thrown out of update()
+// or render() used to end the rAF chain and leave a frozen screen. It is caught,
+// reported once per session, and the next frame runs normally.
+let frameErrorReported=false;
 function loop(ts){
+  requestAnimationFrame(loop);
   if(!lt)lt=ts;
   const d=Math.min((ts-lt)/1000,0.05);lt=ts;
-  // While a full-screen ad covers the game nothing may advance underneath it.
-  if(!adOpen)update(d);
-  hostSync();
-  render();
-  requestAnimationFrame(loop);
+  try{
+    // While a full-screen ad covers the game nothing may advance underneath it.
+    if(!adOpen)update(d);
+    hostSync();
+    render();
+  }catch(e){
+    try{ctx.setTransform(dpr,0,0,dpr,0,0);ctx.globalAlpha=1;ctx.shadowBlur=0;}catch(e2){}
+    if(!frameErrorReported){frameErrorReported=true;track('frame_error',{msg:String(e&&e.message||e).slice(0,90),st:state});}
+  }
 }
 // Start once the embedded fonts are decoded (canvas text measured with a
 // fallback font would shift every hand-tuned layout), with a hard timeout so a

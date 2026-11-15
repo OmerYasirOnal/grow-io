@@ -1,14 +1,12 @@
 Version 1.4: our biggest update yet.
 
-• HERO SKINS: Samurai, Orbit, Kraken and Jet, each with a small power (a blade that slices tails, orbs that block a hit, claws that grab rivals, a jet that saves boost fuel).
-• SMARTER RIVALS: bots with player-style names now try to cut you off, besiege you when you curl up and race you for power-ups. Giants roam the arena, and the King and Boss grow with you.
-• NEW ON THE MAP: treasure to grab, food rain, arrow pads that boost you (only in their direction), mud and brake pads. Edge arrows show where the action is.
-• COMBO METER: keep eating and hunting to fill it and grow up to twice as fast.
-• FAIR BONUS ZONES: x1.2 to x2.5; the richer the zone, the smaller and shorter it is, and it always has food inside.
-• NEW SHOP: see every skin before you buy it, with clear rarities and prices. 4 new skins too.
-• HOW TO PLAY: a new illustrated guide, a new home screen and a clearer results screen.
-• SMOOTHER: a continuous snake body, smooth tail growth, a calmer camera and better performance.
-• SETTINGS: volume sliders for sound and music, and a language choice (Turkish / English).
-• Many bug fixes. Works offline.
+• CHAPTERS: 7 themed maps (Meadow, Desert, Glacier, Jungle, Volcano, Abyss, Galaxy). Complete the goals to unlock the next one: eat eggs from bird nests, collect gems, grow, hunt rivals and, in the last chapter, defeat the King.
+• HERO SKINS: Samurai, Orbit, Kraken and Jet, each with a small power. Rivals sometimes wear special costumes too.
+• 10 NEW SKINS: Glacier, Ocean, Zebra, Ember, Bubblegum, Tiger, Galaxy, Sakura, Venom and Inferno (38 skins in total).
+• LIVELIER RIVALS: every game rolls a different field. Some bots are sharp, some are clumsy, and sometimes everyone is good. Giants, the King and the Boss now arrive smaller and grow into a fight with you.
+• NEW ON THE MAP: treasure, food rain, arrow pads, mud and brake pads; edge arrows show where the action is.
+• COMBO METER and FAIR BONUS ZONES (x1.2 to x2.5).
+• FIXES: the game could freeze when the King and the Boss were both on the map; a shield now blocks exactly one hit; food no longer vanishes on screen; smoother haptics.
+• A new launch animation, a new shop and settings with volume sliders and a language choice.
 
 Thanks for playing. Grow on!

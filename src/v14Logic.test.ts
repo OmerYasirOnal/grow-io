@@ -184,17 +184,18 @@ describe('v1.4 structural guards', () => {
       expect(types[i].w).toBeLessThan(types[i - 1].w);
     }
   });
-  it('gives every hero skin a known power and keeps bots out of hero skins', () => {
+  it('gives every hero skin a known power; bots wear heroes as costumes only', () => {
     const skins = new Function(`return (${/const SKINS = (\[[\s\S]*?\]);\n/.exec(html)![1]});`)() as
       { name: string; r: string; power?: string }[];
     const heroes = skins.filter((k) => k.power);
     expect(heroes.map((k) => k.power).sort()).toEqual(['blade', 'claws', 'jet', 'orbit']);
     heroes.forEach((k) => expect(k.r).toBe('hero'));
-    // Hero skins are appended after every regular skin.
-    const first = skins.findIndex((k) => k.power);
-    expect(skins.slice(first).every((k) => k.power)).toBe(true);
-    expect(html).toContain('b.skin=randInt(5,HERO_FIRST-1);');
-    expect(html).toContain('b.skin=randInt(0,HERO_FIRST-1);');
+    // Powers only ever come from the player's own skin.
+    expect(html).toContain('function heroPower(){return player&&SKINS[player.skin]?(SKINS[player.skin].power||null):null;}');
+    // Bots pick their look through botSkin(); heroes are a rare costume.
+    expect(html).toContain('b.skin=botSkin(b.tier);');
+    // The shop lists every regular skin first, heroes last.
+    expect(html).toContain('const SHOP_ORDER=');
   });
   it('keeps the in-game version stamp in sync with app.json', () => {
     const appVersion = JSON.parse(readFileSync(join(__dirname, '..', 'app.json'), 'utf8')).expo.version;

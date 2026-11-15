@@ -1,59 +1,35 @@
-The ultimate neon snake io battle arena! Slither, eat, grow, and dominate the leaderboard in this addictive snake vs snake combat game.
+Snake Grow.io is a neon snake arena game. Eat glowing food, grow longer, cut off your rivals and become the biggest snake on the map. Play anywhere, even without Wi-Fi.
 
-Grow from a tiny worm into a massive serpent. Outsmart enemies, collect power-ups, and crush the King for epic rewards. Classic snake io gameplay with modern twists and 52 unique skins to unlock.
+HOW IT WORKS
+• Steer with one thumb and tap BOOST for a burst of speed.
+• Eat food to grow. Make rivals crash into your body to take their length.
+• Grow big enough to take down the King and the Boss for huge rewards.
 
-◆ WHY PLAYERS LOVE IT
+WHAT'S INSIDE
+• 3 modes: Classic (endless), Rush (90 seconds) and Boss Rush.
+• 12 AI rivals with player-style names that cut you off, surround you and race you for power-ups.
+• The King: +500 score and 75 coins. The Boss: +1000 score and 100 coins.
+• 4 power-ups: Speed, Shield, Magnet and Ghost.
+• Bonus zones from x1.2 to x2.5 and a combo meter that makes you grow up to twice as fast.
+• Map events: treasure, food rain, arrow speed pads, mud and brake pads.
 
-• Addictive fast-paced snake battles
-• Smooth one-thumb touch controls
-• Offline play — no wifi needed
-• 52 collectible snake skins with neon, rainbow, striped & gradient styles
-• Dynamic zones that change as you grow
-• Daily rewards + coin economy
-• Pause, settings, tutorial — polished experience
+CHAPTERS (NEW)
+• 7 themed maps: Meadow, Desert, Glacier, Jungle, Volcano, Abyss and Galaxy.
+• Goals unlock the next chapter: eggs from bird nests, gems, length, kills and the King.
 
-◆ GAME MODES & FEATURES
+HERO SKINS (NEW)
+• Samurai: a blade that slices rival tails.
+• Orbit: orbs that block a hit.
+• Kraken: claws that grab a smaller rival next to your head.
+• Jet: a jet that saves boost fuel.
 
-• Battle Arena: Compete against 12 intelligent AI snakes
-• King Boss Fight: Take down the giant King snake for 500 bonus points
-• Combo System: Chain food pickups for 2x and 3x score multipliers
-• Power-Ups: Speed, Shield, Magnet, and Ghost mode
-• Local Leaderboard: Track your top 10 best scores
-• Daily Login Bonus: Come back every day for free coins + streak rewards
+COLLECT AND PROGRESS
+• 38 snake skins (4 heroes) and 5 trails, with clear rarities and prices.
+• Daily missions, daily login rewards, levels, rank tiers and 10 achievements.
+• Your best scores are saved on your device.
 
-◆ HOW TO PLAY
+MADE FOR IPHONE AND IPAD
+• Smooth play and volume sliders for sound and music.
+• Turkish and English.
 
-• Touch and drag to steer your snake
-• Eat glowing food orbs to grow longer
-• Hit the BOOST button for a speed burst
-• Crash enemies into your body to eliminate them
-• Bigger snake wins head-to-head collisions
-• Avoid walls and opponent bodies!
-
-◆ PRO TIPS
-
-• Use the magnet power-up to collect distant food
-• Shield protects from one fatal hit
-• Ghost mode lets you phase through enemies
-• Trap smaller snakes in tight circles
-• Save boost fuel for escape and attack moments
-• Longer snakes get bigger rewards from kills
-
-◆ WHAT'S NEW IN v1.1
-
-• Coin economy — earn coins, instantly buy any skin
-• Pause menu with sound and camera settings
-• Daily login bonus with streak multiplier
-• Combo multipliers (up to 3x score)
-• Floating score popups and king-arrival cinematic
-• Local leaderboard with top 10 best scores
-• Tutorial for new players
-• Big kill bonus — defeat bigger snakes for extra rewards
-• Minimap direction indicator
-• Many bug fixes and UX improvements
-
-◆ PERFECT FOR FANS OF
-
-Snake.io, Slither.io, Agar.io, Worms Zone, Paper.io, Little Big Snake, and other classic io arena games.
-
-Download now — become the biggest snake in the arena!
+Grow on and rule the arena!

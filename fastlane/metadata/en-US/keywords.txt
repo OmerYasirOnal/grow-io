@@ -1,1 +1,1 @@
-snake,io,slither,agar,worm,battle,arena,multiplayer,offline,skins,grow,neon,casual,fun,classic
+worm,offline,neon,skins,hero,boss,king,casual,arcade,serpent,python,combo,egg,gem,chapter,longest

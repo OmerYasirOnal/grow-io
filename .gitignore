@@ -47,3 +47,6 @@ coverage/
 /android
 ---
 .claude/scheduled_tasks.lock
+
+# App Preview videos (~38 MB each) stay local; regenerate with the capture scripts.
+marketing/preview/*.mp4

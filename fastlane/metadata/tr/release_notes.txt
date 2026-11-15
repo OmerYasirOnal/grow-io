@@ -1,14 +1,12 @@
 Sürüm 1.4: şimdiye kadarki en büyük güncelleme.
 
-• KAHRAMAN GÖRÜNÜMLER: Samurai, Orbit, Kraken ve Jet; her birinin küçük bir gücü var (kuyruk kesen kılıç, çarpmayı engelleyen küreler, rakibi yakalayan pençeler, hız yakıtını koruyan jet).
-• DAHA AKILLI RAKİPLER: oyuncu isimli botlar artık önünü kesmeye çalışıyor, kıvrılınca seni kuşatıyor, güçler için seninle yarışıyor. Arenada dev yılanlar dolaşıyor, Kral ve Boss seninle birlikte büyüyor.
-• HARİTADA YENİ: kapılacak hazine, yem yağmuru, yalnızca ok yönünde hızlandıran pistler, çamur ve fren pistleri. Ekran kenarındaki oklar nerede ne olduğunu gösteriyor.
-• KOMBO ÇUBUĞU: yemeye ve avlanmaya devam et, iki kata kadar hızlı büyü.
-• ADİL BONUS BÖLGELERİ: x1.2 ile x2.5 arası; bölge ne kadar zenginse o kadar küçük ve kısa süreli, içinde hep yem var.
-• YENİ MAĞAZA: her görünümü almadan önce gör; nadirlikler ve fiyatlar net. 4 yeni görünüm de eklendi.
-• NASIL OYNANIR: yeni resimli rehber, yeni ana ekran ve daha net sonuç ekranı.
-• DAHA AKICI: kesintisiz yılan gövdesi, yumuşak kuyruk büyümesi, daha sakin kamera ve daha iyi performans.
-• AYARLAR: ses ve müzik için ses seviyesi, dil seçimi (Türkçe / İngilizce).
-• Birçok hata düzeltmesi. Çevrimdışı çalışır.
+• BÖLÜMLER: 7 temalı harita (Çayır, Çöl, Buzul, Orman, Volkan, Derinlik, Galaksi). Görevleri tamamla, sonraki bölümü aç: kuş yuvalarından yumurta ye, elmas topla, büyü, rakip avla ve son bölümde Kral'ı devir.
+• KAHRAMAN GÖRÜNÜMLER: Samuray, Yörünge, Kraken ve Jet; her birinin küçük bir gücü var. Rakipler de ara sıra özel kostümle çıkıyor.
+• 10 YENİ GÖRÜNÜM: Buzul, Okyanus, Zebra, Kor, Sakız, Kaplan, Galaksi, Sakura, Engerek ve Cehennem (toplam 38 görünüm).
+• DAHA CANLI RAKİPLER: her oyunda farklı bir lobi. Kimi bot çok iyi, kimi beceriksiz, bazen de herkes iyi oynuyor. Devler, Kral ve Boss artık küçük gelip zamanla büyüyor ve seninle kapışıyor.
+• HARİTADA YENİ: hazine, yem yağmuru, oklu hız pistleri, çamur ve fren pistleri; kenar okları nerede ne olduğunu gösteriyor.
+• KOMBO ÇUBUĞU ve ADİL BONUS BÖLGELERİ (x1.2 ile x2.5 arası).
+• DÜZELTMELER: Kral ve Boss aynı anda haritadayken oyun donabiliyordu; kalkan artık tam olarak bir çarpmayı engelliyor; ekrandaki yemler artık kaybolmuyor; titreşimler daha akıcı.
+• Yeni açılış animasyonu, yeni mağaza, ses seviyesi ve dil seçimli ayarlar.
 
 Oynadığın için teşekkürler. Büyümeye devam!

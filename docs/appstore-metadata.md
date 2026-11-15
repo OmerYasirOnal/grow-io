@@ -54,17 +54,17 @@ growio-ios-2026
 
 ### Privacy Policy URL (REQUIRED)
 ```
-https://akisgames.com/privacy
+https://omeryasironal.com/grow-io/privacy/
 ```
 
 ### Support URL (REQUIRED)
 ```
-https://akisgames.com/support
+https://omeryasironal.com/grow-io/
 ```
 
 ### Marketing URL (optional but recommended)
 ```
-https://akisgames.com/games/grow-io
+https://omeryasironal.com/grow-io/
 ```
 
 ---
